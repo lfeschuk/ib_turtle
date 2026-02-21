@@ -3,11 +3,37 @@ import pandas as pd
 import logging
 import math
 import random
-from ib_insync import *
 import datetime
+import pytz
+from ib_insync import *
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
 logger = logging.getLogger(__name__)
+
+# ==========================================
+# 0. MARKET HOURS CALCULATOR
+# ==========================================
+def get_us_market_status():
+    """Calculates if the US Market is currently open and when it opens next."""
+    est = pytz.timezone('US/Eastern')
+    now_est = datetime.datetime.now(est)
+    
+    market_open = now_est.replace(hour=9, minute=30, second=0, microsecond=0)
+    market_close = now_est.replace(hour=16, minute=0, second=0, microsecond=0)
+    
+    if now_est.weekday() >= 5: # Saturday or Sunday
+        days_ahead = 7 - now_est.weekday()
+        next_open = (now_est + datetime.timedelta(days=days_ahead)).replace(hour=9, minute=30, second=0)
+        return f"🔴 CLOSED (Weekend). Next Open: {next_open.strftime('%A, %b %d at %H:%M EST')}"
+        
+    if now_est < market_open:
+        return f"🟡 CLOSED (Pre-Market). Opens today at 09:30 EST."
+    elif market_open <= now_est <= market_close:
+        return f"🟢 OPEN. Closes today at 16:00 EST."
+    else: # After 4:00 PM EST
+        days_ahead = 3 if now_est.weekday() == 4 else 1 # Skip weekend if Friday
+        next_open = (now_est + datetime.timedelta(days=days_ahead)).replace(hour=9, minute=30, second=0)
+        return f"🔴 CLOSED (After-Hours). Next Open: {next_open.strftime('%A, %b %d at %H:%M EST')}"
 
 # ==========================================
 # 1. THE UNIFIED MEMORY (DataManager)
@@ -17,17 +43,11 @@ class DataManager:
         self.conn = sqlite3.connect(db_name, check_same_thread=False)
         self.cursor = self.conn.cursor()
         
-        # Table 1: Offline Market Data
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS market_data (ticker TEXT, date TEXT, open REAL, high REAL, low REAL, close REAL, volume INTEGER, UNIQUE(ticker, date))''')
-        
-        # Table 2: Bot State & Capital
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS bot_state (ticker TEXT PRIMARY KEY, last_trade_won INTEGER, virtual_capital REAL, units_held INTEGER)''')
-        
-        # Table 3: Trade Log for the Dashboard
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS trade_log (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, action TEXT, price REAL)''')
         self.conn.commit()
 
-        # Initialize Virtual Capital to $5,000 if it doesn't exist
         self.cursor.execute("SELECT virtual_capital FROM bot_state WHERE ticker='MASTER_ACCOUNT'")
         if not self.cursor.fetchone():
             self.cursor.execute("INSERT INTO bot_state (ticker, last_trade_won, virtual_capital, units_held) VALUES ('MASTER_ACCOUNT', 0, 5000.0, 0)")
@@ -66,7 +86,7 @@ class DataManager:
 # 2. THE EXECUTOR (IBBroker)
 # ==========================================
 class IBBroker:
-    def __init__(self, port=4002): # Using 4002 for IB Gateway
+    def __init__(self, port=4002): 
         self.ib = IB()
         self.port = port
         self.client_id = random.randint(1, 9999) 
@@ -79,24 +99,29 @@ class IBBroker:
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
         bars = self.ib.reqHistoricalData(contract, endDateTime='', durationStr=f'{days} D', barSizeSetting='1 day', whatToShow='TRADES', useRTH=True)
-        self.ib.sleep(1) # Pacing fix to prevent disconnects
+        self.ib.sleep(1) 
         return bars
 
     def place_oco_buy(self, ticker, price, size, stop_price):
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
         
+        # --- ORDER TIME-IN-FORCE UPGRADES ---
+        # The Entry Order is a DAY order. If it doesn't trigger tomorrow, it dies.
         buy_order = StopOrder('BUY', size, price)
         buy_order.ocaGroup = "TURTLE_BASKET_" + datetime.datetime.now().strftime('%H%M')
         buy_order.ocaType = 1 
+        buy_order.tif = 'DAY' 
         
+        # The Stop Loss is GTC. If the entry fills, this protects you forever until hit.
         stop_order = StopOrder('SELL', size, stop_price)
         stop_order.parentId = buy_order.orderId
         stop_order.transmit = True 
+        stop_order.tif = 'GTC'
         
         self.ib.placeOrder(contract, buy_order)
         self.ib.placeOrder(contract, stop_order)
-        logger.info(f"🕸️ Placed OCO Trap for {ticker} at ${price:.2f} (Size: {size})")
+        logger.info(f"🕸️ Placed OCO Trap for {ticker} at ${price:.2f} (DAY order)")
 
     def get_open_positions(self):
         return [p.contract.symbol for p in self.ib.positions() if p.position > 0]
@@ -141,13 +166,20 @@ class TurtleStrategy:
         
         risk_amt = self.capital * 0.01
         size = math.floor(risk_amt / atr) if atr > 0 else 0
-
         is_forced = ticker in self.force_list
 
         if size > 0:
             if is_forced or (macro_safe and rs_safe):
                 if current_close < entry_price: 
-                    return {"action": "SET_TRAP", "price": round(entry_price, 2), "stop": round(low_10, 2), "size": size, "rs": round(rs, 1), "forced": is_forced}
+                    return {
+                        "action": "SET_TRAP", 
+                        "current": round(current_close, 2), # Passing current price for the Plan
+                        "price": round(entry_price, 2), 
+                        "stop": round(low_10, 2), 
+                        "size": size, 
+                        "rs": round(rs, 1), 
+                        "forced": is_forced
+                    }
         
         return None
 
@@ -156,14 +188,13 @@ class TurtleStrategy:
 # ==========================================
 def run_daily_workflow():
     db = DataManager()
-    
-    # Check port 4002 for Gateway. If using TWS, change to 7497.
     broker = IBBroker(port=4002) 
     
     force_list = ["PLTR", "MSTR"] 
     universe = ["AAPL", "MSFT", "NVDA", "GOOG", "CVX", "JPM", "WM", "COST"]
     all_tickers = ["SPY"] + force_list + universe
     
+    print(f"\n{get_us_market_status()}")
     logger.info("--- WAKING UP TRADING BOT ---")
     broker.connect()
     
@@ -178,7 +209,6 @@ def run_daily_workflow():
         broker.disconnect()
         return
 
-    # Data Sync: Read from offline DB, fetch from IBKR if missing
     for ticker in all_tickers:
         local_df = db.load_bars(ticker)
         if len(local_df) < 260:
@@ -198,20 +228,26 @@ def run_daily_workflow():
         if signal and signal['action'] == "SET_TRAP":
             targets.append((ticker, signal))
 
-    print("\n" + "="*50)
-    print("📈 PLAN FOR TOMORROW:")
-    print("="*50)
+    # --- THE UPGRADED PLAN VISUALIZATION ---
+    print("\n" + "="*80)
+    print("📈 PLAN FOR NEXT TRADING SESSION:")
+    print("="*80)
     
     if not targets:
-        print("No setups found. The robot will sit safely in cash.")
+        print("No valid setups found today. The robot will sit safely in cash.")
     else:
         targets.sort(key=lambda x: x[1]['rs'], reverse=True)
         for t, s in targets:
+            # Calculate distance to breakout
+            dist_dollars = s['price'] - s['current']
+            dist_pct = (dist_dollars / s['current']) * 100
+            
             force_tag = "[FORCED]" if s['forced'] else ""
-            print(f"- {t}: Buy Stop @ ${s['price']} | Size: {s['size']} | RS: {s['rs']} {force_tag}")
+            
+            print(f"🎯 {t: <5} | Current: ${s['current']:<7.2f} | Buy Stop: ${s['price']:<7.2f} (+${dist_dollars:<5.2f} / +{dist_pct:<5.2f}%) | Risk Stop: ${s['stop']:<7.2f} | Size: {s['size']:<4} | RS: {s['rs']:<4} {force_tag}")
         
-        print("="*50)
-        choice = input("\nPress ENTER to place OCO net for all targets, or type a preferred TICKER to only trap one: ").strip().upper()
+        print("="*80)
+        choice = input("\nPress ENTER to place OCO DAY Orders for all targets, or type a TICKER to trap only one: ").strip().upper()
         
         if choice in [t[0] for t in targets]:
             print(f"User Override: Locking onto {choice} only.")
@@ -219,7 +255,7 @@ def run_daily_workflow():
         
         for t, s in targets:
             broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
-            db.log_trade(t, "OCO_TRAP_PLACED", s['price'])
+            db.log_trade(t, "DAY_TRAP_PLACED", s['price'])
 
     broker.disconnect()
     logger.info("💤 Workflow Complete. Bot returning to sleep.")
