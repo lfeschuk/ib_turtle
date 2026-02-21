@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import numpy as np
 import logging
 import math
 import random
@@ -14,14 +15,13 @@ logger = logging.getLogger(__name__)
 # 0. MARKET HOURS CALCULATOR
 # ==========================================
 def get_us_market_status():
-    """Calculates if the US Market is currently open and when it opens next."""
     est = pytz.timezone('US/Eastern')
     now_est = datetime.datetime.now(est)
     
     market_open = now_est.replace(hour=9, minute=30, second=0, microsecond=0)
     market_close = now_est.replace(hour=16, minute=0, second=0, microsecond=0)
     
-    if now_est.weekday() >= 5: # Saturday or Sunday
+    if now_est.weekday() >= 5: 
         days_ahead = 7 - now_est.weekday()
         next_open = (now_est + datetime.timedelta(days=days_ahead)).replace(hour=9, minute=30, second=0)
         return f"🔴 CLOSED (Weekend). Next Open: {next_open.strftime('%A, %b %d at %H:%M EST')}"
@@ -30,8 +30,8 @@ def get_us_market_status():
         return f"🟡 CLOSED (Pre-Market). Opens today at 09:30 EST."
     elif market_open <= now_est <= market_close:
         return f"🟢 OPEN. Closes today at 16:00 EST."
-    else: # After 4:00 PM EST
-        days_ahead = 3 if now_est.weekday() == 4 else 1 # Skip weekend if Friday
+    else: 
+        days_ahead = 3 if now_est.weekday() == 4 else 1 
         next_open = (now_est + datetime.timedelta(days=days_ahead)).replace(hour=9, minute=30, second=0)
         return f"🔴 CLOSED (After-Hours). Next Open: {next_open.strftime('%A, %b %d at %H:%M EST')}"
 
@@ -60,7 +60,7 @@ class DataManager:
         self.cursor.executemany(insert_query, data_to_insert)
         self.conn.commit()
 
-    def load_bars(self, ticker, limit=260):
+    def load_bars(self, ticker, limit=300):
         query = f"SELECT date, open, high, low, close FROM market_data WHERE ticker = ? ORDER BY date DESC LIMIT {limit}"
         df = pd.read_sql_query(query, self.conn, params=(ticker,))
         if df.empty: return df
@@ -95,7 +95,7 @@ class IBBroker:
         self.ib.connect('127.0.0.1', self.port, clientId=self.client_id, timeout=30)
         logger.info(f"🟢 Connected to IBKR using Client ID: {self.client_id}")
 
-    def fetch_missing_bars(self, ticker, days=260):
+    def fetch_missing_bars(self, ticker, days=300):
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
         bars = self.ib.reqHistoricalData(contract, endDateTime='', durationStr=f'{days} D', barSizeSetting='1 day', whatToShow='TRADES', useRTH=True)
@@ -106,14 +106,11 @@ class IBBroker:
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
         
-        # --- ORDER TIME-IN-FORCE UPGRADES ---
-        # The Entry Order is a DAY order. If it doesn't trigger tomorrow, it dies.
         buy_order = StopOrder('BUY', size, price)
         buy_order.ocaGroup = "TURTLE_BASKET_" + datetime.datetime.now().strftime('%H%M')
         buy_order.ocaType = 1 
         buy_order.tif = 'DAY' 
         
-        # The Stop Loss is GTC. If the entry fills, this protects you forever until hit.
         stop_order = StopOrder('SELL', size, stop_price)
         stop_order.parentId = buy_order.orderId
         stop_order.transmit = True 
@@ -139,8 +136,59 @@ class TurtleStrategy:
         self.capital = capital
         self.force_list = force_list
 
+    def _calc_days_above(self, price_series, sma_series):
+        """Counts how many consecutive days the price has been strictly above the SMA."""
+        above = price_series > sma_series
+        count = 0
+        for val in reversed(above.values):
+            if val: count += 1
+            else: break
+        return count
+
+    def _calc_adx(self, df, period=14):
+        """Calculates 14-day ADX. Returns the most recent value."""
+        df = df.copy()
+        df['up_move'] = df['high'].diff()
+        df['down_move'] = df['low'].shift(1) - df['low']
+        
+        df['+dm'] = np.where((df['up_move'] > df['down_move']) & (df['up_move'] > 0), df['up_move'], 0)
+        df['-dm'] = np.where((df['down_move'] > df['up_move']) & (df['down_move'] > 0), df['down_move'], 0)
+        
+        tr1 = df['high'] - df['low']
+        tr2 = abs(df['high'] - df['close'].shift(1))
+        tr3 = abs(df['low'] - df['close'].shift(1))
+        df['tr'] = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+        
+        atr = df['tr'].ewm(alpha=1/period, adjust=False).mean()
+        plus_di = 100 * (df['+dm'].ewm(alpha=1/period, adjust=False).mean() / atr)
+        minus_di = 100 * (df['-dm'].ewm(alpha=1/period, adjust=False).mean() / atr)
+        
+        dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di)
+        adx = dx.ewm(alpha=1/period, adjust=False).mean()
+        return adx.iloc[-1]
+
+    def get_spy_status(self, df_spy):
+        if len(df_spy) < 200: return "Not enough data for SPY Macro."
+        
+        close = df_spy['close'].iloc[-1]
+        sma50 = df_spy['close'].rolling(50).mean()
+        sma200 = df_spy['close'].rolling(200).mean()
+        
+        curr_sma50 = sma50.iloc[-1]
+        curr_sma200 = sma200.iloc[-1]
+        
+        days_above_50 = self._calc_days_above(df_spy['close'], sma50)
+        days_above_200 = self._calc_days_above(df_spy['close'], sma200)
+        
+        macro_safe = close > curr_sma50 and curr_sma50 > curr_sma200
+        status_icon = "🟢 BULL REGIME" if macro_safe else "🔴 BEAR/CHOP REGIME (Cash Only)"
+        
+        return (f"{status_icon}\n"
+                f"Current: ${close:.2f} | 50d SMA: ${curr_sma50:.2f} | 200d SMA: ${curr_sma200:.2f}\n"
+                f"SPY is > 50d for [{days_above_50}] days | > 200d for [{days_above_200}] days.")
+
     def analyze(self, ticker, df_stock, df_spy):
-        if len(df_stock) < 55 or len(df_spy) < 200:
+        if len(df_stock) < 200 or len(df_spy) < 200:
             return None 
 
         spy_close = df_spy['close'].iloc[-1]
@@ -151,6 +199,18 @@ class TurtleStrategy:
         high_20 = df_stock['high'].rolling(20).max().iloc[-2] 
         high_55 = df_stock['high'].rolling(55).max().iloc[-2]
         low_10 = df_stock['low'].rolling(10).min().iloc[-2]
+        
+        # New Moving Average & ADX Math
+        sma50 = df_stock['close'].rolling(50).mean()
+        sma200 = df_stock['close'].rolling(200).mean()
+        curr_sma50 = sma50.iloc[-1]
+        curr_sma200 = sma200.iloc[-1]
+        
+        dist_50 = ((current_close / curr_sma50) - 1) * 100 if curr_sma50 > 0 else 0
+        dist_200 = ((current_close / curr_sma200) - 1) * 100 if curr_sma200 > 0 else 0
+        days_50 = self._calc_days_above(df_stock['close'], sma50)
+        days_200 = self._calc_days_above(df_stock['close'], sma200)
+        adx_val = self._calc_adx(df_stock, 14)
         
         df_stock['prev_close'] = df_stock['close'].shift(1)
         tr = df_stock[['high', 'prev_close']].max(axis=1) - df_stock[['low', 'prev_close']].min(axis=1)
@@ -173,11 +233,16 @@ class TurtleStrategy:
                 if current_close < entry_price: 
                     return {
                         "action": "SET_TRAP", 
-                        "current": round(current_close, 2), # Passing current price for the Plan
+                        "current": round(current_close, 2), 
                         "price": round(entry_price, 2), 
                         "stop": round(low_10, 2), 
                         "size": size, 
                         "rs": round(rs, 1), 
+                        "adx": round(adx_val, 1),
+                        "dist_50": round(dist_50, 1),
+                        "dist_200": round(dist_200, 1),
+                        "days_50": days_50,
+                        "days_200": days_200,
                         "forced": is_forced
                     }
         
@@ -211,16 +276,22 @@ def run_daily_workflow():
 
     for ticker in all_tickers:
         local_df = db.load_bars(ticker)
-        if len(local_df) < 260:
+        # Increased fetch to 300 to safely cover 252 RS + 200 SMA lookbacks
+        if len(local_df) < 300:
             logger.info(f"📥 Updating offline memory for {ticker} from IBKR...")
-            bars = broker.fetch_missing_bars(ticker, days=260)
+            bars = broker.fetch_missing_bars(ticker, days=300)
             db.save_bars(ticker, bars)
 
     df_spy = db.load_bars("SPY")
-
     strategy = TurtleStrategy(db, capital, force_list)
-    targets = []
+    
+    print("\n" + "="*80)
+    print("🇺🇸 SPY MACRO STATUS:")
+    print("-" * 80)
+    print(strategy.get_spy_status(df_spy))
+    print("="*80)
 
+    targets = []
     for ticker in (force_list + universe):
         df_stock = db.load_bars(ticker)
         signal = strategy.analyze(ticker, df_stock, df_spy)
@@ -228,25 +299,22 @@ def run_daily_workflow():
         if signal and signal['action'] == "SET_TRAP":
             targets.append((ticker, signal))
 
-    # --- THE UPGRADED PLAN VISUALIZATION ---
-    print("\n" + "="*80)
+    print("\n" + "="*110)
     print("📈 PLAN FOR NEXT TRADING SESSION:")
-    print("="*80)
+    print("="*110)
     
     if not targets:
         print("No valid setups found today. The robot will sit safely in cash.")
     else:
         targets.sort(key=lambda x: x[1]['rs'], reverse=True)
         for t, s in targets:
-            # Calculate distance to breakout
-            dist_dollars = s['price'] - s['current']
-            dist_pct = (dist_dollars / s['current']) * 100
-            
+            dist_pct = ((s['price'] / s['current']) - 1) * 100
             force_tag = "[FORCED]" if s['forced'] else ""
             
-            print(f"🎯 {t: <5} | Current: ${s['current']:<7.2f} | Buy Stop: ${s['price']:<7.2f} (+${dist_dollars:<5.2f} / +{dist_pct:<5.2f}%) | Risk Stop: ${s['stop']:<7.2f} | Size: {s['size']:<4} | RS: {s['rs']:<4} {force_tag}")
+            # Formatted exactly like an institutional daily brief
+            print(f"🎯 {t: <5} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {s['rs']:<4.1f} | >50d: {s['days_50']} days (+{s['dist_50']:.1f}%) | >200d: {s['days_200']} days (+{s['dist_200']:.1f}%) {force_tag}")
         
-        print("="*80)
+        print("="*110)
         choice = input("\nPress ENTER to place OCO DAY Orders for all targets, or type a TICKER to trap only one: ").strip().upper()
         
         if choice in [t[0] for t in targets]:
