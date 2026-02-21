@@ -2,6 +2,7 @@ import sqlite3
 import pandas as pd
 import logging
 import math
+import random
 from ib_insync import *
 import datetime
 
@@ -9,36 +10,52 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(
 logger = logging.getLogger(__name__)
 
 # ==========================================
-# 1. THE MEMORY (DataManager)
+# 1. THE UNIFIED MEMORY (DataManager)
 # ==========================================
 class DataManager:
     def __init__(self, db_name="trading_state.db"):
         self.conn = sqlite3.connect(db_name, check_same_thread=False)
         self.cursor = self.conn.cursor()
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS bot_state (ticker TEXT PRIMARY KEY, last_trade_won INTEGER, virtual_capital REAL)''')
+        
+        # Table 1: Offline Market Data
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS market_data (ticker TEXT, date TEXT, open REAL, high REAL, low REAL, close REAL, volume INTEGER, UNIQUE(ticker, date))''')
+        
+        # Table 2: Bot State & Capital
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS bot_state (ticker TEXT PRIMARY KEY, last_trade_won INTEGER, virtual_capital REAL, units_held INTEGER)''')
+        
+        # Table 3: Trade Log for the Dashboard
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS trade_log (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, action TEXT, price REAL)''')
         self.conn.commit()
 
         # Initialize Virtual Capital to $5,000 if it doesn't exist
         self.cursor.execute("SELECT virtual_capital FROM bot_state WHERE ticker='MASTER_ACCOUNT'")
         if not self.cursor.fetchone():
-            self.cursor.execute("INSERT INTO bot_state (ticker, last_trade_won, virtual_capital) VALUES ('MASTER_ACCOUNT', 0, 5000.0)")
+            self.cursor.execute("INSERT INTO bot_state (ticker, last_trade_won, virtual_capital, units_held) VALUES ('MASTER_ACCOUNT', 0, 5000.0, 0)")
             self.conn.commit()
+
+    def save_bars(self, ticker, bars):
+        if not bars: return
+        insert_query = '''INSERT OR IGNORE INTO market_data (ticker, date, open, high, low, close, volume) VALUES (?, ?, ?, ?, ?, ?, ?)'''
+        data_to_insert = [(ticker, bar.date.strftime('%Y-%m-%d'), bar.open, bar.high, bar.low, bar.close, bar.volume) for bar in bars]
+        self.cursor.executemany(insert_query, data_to_insert)
+        self.conn.commit()
+
+    def load_bars(self, ticker, limit=260):
+        query = f"SELECT date, open, high, low, close FROM market_data WHERE ticker = ? ORDER BY date DESC LIMIT {limit}"
+        df = pd.read_sql_query(query, self.conn, params=(ticker,))
+        if df.empty: return df
+        df = df.sort_values(by='date', ascending=True).reset_index(drop=True)
+        df.set_index('date', inplace=True)
+        return df
 
     def get_capital(self):
         self.cursor.execute("SELECT virtual_capital FROM bot_state WHERE ticker='MASTER_ACCOUNT'")
         return self.cursor.fetchone()[0]
 
-    def update_capital(self, realized_pnl):
-        current = self.get_capital()
-        new_cap = current + realized_pnl
-        self.cursor.execute("UPDATE bot_state SET virtual_capital = ? WHERE ticker='MASTER_ACCOUNT'", (new_cap,))
-        self.conn.commit()
-
     def get_system_status(self, ticker):
         self.cursor.execute("SELECT last_trade_won FROM bot_state WHERE ticker=?", (ticker,))
         row = self.cursor.fetchone()
-        return row[0] if row else 0 # 0 means we use System 1 (20-day), 1 means System 2 (55-day)
+        return row[0] if row else 0 
 
     def log_trade(self, ticker, action, price):
         date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
@@ -49,38 +66,33 @@ class DataManager:
 # 2. THE EXECUTOR (IBBroker)
 # ==========================================
 class IBBroker:
-    def __init__(self, port=7497):
+    def __init__(self, port=4002): # Using 4002 for IB Gateway
         self.ib = IB()
         self.port = port
+        self.client_id = random.randint(1, 9999) 
 
     def connect(self):
-        self.ib.connect('127.0.0.1', self.port, clientId=1, timeout=30)
-        logger.info("🟢 Connected to IBKR.")
+        self.ib.connect('127.0.0.1', self.port, clientId=self.client_id, timeout=30)
+        logger.info(f"🟢 Connected to IBKR using Client ID: {self.client_id}")
 
-    def get_bars(self, ticker, days=260):
+    def fetch_missing_bars(self, ticker, days=260):
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
         bars = self.ib.reqHistoricalData(contract, endDateTime='', durationStr=f'{days} D', barSizeSetting='1 day', whatToShow='TRADES', useRTH=True)
-        df = util.df(bars)
-        if df is not None and not df.empty:
-            df = df[['date', 'open', 'high', 'low', 'close']]
-            df.set_index('date', inplace=True)
-            return df
-        return pd.DataFrame()
+        self.ib.sleep(1) # Pacing fix to prevent disconnects
+        return bars
 
     def place_oco_buy(self, ticker, price, size, stop_price):
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
         
-        # Parent Buy Stop
         buy_order = StopOrder('BUY', size, price)
         buy_order.ocaGroup = "TURTLE_BASKET_" + datetime.datetime.now().strftime('%H%M')
-        buy_order.ocaType = 1 # Cancel all others if this fills
+        buy_order.ocaType = 1 
         
-        # Child Trailing Stop Loss
         stop_order = StopOrder('SELL', size, stop_price)
         stop_order.parentId = buy_order.orderId
-        stop_order.transmit = True # Transmit the whole bracket
+        stop_order.transmit = True 
         
         self.ib.placeOrder(contract, buy_order)
         self.ib.placeOrder(contract, stop_order)
@@ -88,6 +100,10 @@ class IBBroker:
 
     def get_open_positions(self):
         return [p.contract.symbol for p in self.ib.positions() if p.position > 0]
+
+    def disconnect(self):
+        self.ib.disconnect()
+        logger.info("🔴 Disconnected from Interactive Brokers.")
 
 # ==========================================
 # 3. THE BRAINS (TurtleStrategy)
@@ -100,44 +116,37 @@ class TurtleStrategy:
 
     def analyze(self, ticker, df_stock, df_spy):
         if len(df_stock) < 55 or len(df_spy) < 200:
-            return None # Not enough data
+            return None 
 
-        # Calculate SPY Regime
         spy_close = df_spy['close'].iloc[-1]
         spy_sma200 = df_spy['close'].rolling(200).mean().iloc[-1]
         macro_safe = spy_close > spy_sma200
 
-        # Calculate Stock Indicators
         current_close = df_stock['close'].iloc[-1]
-        high_20 = df_stock['high'].rolling(20).max().iloc[-2] # High of previous 20 days
+        high_20 = df_stock['high'].rolling(20).max().iloc[-2] 
         high_55 = df_stock['high'].rolling(55).max().iloc[-2]
         low_10 = df_stock['low'].rolling(10).min().iloc[-2]
         
-        # ATR Calculation
         df_stock['prev_close'] = df_stock['close'].shift(1)
         tr = df_stock[['high', 'prev_close']].max(axis=1) - df_stock[['low', 'prev_close']].min(axis=1)
         atr = tr.rolling(20).mean().iloc[-1]
 
-        # Calculate RS (1-Year Proxy)
         stock_ret = (current_close / df_stock['close'].iloc[-252]) - 1 if len(df_stock) >= 252 else 0
         spy_ret = (spy_close / df_spy['close'].iloc[-252]) - 1 if len(df_spy) >= 252 else 0
         rs = 50 + ((stock_ret - spy_ret) * 100)
         rs_safe = rs >= 70
 
-        # Determine Entry Price based on past wins
         last_won = self.db.get_system_status(ticker)
         entry_price = high_55 if last_won else high_20
         
-        # Sizing: Risk 1% of Capital
         risk_amt = self.capital * 0.01
         size = math.floor(risk_amt / atr) if atr > 0 else 0
 
         is_forced = ticker in self.force_list
 
-        # Signal Generation
         if size > 0:
             if is_forced or (macro_safe and rs_safe):
-                if current_close < entry_price: # We haven't broken out yet
+                if current_close < entry_price: 
                     return {"action": "SET_TRAP", "price": round(entry_price, 2), "stop": round(low_10, 2), "size": size, "rs": round(rs, 1), "forced": is_forced}
         
         return None
@@ -147,11 +156,13 @@ class TurtleStrategy:
 # ==========================================
 def run_daily_workflow():
     db = DataManager()
-    broker = IBBroker(port=7497)
     
-    # Configure your lists here!
+    # Check port 4002 for Gateway. If using TWS, change to 7497.
+    broker = IBBroker(port=4002) 
+    
     force_list = ["PLTR", "MSTR"] 
     universe = ["AAPL", "MSFT", "NVDA", "GOOG", "CVX", "JPM", "WM", "COST"]
+    all_tickers = ["SPY"] + force_list + universe
     
     logger.info("--- WAKING UP TRADING BOT ---")
     broker.connect()
@@ -167,21 +178,26 @@ def run_daily_workflow():
         broker.disconnect()
         return
 
-    logger.info("📥 Fetching SPY Macro Data...")
-    df_spy = broker.get_bars("SPY", days=260)
+    # Data Sync: Read from offline DB, fetch from IBKR if missing
+    for ticker in all_tickers:
+        local_df = db.load_bars(ticker)
+        if len(local_df) < 260:
+            logger.info(f"📥 Updating offline memory for {ticker} from IBKR...")
+            bars = broker.fetch_missing_bars(ticker, days=260)
+            db.save_bars(ticker, bars)
+
+    df_spy = db.load_bars("SPY")
 
     strategy = TurtleStrategy(db, capital, force_list)
     targets = []
 
-    # Scan the market
     for ticker in (force_list + universe):
-        df_stock = broker.get_bars(ticker, days=260)
+        df_stock = db.load_bars(ticker)
         signal = strategy.analyze(ticker, df_stock, df_spy)
         
         if signal and signal['action'] == "SET_TRAP":
             targets.append((ticker, signal))
 
-    # Review the Plan
     print("\n" + "="*50)
     print("📈 PLAN FOR TOMORROW:")
     print("="*50)
@@ -189,21 +205,18 @@ def run_daily_workflow():
     if not targets:
         print("No setups found. The robot will sit safely in cash.")
     else:
-        # Sort by RS
         targets.sort(key=lambda x: x[1]['rs'], reverse=True)
         for t, s in targets:
             force_tag = "[FORCED]" if s['forced'] else ""
             print(f"- {t}: Buy Stop @ ${s['price']} | Size: {s['size']} | RS: {s['rs']} {force_tag}")
         
         print("="*50)
-        # Ask for user preference
         choice = input("\nPress ENTER to place OCO net for all targets, or type a preferred TICKER to only trap one: ").strip().upper()
         
         if choice in [t[0] for t in targets]:
             print(f"User Override: Locking onto {choice} only.")
             targets = [t for t in targets if t[0] == choice]
         
-        # Fire Orders to IBKR
         for t, s in targets:
             broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
             db.log_trade(t, "OCO_TRAP_PLACED", s['price'])
