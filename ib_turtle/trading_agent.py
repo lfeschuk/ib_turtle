@@ -142,18 +142,24 @@ class IBBroker:
             return ['API_ERROR_LOCKOUT']
 
     def cancel_orders(self, target_tickers):
-        self.ib.reqAllOpenOrders()
-        self.ib.sleep(1)
-        trades = self.ib.openTrades()
-        count = 0
-        for t in trades:
-            if hasattr(t, 'contract') and hasattr(t.contract, 'symbol'):
-                if target_tickers == ['ALL'] or t.contract.symbol in target_tickers:
-                    self.ib.cancelOrder(t.order)
-                    logger.info(f"🗑️ Canceled active order for {t.contract.symbol}")
-                    count += 1
-        self.ib.sleep(1)
-        if count > 0: print(f"✅ Successfully sent cancel request for {count} order(s).")
+        if target_tickers == ['ALL']:
+            # THE GLOBAL NUKE: Bypasses Client IDs and wipes the entire server board
+            self.ib.reqGlobalCancel()
+            logger.info("☢️ GLOBAL CANCEL EXECUTED: Commanded IBKR to wipe ALL open orders.")
+            self.ib.sleep(3)
+        else:
+            self.ib.reqAllOpenOrders()
+            self.ib.sleep(1)
+            trades = self.ib.openTrades()
+            count = 0
+            for t in trades:
+                if hasattr(t, 'contract') and hasattr(t.contract, 'symbol'):
+                    if t.contract.symbol in target_tickers:
+                        self.ib.cancelOrder(t.order)
+                        logger.info(f"🗑️ Canceled active order for {t.contract.symbol}")
+                        count += 1
+            self.ib.sleep(1)
+            if count > 0: print(f"✅ Successfully sent cancel request for {count} specific order(s).")
 
     def liquidate_positions(self, target_tickers):
         positions = self.ib.positions()
