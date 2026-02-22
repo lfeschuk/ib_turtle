@@ -124,9 +124,30 @@ class IBBroker:
         return [p.contract.symbol for p in self.ib.positions() if p.position > 0]
 
     def get_pending_orders(self):
-        open_orders = self.ib.reqAllOpenOrders()
-        pending_tickers = list(set([o.contract.symbol for o in open_orders]))
-        return pending_tickers
+        pending_tickers = []
+        try:
+            # Request all open orders from IBKR
+            self.ib.reqAllOpenOrders()
+            # Give the socket a polite 1-second delay to receive and parse the data
+            self.ib.sleep(1) 
+            
+            # Primary Method: Parse the Trade objects safely
+            trades = self.ib.openTrades()
+            for t in trades:
+                # Fallback Check: Ensure the object actually has a contract and symbol before grabbing it
+                if hasattr(t, 'contract') and hasattr(t.contract, 'symbol'):
+                    pending_tickers.append(t.contract.symbol)
+                    
+            return list(set(pending_tickers))
+            
+        except Exception as e:
+            # --- THE FAIL-SAFE FALLBACK ---
+            logger.error(f"🔴 CRITICAL API ERROR: Could not parse open orders. Error: {e}")
+            logger.error("🛑 Engaging Fail-Safe: Bot will assume traps are already set to prevent double-ordering.")
+            
+            # Returning a fake item ensures len(pending_orders) > 0.
+            # This triggers the skip logic in the orchestrator, protecting your capital.
+            return ['API_ERROR_LOCKOUT']
 
     def disconnect(self):
         self.ib.disconnect()
