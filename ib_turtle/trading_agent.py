@@ -89,11 +89,14 @@ class IBBroker:
     def __init__(self, port=4002): 
         self.ib = IB()
         self.port = port
-        self.client_id = random.randint(1, 9999) 
+        # --- THE MASTER KEY UPGRADE ---
+        self.client_id = 0 
 
     def connect(self):
         self.ib.connect('127.0.0.1', self.port, clientId=self.client_id, timeout=30)
-        logger.info(f"🟢 Connected to IBKR using Client ID: {self.client_id}")
+        logger.info(f"🟢 Connected to IBKR using Master Client ID: {self.client_id}")
+        # Command IBKR to hand over control of ALL orders to this script
+        self.ib.reqAutoOpenOrders(True)
 
     def fetch_missing_bars(self, ticker, days=300):
         contract = Stock(ticker, 'SMART', 'USD')
@@ -138,9 +141,7 @@ class IBBroker:
             logger.error("🛑 Engaging Fail-Safe: Bot will assume traps are already set to prevent double-ordering.")
             return ['API_ERROR_LOCKOUT']
 
-    # --- NEW: MANUAL INTERVENTION TOOLS ---
     def cancel_orders(self, target_tickers):
-        """Cancels open orders for specific tickers, or ALL orders."""
         self.ib.reqAllOpenOrders()
         self.ib.sleep(1)
         trades = self.ib.openTrades()
@@ -152,20 +153,16 @@ class IBBroker:
                     logger.info(f"🗑️ Canceled active order for {t.contract.symbol}")
                     count += 1
         self.ib.sleep(1)
-        if count > 0: print(f"✅ Successfully canceled {count} order(s).")
+        if count > 0: print(f"✅ Successfully sent cancel request for {count} order(s).")
 
     def liquidate_positions(self, target_tickers):
-        """Closes open positions at Market price AND cancels their attached Stop Losses."""
         positions = self.ib.positions()
         count = 0
         for p in positions:
             if p.position > 0:
                 ticker = p.contract.symbol
                 if target_tickers == ['ALL'] or ticker in target_tickers:
-                    # 1. Cancel the stop loss first to avoid accidental shorting later!
                     self.cancel_orders([ticker])
-                    
-                    # 2. Fire the Market Sell Order
                     contract = Stock(ticker, 'SMART', 'USD')
                     self.ib.qualifyContracts(contract)
                     sell_order = MarketOrder('SELL', p.position)
@@ -317,9 +314,6 @@ def run_daily_workflow():
     capital = db.get_capital()
     logger.info(f"💰 Available Virtual Capital: ${capital:,.2f}")
     
-    # -----------------------------------------------------
-    # NEW: THE MANUAL INTERVENTION DASHBOARD
-    # -----------------------------------------------------
     open_positions = broker.get_open_positions()
     if open_positions:
         print("\n" + "="*60)
@@ -330,7 +324,9 @@ def run_daily_workflow():
             targets = ['ALL'] if choice == 'ALL' else [x.strip() for x in choice.split(',')]
             broker.liquidate_positions(targets)
             db.log_trade("MANUAL_LIQUIDATE", str(targets), 0)
-            open_positions = broker.get_open_positions() # Refresh reality
+            print("⏳ Waiting for IBKR server to process liquidation...")
+            broker.ib.sleep(3) 
+            open_positions = broker.get_open_positions() 
 
     pending_orders = broker.get_pending_orders()
     if pending_orders and 'API_ERROR_LOCKOUT' not in pending_orders:
@@ -342,7 +338,12 @@ def run_daily_workflow():
             targets = ['ALL'] if choice == 'ALL' else [x.strip() for x in choice.split(',')]
             broker.cancel_orders(targets)
             db.log_trade("MANUAL_CANCEL", str(targets), 0)
-            pending_orders = broker.get_pending_orders() # Refresh reality
+            
+            # --- THE SERVER SYNC DELAY FIX ---
+            print("⏳ Waiting for IBKR server to process cancellations...")
+            broker.ib.sleep(3) 
+            
+            pending_orders = broker.get_pending_orders() 
 
     # -----------------------------------------------------
     # THE SCANNER & PLAN EXECUTION
