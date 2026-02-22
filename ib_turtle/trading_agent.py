@@ -126,28 +126,54 @@ class IBBroker:
     def get_pending_orders(self):
         pending_tickers = []
         try:
-            # Request all open orders from IBKR
             self.ib.reqAllOpenOrders()
-            # Give the socket a polite 1-second delay to receive and parse the data
             self.ib.sleep(1) 
-            
-            # Primary Method: Parse the Trade objects safely
             trades = self.ib.openTrades()
             for t in trades:
-                # Fallback Check: Ensure the object actually has a contract and symbol before grabbing it
                 if hasattr(t, 'contract') and hasattr(t.contract, 'symbol'):
                     pending_tickers.append(t.contract.symbol)
-                    
             return list(set(pending_tickers))
-            
         except Exception as e:
-            # --- THE FAIL-SAFE FALLBACK ---
             logger.error(f"🔴 CRITICAL API ERROR: Could not parse open orders. Error: {e}")
             logger.error("🛑 Engaging Fail-Safe: Bot will assume traps are already set to prevent double-ordering.")
-            
-            # Returning a fake item ensures len(pending_orders) > 0.
-            # This triggers the skip logic in the orchestrator, protecting your capital.
             return ['API_ERROR_LOCKOUT']
+
+    # --- NEW: MANUAL INTERVENTION TOOLS ---
+    def cancel_orders(self, target_tickers):
+        """Cancels open orders for specific tickers, or ALL orders."""
+        self.ib.reqAllOpenOrders()
+        self.ib.sleep(1)
+        trades = self.ib.openTrades()
+        count = 0
+        for t in trades:
+            if hasattr(t, 'contract') and hasattr(t.contract, 'symbol'):
+                if target_tickers == ['ALL'] or t.contract.symbol in target_tickers:
+                    self.ib.cancelOrder(t.order)
+                    logger.info(f"🗑️ Canceled active order for {t.contract.symbol}")
+                    count += 1
+        self.ib.sleep(1)
+        if count > 0: print(f"✅ Successfully canceled {count} order(s).")
+
+    def liquidate_positions(self, target_tickers):
+        """Closes open positions at Market price AND cancels their attached Stop Losses."""
+        positions = self.ib.positions()
+        count = 0
+        for p in positions:
+            if p.position > 0:
+                ticker = p.contract.symbol
+                if target_tickers == ['ALL'] or ticker in target_tickers:
+                    # 1. Cancel the stop loss first to avoid accidental shorting later!
+                    self.cancel_orders([ticker])
+                    
+                    # 2. Fire the Market Sell Order
+                    contract = Stock(ticker, 'SMART', 'USD')
+                    self.ib.qualifyContracts(contract)
+                    sell_order = MarketOrder('SELL', p.position)
+                    self.ib.placeOrder(contract, sell_order)
+                    logger.info(f"💥 Liquidating {p.position} shares of {ticker} at MARKET price.")
+                    count += 1
+        self.ib.sleep(1)
+        if count > 0: print(f"✅ Successfully fired {count} Market Sell order(s).")
 
     def disconnect(self):
         self.ib.disconnect()
@@ -291,14 +317,36 @@ def run_daily_workflow():
     capital = db.get_capital()
     logger.info(f"💰 Available Virtual Capital: ${capital:,.2f}")
     
+    # -----------------------------------------------------
+    # NEW: THE MANUAL INTERVENTION DASHBOARD
+    # -----------------------------------------------------
     open_positions = broker.get_open_positions()
-    logger.info(f"📂 Current Open Positions in IBKR: {open_positions}")
+    if open_positions:
+        print("\n" + "="*60)
+        print(f"📂 ACTIVE POSITIONS: {open_positions}")
+        print("="*60)
+        choice = input("Type TICKERS to LIQUIDATE (e.g. MSFT,AAPL), 'ALL', or press ENTER to hold: ").strip().upper()
+        if choice:
+            targets = ['ALL'] if choice == 'ALL' else [x.strip() for x in choice.split(',')]
+            broker.liquidate_positions(targets)
+            db.log_trade("MANUAL_LIQUIDATE", str(targets), 0)
+            open_positions = broker.get_open_positions() # Refresh reality
 
     pending_orders = broker.get_pending_orders()
-    
-    if len(pending_orders) > 0:
-        logger.info(f"⏳ Found Pending Breakout Traps for: {pending_orders}")
+    if pending_orders and 'API_ERROR_LOCKOUT' not in pending_orders:
+        print("\n" + "="*60)
+        print(f"⏳ PENDING ORDERS/TRAPS: {pending_orders}")
+        print("="*60)
+        choice = input("Type TICKERS to CANCEL orders for (e.g. GOOG,NVDA), 'ALL', or press ENTER to keep them: ").strip().upper()
+        if choice:
+            targets = ['ALL'] if choice == 'ALL' else [x.strip() for x in choice.split(',')]
+            broker.cancel_orders(targets)
+            db.log_trade("MANUAL_CANCEL", str(targets), 0)
+            pending_orders = broker.get_pending_orders() # Refresh reality
 
+    # -----------------------------------------------------
+    # THE SCANNER & PLAN EXECUTION
+    # -----------------------------------------------------
     if len(open_positions) == 0 and len(pending_orders) == 0:
         for ticker in all_tickers:
             local_df = db.load_bars(ticker)
@@ -335,20 +383,14 @@ def run_daily_workflow():
             for t, s in targets:
                 dist_pct = ((s['price'] / s['current']) - 1) * 100
                 force_tag = "[FORCED]" if s['forced'] else ""
-                
-                # S1/S2 is injected here, along with ADX and MA distances
                 print(f"🎯 {t: <5} | {s['sys']} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {s['rs']:<4.1f} | >50d: {s['days_50']:<3} (+{s['dist_50']:>4.1f}%) | >200d: {s['days_200']:<3} (+{s['dist_200']:>4.1f}%) {force_tag}")
             
             print("="*125)
             
-            # --- THE COMMA-SEPARATED MULTI-TICKER PROMPT ---
             choice = input("\nPress ENTER to place OCO DAY Orders for all targets, or type TICKERS separated by commas (e.g. NVDA,AAPL) to trap specific ones: ").strip().upper()
             
             if choice:
-                # Break the string down into a list and clean up spaces
                 chosen_list = [x.strip() for x in choice.split(',')]
-                
-                # Filter the targets to only include the ones the user actually typed
                 filtered_targets = [t for t in targets if t[0] in chosen_list]
                 
                 if filtered_targets:
@@ -356,7 +398,7 @@ def run_daily_workflow():
                     targets = filtered_targets
                 else:
                     print("\n⚠️ No matching tickers found from your input. Aborting order placement for safety.")
-                    targets = [] # Kill the list so it skips the execution block
+                    targets = [] 
             
             for t, s in targets:
                 broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
