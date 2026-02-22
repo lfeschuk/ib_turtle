@@ -78,7 +78,7 @@ class DataManager:
         return row[0] if row else 0 
 
     def log_trade(self, ticker, action, price):
-        date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
+        date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.cursor.execute("INSERT INTO trade_log (date, ticker, action, price) VALUES (?, ?, ?, ?)", (date, ticker, action, price))
         self.conn.commit()
 
@@ -123,6 +123,11 @@ class IBBroker:
     def get_open_positions(self):
         return [p.contract.symbol for p in self.ib.positions() if p.position > 0]
 
+    def get_pending_orders(self):
+        open_orders = self.ib.reqAllOpenOrders()
+        pending_tickers = list(set([o.contract.symbol for o in open_orders]))
+        return pending_tickers
+
     def disconnect(self):
         self.ib.disconnect()
         logger.info("🔴 Disconnected from Interactive Brokers.")
@@ -137,7 +142,6 @@ class TurtleStrategy:
         self.force_list = force_list
 
     def _calc_days_above(self, price_series, sma_series):
-        """Counts how many consecutive days the price has been strictly above the SMA."""
         above = price_series > sma_series
         count = 0
         for val in reversed(above.values):
@@ -146,7 +150,6 @@ class TurtleStrategy:
         return count
 
     def _calc_adx(self, df, period=14):
-        """Calculates 14-day ADX. Returns the most recent value."""
         df = df.copy()
         df['up_move'] = df['high'].diff()
         df['down_move'] = df['low'].shift(1) - df['low']
@@ -200,7 +203,6 @@ class TurtleStrategy:
         high_55 = df_stock['high'].rolling(55).max().iloc[-2]
         low_10 = df_stock['low'].rolling(10).min().iloc[-2]
         
-        # New Moving Average & ADX Math
         sma50 = df_stock['close'].rolling(50).mean()
         sma200 = df_stock['close'].rolling(200).mean()
         curr_sma50 = sma50.iloc[-1]
@@ -222,6 +224,7 @@ class TurtleStrategy:
         rs_safe = rs >= 70
 
         last_won = self.db.get_system_status(ticker)
+        system_type = "S2 (55d)" if last_won else "S1 (20d)"
         entry_price = high_55 if last_won else high_20
         
         risk_amt = self.capital * 0.01
@@ -233,6 +236,7 @@ class TurtleStrategy:
                 if current_close < entry_price: 
                     return {
                         "action": "SET_TRAP", 
+                        "sys": system_type,
                         "current": round(current_close, 2), 
                         "price": round(entry_price, 2), 
                         "stop": round(low_10, 2), 
@@ -269,64 +273,99 @@ def run_daily_workflow():
     open_positions = broker.get_open_positions()
     logger.info(f"📂 Current Open Positions in IBKR: {open_positions}")
 
-    if len(open_positions) > 0:
-        logger.info("We are already in a trade. Skipping new entries to manage current position.")
-        broker.disconnect()
-        return
-
-    for ticker in all_tickers:
-        local_df = db.load_bars(ticker)
-        # Increased fetch to 300 to safely cover 252 RS + 200 SMA lookbacks
-        if len(local_df) < 300:
-            logger.info(f"📥 Updating offline memory for {ticker} from IBKR...")
-            bars = broker.fetch_missing_bars(ticker, days=300)
-            db.save_bars(ticker, bars)
-
-    df_spy = db.load_bars("SPY")
-    strategy = TurtleStrategy(db, capital, force_list)
+    pending_orders = broker.get_pending_orders()
     
-    print("\n" + "="*80)
-    print("🇺🇸 SPY MACRO STATUS:")
-    print("-" * 80)
-    print(strategy.get_spy_status(df_spy))
-    print("="*80)
+    if len(pending_orders) > 0:
+        logger.info(f"⏳ Found Pending Breakout Traps for: {pending_orders}")
 
-    targets = []
-    for ticker in (force_list + universe):
-        df_stock = db.load_bars(ticker)
-        signal = strategy.analyze(ticker, df_stock, df_spy)
+    if len(open_positions) == 0 and len(pending_orders) == 0:
+        for ticker in all_tickers:
+            local_df = db.load_bars(ticker)
+            if len(local_df) < 300:
+                logger.info(f"📥 Updating offline memory for {ticker} from IBKR...")
+                bars = broker.fetch_missing_bars(ticker, days=300)
+                db.save_bars(ticker, bars)
+
+        df_spy = db.load_bars("SPY")
+        strategy = TurtleStrategy(db, capital, force_list)
         
-        if signal and signal['action'] == "SET_TRAP":
-            targets.append((ticker, signal))
+        print("\n" + "="*80)
+        print("🇺🇸 SPY MACRO STATUS:")
+        print("-" * 80)
+        print(strategy.get_spy_status(df_spy))
+        print("="*80)
 
-    print("\n" + "="*110)
-    print("📈 PLAN FOR NEXT TRADING SESSION:")
-    print("="*110)
-    
-    if not targets:
-        print("No valid setups found today. The robot will sit safely in cash.")
-    else:
-        targets.sort(key=lambda x: x[1]['rs'], reverse=True)
-        for t, s in targets:
-            dist_pct = ((s['price'] / s['current']) - 1) * 100
-            force_tag = "[FORCED]" if s['forced'] else ""
+        targets = []
+        for ticker in (force_list + universe):
+            df_stock = db.load_bars(ticker)
+            signal = strategy.analyze(ticker, df_stock, df_spy)
             
-            # Formatted exactly like an institutional daily brief
-            print(f"🎯 {t: <5} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {s['rs']:<4.1f} | >50d: {s['days_50']} days (+{s['dist_50']:.1f}%) | >200d: {s['days_200']} days (+{s['dist_200']:.1f}%) {force_tag}")
-        
-        print("="*110)
-        choice = input("\nPress ENTER to place OCO DAY Orders for all targets, or type a TICKER to trap only one: ").strip().upper()
-        
-        if choice in [t[0] for t in targets]:
-            print(f"User Override: Locking onto {choice} only.")
-            targets = [t for t in targets if t[0] == choice]
-        
-        for t, s in targets:
-            broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
-            db.log_trade(t, "DAY_TRAP_PLACED", s['price'])
+            if signal and signal['action'] == "SET_TRAP":
+                targets.append((ticker, signal))
 
-    broker.disconnect()
-    logger.info("💤 Workflow Complete. Bot returning to sleep.")
+        print("\n" + "="*125)
+        print("📈 PLAN FOR NEXT TRADING SESSION:")
+        print("="*125)
+        
+        if not targets:
+            print("No valid setups found today. The robot will sit safely in cash.")
+        else:
+            targets.sort(key=lambda x: x[1]['rs'], reverse=True)
+            for t, s in targets:
+                dist_pct = ((s['price'] / s['current']) - 1) * 100
+                force_tag = "[FORCED]" if s['forced'] else ""
+                
+                # S1/S2 is injected here, along with ADX and MA distances
+                print(f"🎯 {t: <5} | {s['sys']} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {s['rs']:<4.1f} | >50d: {s['days_50']:<3} (+{s['dist_50']:>4.1f}%) | >200d: {s['days_200']:<3} (+{s['dist_200']:>4.1f}%) {force_tag}")
+            
+            print("="*125)
+            
+            # --- THE COMMA-SEPARATED MULTI-TICKER PROMPT ---
+            choice = input("\nPress ENTER to place OCO DAY Orders for all targets, or type TICKERS separated by commas (e.g. NVDA,AAPL) to trap specific ones: ").strip().upper()
+            
+            if choice:
+                # Break the string down into a list and clean up spaces
+                chosen_list = [x.strip() for x in choice.split(',')]
+                
+                # Filter the targets to only include the ones the user actually typed
+                filtered_targets = [t for t in targets if t[0] in chosen_list]
+                
+                if filtered_targets:
+                    print(f"\n✅ User Override: Locking onto {', '.join([t[0] for t in filtered_targets])} only.")
+                    targets = filtered_targets
+                else:
+                    print("\n⚠️ No matching tickers found from your input. Aborting order placement for safety.")
+                    targets = [] # Kill the list so it skips the execution block
+            
+            for t, s in targets:
+                broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
+                db.log_trade(t, "DAY_TRAP_PLACED", s['price'])
+
+    # ==========================================
+    # THE LIVE MONITORING LOOP
+    # ==========================================
+    def on_fill(trade, fill):
+        ticker = trade.contract.symbol
+        side = fill.execution.side  
+        price = fill.execution.price
+        
+        print("\n" + "🚨"*20)
+        logger.info(f"LIVE EXECUTION ALERT: Order Filled!")
+        logger.info(f"Action: {side} | Ticker: {ticker} | Price: ${price:.2f}")
+        print("🚨"*20 + "\n")
+        
+        db.log_trade(ticker, f"LIVE_FILL_{side}", price)
+
+    broker.ib.execDetailsEvent += on_fill
+    
+    print("\n👁️  Bot is now in LIVE MONITORING MODE. Waiting for fills...")
+    print("Press Ctrl+C to stop the bot at any time.")
+    
+    try:
+        broker.ib.run()
+    except KeyboardInterrupt:
+        print("\nManually stopped by user.")
+        broker.disconnect()
 
 if __name__ == "__main__":
     run_daily_workflow()
