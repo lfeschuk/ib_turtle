@@ -89,13 +89,11 @@ class IBBroker:
     def __init__(self, port=4002): 
         self.ib = IB()
         self.port = port
-        # --- THE MASTER KEY UPGRADE ---
         self.client_id = 0 
 
     def connect(self):
         self.ib.connect('127.0.0.1', self.port, clientId=self.client_id, timeout=30)
         logger.info(f"🟢 Connected to IBKR using Master Client ID: {self.client_id}")
-        # Command IBKR to hand over control of ALL orders to this script
         self.ib.reqAutoOpenOrders(True)
 
     def fetch_missing_bars(self, ticker, days=300):
@@ -143,7 +141,6 @@ class IBBroker:
 
     def cancel_orders(self, target_tickers):
         if target_tickers == ['ALL']:
-            # THE GLOBAL NUKE: Bypasses Client IDs and wipes the entire server board
             self.ib.reqGlobalCancel()
             logger.info("☢️ GLOBAL CANCEL EXECUTED: Commanded IBKR to wipe ALL open orders.")
             self.ib.sleep(3)
@@ -273,12 +270,20 @@ class TurtleStrategy:
         rs = 50 + ((stock_ret - spy_ret) * 100)
         rs_safe = rs >= 70
 
-        last_won = self.db.get_system_status(ticker)
-        system_type = "S2 (55d)" if last_won else "S1 (20d)"
-        entry_price = high_55 if last_won else high_20
+        last_trade_won = self.db.get_system_status(ticker)
+        system_type = "S2 (55d)" if last_trade_won else "S1 (20d)"
+        entry_price = high_55 if last_trade_won else high_20
         
-        risk_amt = self.capital * 0.01
-        size = math.floor(risk_amt / atr) if atr > 0 else 0
+        # --- NEW SIZING ARITHMETIC ---
+        multiplier = 2.0 if last_trade_won else 0.5
+        base_risk_amt = self.capital * 0.01
+        adj_risk_amt = base_risk_amt * multiplier
+        
+        size = math.floor(adj_risk_amt / atr) if atr > 0 else 0
+        
+        # Build the exact math string to print to the console
+        math_str = f"(${self.capital:,.0f} Acct * 1% Risk) * {multiplier}x Multiplier = ${adj_risk_amt:,.2f} Risk ÷ ${atr:.2f} ATR = {size} Shares"
+
         is_forced = ticker in self.force_list
 
         if size > 0:
@@ -291,6 +296,7 @@ class TurtleStrategy:
                         "price": round(entry_price, 2), 
                         "stop": round(low_10, 2), 
                         "size": size, 
+                        "math_str": math_str, # Injected math logic
                         "rs": round(rs, 1), 
                         "adx": round(adx_val, 1),
                         "dist_50": round(dist_50, 1),
@@ -344,11 +350,8 @@ def run_daily_workflow():
             targets = ['ALL'] if choice == 'ALL' else [x.strip() for x in choice.split(',')]
             broker.cancel_orders(targets)
             db.log_trade("MANUAL_CANCEL", str(targets), 0)
-            
-            # --- THE SERVER SYNC DELAY FIX ---
             print("⏳ Waiting for IBKR server to process cancellations...")
             broker.ib.sleep(3) 
-            
             pending_orders = broker.get_pending_orders() 
 
     # -----------------------------------------------------
@@ -391,6 +394,8 @@ def run_daily_workflow():
                 dist_pct = ((s['price'] / s['current']) - 1) * 100
                 force_tag = "[FORCED]" if s['forced'] else ""
                 print(f"🎯 {t: <5} | {s['sys']} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {s['rs']:<4.1f} | >50d: {s['days_50']:<3} (+{s['dist_50']:>4.1f}%) | >200d: {s['days_200']:<3} (+{s['dist_200']:>4.1f}%) {force_tag}")
+                # --- PRINTS THE MATH EXPLANATION DIRECLTY UNDER THE TICKER ---
+                print(f"   ↳ 🧮 Sizing Math: {s['math_str']}")
             
             print("="*125)
             
