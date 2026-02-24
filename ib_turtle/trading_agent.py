@@ -238,7 +238,10 @@ class TurtleStrategy:
                 f"SPY is > 50d for [{days_above_50}] days | > 200d for [{days_above_200}] days.")
 
     def analyze(self, ticker, df_stock, df_spy):
-        if len(df_stock) < 200 or len(df_spy) < 200:
+        # --- THE IPO / SPINOFF BYPASS UPDATE ---
+        # SPY must still have 200 days to verify the macro market.
+        # But the stock now only requires 55 days (minimum needed for System 2).
+        if len(df_stock) < 55 or len(df_spy) < 200:
             return None 
 
         spy_close = df_spy['close'].iloc[-1]
@@ -250,38 +253,46 @@ class TurtleStrategy:
         high_55 = df_stock['high'].rolling(55).max().iloc[-2]
         low_10 = df_stock['low'].rolling(10).min().iloc[-2]
         
+        # 50-day calculation is guaranteed safe since we require 55 days
         sma50 = df_stock['close'].rolling(50).mean()
-        sma200 = df_stock['close'].rolling(200).mean()
         curr_sma50 = sma50.iloc[-1]
-        curr_sma200 = sma200.iloc[-1]
-        
         dist_50 = ((current_close / curr_sma50) - 1) * 100 if curr_sma50 > 0 else 0
-        dist_200 = ((current_close / curr_sma200) - 1) * 100 if curr_sma200 > 0 else 0
         days_50 = self._calc_days_above(df_stock['close'], sma50)
-        days_200 = self._calc_days_above(df_stock['close'], sma200)
+
+        # 200-day calculation (Safely Bypassed if < 200 days)
+        if len(df_stock) >= 200:
+            sma200 = df_stock['close'].rolling(200).mean()
+            curr_sma200 = sma200.iloc[-1]
+            dist_200 = ((current_close / curr_sma200) - 1) * 100 if curr_sma200 > 0 else 0
+            days_200 = self._calc_days_above(df_stock['close'], sma200)
+        else:
+            dist_200 = "N/A"
+            days_200 = "N/A"
+
+        # RS Calculation (Safely Bypassed if < 252 days)
+        if len(df_stock) >= 252:
+            stock_ret = (current_close / df_stock['close'].iloc[-252]) - 1 
+            spy_ret = (spy_close / df_spy['close'].iloc[-252]) - 1 
+            rs = round(50 + ((stock_ret - spy_ret) * 100), 1)
+            rs_safe = rs >= 70
+        else:
+            rs = "N/A"
+            rs_safe = True # Automatically bypasses the RS barrier for new stocks
+            
         adx_val = self._calc_adx(df_stock, 14)
         
         df_stock['prev_close'] = df_stock['close'].shift(1)
         tr = df_stock[['high', 'prev_close']].max(axis=1) - df_stock[['low', 'prev_close']].min(axis=1)
         atr = tr.rolling(20).mean().iloc[-1]
 
-        stock_ret = (current_close / df_stock['close'].iloc[-252]) - 1 if len(df_stock) >= 252 else 0
-        spy_ret = (spy_close / df_spy['close'].iloc[-252]) - 1 if len(df_spy) >= 252 else 0
-        rs = 50 + ((stock_ret - spy_ret) * 100)
-        rs_safe = rs >= 70
-
         last_trade_won = self.db.get_system_status(ticker)
         system_type = "S2 (55d)" if last_trade_won else "S1 (20d)"
         entry_price = high_55 if last_trade_won else high_20
         
-        # --- NEW SIZING ARITHMETIC ---
         multiplier = 2.0 if last_trade_won else 0.5
         base_risk_amt = self.capital * 0.01
         adj_risk_amt = base_risk_amt * multiplier
-        
         size = math.floor(adj_risk_amt / atr) if atr > 0 else 0
-        
-        # Build the exact math string to print to the console
         math_str = f"(${self.capital:,.0f} Acct * 1% Risk) * {multiplier}x Multiplier = ${adj_risk_amt:,.2f} Risk ÷ ${atr:.2f} ATR = {size} Shares"
 
         is_forced = ticker in self.force_list
@@ -296,11 +307,11 @@ class TurtleStrategy:
                         "price": round(entry_price, 2), 
                         "stop": round(low_10, 2), 
                         "size": size, 
-                        "math_str": math_str, # Injected math logic
-                        "rs": round(rs, 1), 
+                        "math_str": math_str,
+                        "rs": rs, 
                         "adx": round(adx_val, 1),
                         "dist_50": round(dist_50, 1),
-                        "dist_200": round(dist_200, 1),
+                        "dist_200": dist_200 if dist_200 == "N/A" else round(dist_200, 1),
                         "days_50": days_50,
                         "days_200": days_200,
                         "forced": is_forced
@@ -316,7 +327,8 @@ def run_daily_workflow():
     broker = IBBroker(port=4002) 
     
     force_list = ["PLTR", "MSTR"] 
-    universe = ["AAPL", "MSFT", "NVDA", "GOOG", "CVX", "JPM", "WM", "COST"]
+    # ADDED SNDK TO THE UNIVERSE
+    universe = ["AAPL", "MSFT", "NVDA", "GOOG", "CVX", "JPM", "WM", "COST", "SNDK"]
     all_tickers = ["SPY"] + force_list + universe
     
     print(f"\n{get_us_market_status()}")
@@ -389,12 +401,21 @@ def run_daily_workflow():
         if not targets:
             print("No valid setups found today. The robot will sit safely in cash.")
         else:
-            targets.sort(key=lambda x: x[1]['rs'], reverse=True)
+            # Sort securely, treating "N/A" RS as high priority for new breakouts
+            def get_rs_sort(x):
+                return float(x[1]['rs']) if x[1]['rs'] != "N/A" else 100.0
+                
+            targets.sort(key=get_rs_sort, reverse=True)
             for t, s in targets:
                 dist_pct = ((s['price'] / s['current']) - 1) * 100
                 force_tag = "[FORCED]" if s['forced'] else ""
-                print(f"🎯 {t: <5} | {s['sys']} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {s['rs']:<4.1f} | >50d: {s['days_50']:<3} (+{s['dist_50']:>4.1f}%) | >200d: {s['days_200']:<3} (+{s['dist_200']:>4.1f}%) {force_tag}")
-                # --- PRINTS THE MATH EXPLANATION DIRECLTY UNDER THE TICKER ---
+                
+                # Format strings conditionally to handle N/A elegantly
+                rs_str = str(s['rs'])
+                d200_str = f"+{s['dist_200']}%" if s['dist_200'] != "N/A" else "N/A"
+                days200_str = str(s['days_200'])
+                
+                print(f"🎯 {t: <5} | {s['sys']} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {rs_str:<4} | >50d: {s['days_50']:<3} (+{s['dist_50']:>4.1f}%) | >200d: {days200_str:<3} ({d200_str}) {force_tag}")
                 print(f"   ↳ 🧮 Sizing Math: {s['math_str']}")
             
             print("="*125)
