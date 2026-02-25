@@ -48,7 +48,6 @@ class DataManager:
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS trade_log (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, action TEXT, price REAL)''')
         self.conn.commit()
 
-        # --- DB UPGRADES: ADDING PYRAMIDING & ACTIVE SYSTEM MEMORY ---
         try:
             self.cursor.execute("ALTER TABLE bot_state ADD COLUMN last_buy_price REAL DEFAULT 0.0")
             self.conn.commit()
@@ -56,7 +55,6 @@ class DataManager:
         try:
             self.cursor.execute("ALTER TABLE bot_state ADD COLUMN active_system INTEGER DEFAULT 1")
             self.conn.commit()
-            logger.info("⚙️ Database upgraded: Added active_system tracking.")
         except sqlite3.OperationalError: pass 
 
         self.cursor.execute("SELECT virtual_capital FROM bot_state WHERE ticker='MASTER_ACCOUNT'")
@@ -132,7 +130,6 @@ class IBBroker:
         self.ib.placeOrder(contract, stop_order)
         logger.info(f"🕸️ Placed OCO Trap for {ticker} at ${price:.2f} (DAY order)")
 
-    # --- NEW: PARTIAL LIQUIDATION FOR TRANSITIONS ---
     def liquidate_partial(self, ticker, size):
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
@@ -140,7 +137,6 @@ class IBBroker:
         self.ib.placeOrder(contract, sell_order)
         logger.info(f"💸 Profit Taker: Sold {size} shares of {ticker} at Market.")
 
-    # --- NEW: STANDALONE PROTECTIVE STOP RE-ALIGNMENT ---
     def adjust_stop_loss(self, ticker, stop_price, size):
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
@@ -178,7 +174,6 @@ class IBBroker:
                 if hasattr(t, 'contract') and hasattr(t.contract, 'symbol'):
                     if t.contract.symbol in target_tickers:
                         self.ib.cancelOrder(t.order)
-                        logger.info(f"🗑️ Canceled active order for {t.contract.symbol}")
                         count += 1
             self.ib.sleep(1)
 
@@ -194,7 +189,6 @@ class IBBroker:
                     self.ib.qualifyContracts(contract)
                     sell_order = MarketOrder('SELL', p.position)
                     self.ib.placeOrder(contract, sell_order)
-                    logger.info(f"💥 Liquidating {p.position} shares of {ticker} at MARKET price.")
                     count += 1
         self.ib.sleep(1)
 
@@ -223,44 +217,29 @@ class TurtleStrategy:
         df = df.copy()
         df['up_move'] = df['high'].diff()
         df['down_move'] = df['low'].shift(1) - df['low']
-        
         df['+dm'] = np.where((df['up_move'] > df['down_move']) & (df['up_move'] > 0), df['up_move'], 0)
         df['-dm'] = np.where((df['down_move'] > df['up_move']) & (df['down_move'] > 0), df['down_move'], 0)
-        
         tr1 = df['high'] - df['low']
         tr2 = abs(df['high'] - df['close'].shift(1))
         tr3 = abs(df['low'] - df['close'].shift(1))
         df['tr'] = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-        
         atr = df['tr'].ewm(alpha=1/period, adjust=False).mean()
         plus_di = 100 * (df['+dm'].ewm(alpha=1/period, adjust=False).mean() / atr)
         minus_di = 100 * (df['-dm'].ewm(alpha=1/period, adjust=False).mean() / atr)
-        
         dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di)
-        adx = dx.ewm(alpha=1/period, adjust=False).mean()
-        return adx.iloc[-1]
+        return dx.ewm(alpha=1/period, adjust=False).mean().iloc[-1]
 
     def get_spy_status(self, df_spy):
         if len(df_spy) < 200: return "Not enough data for SPY Macro."
-        
         close = df_spy['close'].iloc[-1]
-        sma50 = df_spy['close'].rolling(50).mean()
-        sma200 = df_spy['close'].rolling(200).mean()
-        
-        curr_sma50 = sma50.iloc[-1]
-        curr_sma200 = sma200.iloc[-1]
-        
-        days_above_50 = self._calc_days_above(df_spy['close'], sma50)
-        days_above_200 = self._calc_days_above(df_spy['close'], sma200)
-        
-        macro_safe = close > curr_sma50 and curr_sma50 > curr_sma200
+        sma50 = df_spy['close'].rolling(50).mean().iloc[-1]
+        sma200 = df_spy['close'].rolling(200).mean().iloc[-1]
+        days_50 = self._calc_days_above(df_spy['close'], df_spy['close'].rolling(50).mean())
+        days_200 = self._calc_days_above(df_spy['close'], df_spy['close'].rolling(200).mean())
+        macro_safe = close > sma50 and sma50 > sma200
         status_icon = "🟢 BULL REGIME" if macro_safe else "🔴 BEAR/CHOP REGIME (Cash Only)"
-        
-        return (f"{status_icon}\n"
-                f"Current: ${close:.2f} | 50d SMA: ${curr_sma50:.2f} | 200d SMA: ${curr_sma200:.2f}\n"
-                f"SPY is > 50d for [{days_above_50}] days | > 200d for [{days_above_200}] days.")
+        return f"{status_icon}\nCurrent: ${close:.2f} | 50d SMA: ${sma50:.2f} | 200d SMA: ${sma200:.2f}\nSPY is > 50d for [{days_50}] days | > 200d for [{days_200}] days."
 
-    # --- THE UPGRADED TRADE MANAGER (S1 -> S2 TRANSITION) ---
     def analyze_open_position(self, ticker, df_stock, avg_cost, current_shares):
         df_stock = df_stock.copy()
         current_close = df_stock['close'].iloc[-1]
@@ -282,47 +261,26 @@ class TurtleStrategy:
 
         stop_price = low_20 if active_sys == 2 else low_10
 
-        # --- 1. THE SYSTEM TRANSITION CHECK ---
         if active_sys == 1 and current_close >= high_55:
-            # Calculate how many shares constitute exactly 1 Unit
             base_unit_size = current_shares // units_held if units_held > 0 else current_shares
-            # We sell everything EXCEPT 1 base unit
             sell_size = current_shares - base_unit_size
-            
             return {
-                "action": "TRANSITION",
-                "sell_size": sell_size,
-                "keep_size": base_unit_size,
-                "new_stop": round(low_20, 2),
-                "current_stop": round(stop_price, 2),
-                "trigger_price": round(high_55, 2)
+                "action": "TRANSITION", "sell_size": sell_size, "keep_size": base_unit_size,
+                "new_stop": round(low_20, 2), "current_stop": round(stop_price, 2), "trigger_price": round(high_55, 2)
             }
 
-        # --- 2. STANDARD PYRAMIDING CHECK ---
         if units_held < 4:
             pyramid_price = last_buy + (0.5 * atr)
             multiplier = 2.0 if last_won else 0.5
-            base_risk_amt = self.capital * 0.01
-            adj_risk_amt = base_risk_amt * multiplier
+            adj_risk_amt = (self.capital * 0.01) * multiplier
             size = math.floor(adj_risk_amt / atr) if atr > 0 else 0
-
             return {
-                "action": "PYRAMID",
-                "sys": f"S{active_sys}",
-                "units_held": units_held,
-                "last_buy": round(last_buy, 2),
-                "atr": round(atr, 2),
-                "pyramid_price": round(pyramid_price, 2),
-                "stop_price": round(stop_price, 2),
-                "size": size
+                "action": "PYRAMID", "sys": f"S{active_sys}", "units_held": units_held,
+                "last_buy": round(last_buy, 2), "atr": round(atr, 2), "pyramid_price": round(pyramid_price, 2),
+                "stop_price": round(stop_price, 2), "size": size
             }
         else:
-            return {
-                "action": "MAX_UNITS",
-                "sys": f"S{active_sys}",
-                "units_held": units_held,
-                "stop_price": round(stop_price, 2)
-            }
+            return {"action": "MAX_UNITS", "sys": f"S{active_sys}", "units_held": units_held, "stop_price": round(stop_price, 2)}
 
     def analyze(self, ticker, df_stock, df_spy):
         if len(df_stock) < 55 or len(df_spy) < 200:
@@ -371,8 +329,7 @@ class TurtleStrategy:
         entry_price = high_55 if last_trade_won else high_20
         
         multiplier = 2.0 if last_trade_won else 0.5
-        base_risk_amt = self.capital * 0.01
-        adj_risk_amt = base_risk_amt * multiplier
+        adj_risk_amt = (self.capital * 0.01) * multiplier
         size = math.floor(adj_risk_amt / atr) if atr > 0 else 0
         math_str = f"(${self.capital:,.0f} Acct * 1% Risk) * {multiplier}x Multiplier = ${adj_risk_amt:,.2f} Risk ÷ ${atr:.2f} ATR = {size} Shares"
 
@@ -383,20 +340,10 @@ class TurtleStrategy:
         if current_close >= entry_price: return {"action": "SKIP", "reason": f"Already Broken Out. Current (${current_close:.2f}) is above the target trap level (${entry_price:.2f}). Waiting for pullback."}
 
         return {
-            "action": "SET_TRAP", 
-            "sys": system_type,
-            "current": round(current_close, 2), 
-            "price": round(entry_price, 2), 
-            "stop": round(low_10, 2), 
-            "size": size, 
-            "math_str": math_str,
-            "rs": rs, 
-            "adx": round(adx_val, 1),
-            "dist_50": round(dist_50, 1),
-            "dist_200": dist_200 if dist_200 == "N/A" else round(dist_200, 1),
-            "days_50": days_50,
-            "days_200": days_200,
-            "forced": is_forced
+            "action": "SET_TRAP", "sys": system_type, "current": round(current_close, 2), "price": round(entry_price, 2), 
+            "stop": round(low_10, 2), "size": size, "math_str": math_str, "rs": rs, "adx": round(adx_val, 1),
+            "dist_50": round(dist_50, 1), "dist_200": dist_200 if dist_200 == "N/A" else round(dist_200, 1),
+            "days_50": days_50, "days_200": days_200, "forced": is_forced
         }
 
 # ==========================================
@@ -408,7 +355,6 @@ def run_daily_workflow():
     
     force_list = ["PLTR", "MSTR"] 
     universe = ["AAPL", "MSFT", "NVDA", "GOOG", "CVX", "JPM", "WM", "COST", "SNDK"]
-    all_tickers = ["SPY"] + force_list + universe
     
     print(f"\n{get_us_market_status()}")
     logger.info("--- WAKING UP TRADING BOT ---")
@@ -419,32 +365,46 @@ def run_daily_workflow():
     
     positions_details = broker.get_positions_details()
     open_positions = list(positions_details.keys())
-    
+    pending_orders = broker.get_pending_orders()
+
+    # --- THE FIX: DYNAMIC TICKER ARRAY TO PREVENT STALE DATA ON ORPHAN POSITIONS ---
+    active_tracking = list(set(["SPY"] + force_list + universe + open_positions + pending_orders))
+    if 'API_ERROR_LOCKOUT' in active_tracking: active_tracking.remove('API_ERROR_LOCKOUT')
+
+    print("\n" + "="*60)
+    print("📥 SYNCHRONIZING MARKET DATA...")
+    for ticker in active_tracking:
+        local_df = db.load_bars(ticker)
+        # Fetch 300 days if new, otherwise grab the last 5 days to ensure we have the exact close from yesterday
+        if len(local_df) < 300:
+            bars = broker.fetch_missing_bars(ticker, days=300)
+        else:
+            bars = broker.fetch_missing_bars(ticker, days=5) 
+        db.save_bars(ticker, bars)
+    print("✅ Data Sync Complete.")
+    print("="*60)
+
+    # --- MANUAL INTERVENTION MENU ---
     if open_positions:
-        print("\n" + "="*60)
-        print(f"📂 ACTIVE POSITIONS: {open_positions}")
-        print("="*60)
+        print(f"\n📂 ACTIVE POSITIONS: {open_positions}")
         choice = input("Type TICKERS to LIQUIDATE (e.g. MSFT,AAPL), 'ALL', or press ENTER to hold: ").strip().upper()
         if choice:
             targets = ['ALL'] if choice == 'ALL' else [x.strip() for x in choice.split(',')]
             broker.liquidate_positions(targets)
             db.log_trade("MANUAL_LIQUIDATE", str(targets), 0)
-            print("⏳ Waiting for IBKR server to process liquidation...")
+            print("⏳ Waiting for IBKR server...")
             broker.ib.sleep(3) 
             positions_details = broker.get_positions_details()
             open_positions = list(positions_details.keys())
 
-    pending_orders = broker.get_pending_orders()
     if pending_orders and 'API_ERROR_LOCKOUT' not in pending_orders:
-        print("\n" + "="*60)
-        print(f"⏳ PENDING ORDERS/TRAPS: {pending_orders}")
-        print("="*60)
+        print(f"\n⏳ PENDING ORDERS/TRAPS: {pending_orders}")
         choice = input("Type TICKERS to CANCEL orders for (e.g. GOOG,NVDA), 'ALL', or press ENTER to keep them: ").strip().upper()
         if choice:
             targets = ['ALL'] if choice == 'ALL' else [x.strip() for x in choice.split(',')]
             broker.cancel_orders(targets)
             db.log_trade("MANUAL_CANCEL", str(targets), 0)
-            print("⏳ Waiting for IBKR server to process cancellations...")
+            print("⏳ Waiting for IBKR server...")
             broker.ib.sleep(3) 
             pending_orders = broker.get_pending_orders() 
 
@@ -453,7 +413,7 @@ def run_daily_workflow():
     # -----------------------------------------------------
     strategy = TurtleStrategy(db, capital, force_list)
     
-    # 1. POSITION MANAGEMENT (TRANSITIONS & PYRAMIDING)
+    # 1. POSITION MANAGEMENT
     if len(open_positions) > 0:
         print("\n" + "="*125)
         print("📈 POSITION MANAGEMENT PLAN:")
@@ -461,7 +421,9 @@ def run_daily_workflow():
         
         for ticker in open_positions:
             df_stock = db.load_bars(ticker)
-            if len(df_stock) < 55: continue
+            if len(df_stock) < 55: 
+                logger.warning(f"⚠️ Not enough data saved for {ticker}. Skipping management.")
+                continue
 
             avg_cost = positions_details[ticker]["avg_cost"]
             shares = positions_details[ticker]["shares"]
@@ -471,8 +433,7 @@ def run_daily_workflow():
             if signal:
                 if signal["action"] == "TRANSITION":
                     print(f"🔄 {ticker: <5} | SYSTEM TRANSITION DETECTED (S1 -> S2) | 55-Day High Hit (${signal['trigger_price']})")
-                    if signal['sell_size'] > 0:
-                        print(f"   ↳ 💸 Will Sell {signal['sell_size']} excess shares at Market.")
+                    if signal['sell_size'] > 0: print(f"   ↳ 💸 Will Sell {signal['sell_size']} excess shares at Market.")
                     print(f"   ↳ 🛡️ Will adjust Stop Loss for remaining {signal['keep_size']} shares to wider S2 floor: ${signal['new_stop']}")
                     
                     choice = input(f"\nPress ENTER to execute Transition Protocol for {ticker}, or type 'SKIP': ").strip().upper()
@@ -481,9 +442,7 @@ def run_daily_workflow():
                         if signal['sell_size'] > 0:
                             broker.liquidate_partial(ticker, signal['sell_size'])
                             db.log_trade(ticker, "TRANSITION_PARTIAL_SELL", 0)
-                        
                         broker.adjust_stop_loss(ticker, signal['new_stop'], signal['keep_size'])
-                        # Upgrade Memory to System 2 & reset units to 1
                         db.cursor.execute("UPDATE bot_state SET active_system=2, units_held=1 WHERE ticker=?", (ticker,))
                         db.conn.commit()
 
@@ -502,35 +461,22 @@ def run_daily_workflow():
                     print(f"🛡️ {ticker: <5} | MAX UNITS REACHED (4/4). Holding position. | Active Sys: {signal['sys']} | Stop Floor: ${signal['stop_price']}")
         print("="*125)
 
-    # 2. STANDARD SCANNER (Only runs if we have no active positions)
+    # 2. STANDARD SCANNER
     elif len(pending_orders) == 0:
-        for ticker in all_tickers:
-            local_df = db.load_bars(ticker)
-            if len(local_df) < 300:
-                logger.info(f"📥 Updating offline memory for {ticker} from IBKR...")
-                bars = broker.fetch_missing_bars(ticker, days=300)
-                db.save_bars(ticker, bars)
-
         df_spy = db.load_bars("SPY")
-        
         print("\n" + "="*80)
         print("🇺🇸 SPY MACRO STATUS:")
         print("-" * 80)
         print(strategy.get_spy_status(df_spy))
         print("="*80)
 
-        targets = []
-        skipped = [] 
-        
+        targets, skipped = [], []
         for ticker in (force_list + universe):
             df_stock = db.load_bars(ticker)
             signal = strategy.analyze(ticker, df_stock, df_spy)
-            
             if signal:
-                if signal['action'] == "SET_TRAP":
-                    targets.append((ticker, signal))
-                elif signal['action'] == "SKIP":
-                    skipped.append((ticker, signal['reason']))
+                if signal['action'] == "SET_TRAP": targets.append((ticker, signal))
+                elif signal['action'] == "SKIP": skipped.append((ticker, signal['reason']))
 
         print("\n" + "="*125)
         print("📈 PLAN FOR NEXT TRADING SESSION:")
@@ -539,36 +485,28 @@ def run_daily_workflow():
         if not targets:
             print("No valid setups found today. The robot will sit safely in cash.")
         else:
-            def get_rs_sort(x):
-                return float(x[1]['rs']) if x[1]['rs'] != "N/A" else 100.0
-                
+            def get_rs_sort(x): return float(x[1]['rs']) if x[1]['rs'] != "N/A" else 100.0
             targets.sort(key=get_rs_sort, reverse=True)
             for t, s in targets:
                 dist_pct = ((s['price'] / s['current']) - 1) * 100
                 force_tag = "[FORCED]" if s['forced'] else ""
-                
                 rs_str = str(s['rs'])
                 d200_str = f"+{s['dist_200']}%" if s['dist_200'] != "N/A" else "N/A"
-                days200_str = str(s['days_200'])
-                
-                print(f"🎯 {t: <5} | {s['sys']} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {rs_str:<4} | >50d: {s['days_50']:<3} (+{s['dist_50']:>4.1f}%) | >200d: {days200_str:<3} ({d200_str}) {force_tag}")
+                print(f"🎯 {t: <5} | {s['sys']} | Buy: ${s['price']:<7.2f} (+{dist_pct:<4.1f}%) | ADX: {s['adx']:<4.1f} | RS: {rs_str:<4} | >50d: {s['days_50']:<3} (+{s['dist_50']:>4.1f}%) | >200d: {s['days_200']:<3} ({d200_str}) {force_tag}")
                 print(f"   ↳ 🧮 Sizing Math: {s['math_str']}")
         
         if skipped:
             print("-" * 125)
             print("❌ REJECTION LOG (Why the bot skipped these stocks):")
-            for t, reason in skipped:
-                print(f"   - {t:<5}: {reason}")
+            for t, reason in skipped: print(f"   - {t:<5}: {reason}")
             
         print("="*125)
         
         if targets:
             choice = input("\nPress ENTER to place OCO DAY Orders for all targets, or type TICKERS separated by commas (e.g. NVDA,AAPL) to trap specific ones: ").strip().upper()
-            
             if choice:
                 chosen_list = [x.strip() for x in choice.split(',')]
                 filtered_targets = [t for t in targets if t[0] in chosen_list]
-                
                 if filtered_targets:
                     print(f"\n✅ User Override: Locking onto {', '.join([t[0] for t in filtered_targets])} only.")
                     targets = filtered_targets
@@ -589,13 +527,11 @@ def run_daily_workflow():
         price = fill.execution.price
         
         if side == 'BOT':
-            # Live Pyramid & System Memory update
             db.cursor.execute("SELECT units_held, last_trade_won FROM bot_state WHERE ticker=?", (ticker,))
             row = db.cursor.fetchone()
             current_units = row[0] if (row and row[0] is not None) else 0
             last_won = row[1] if (row and row[1] is not None) else 0
             
-            # If it's unit 1, lock in which system (1 or 2) triggered it based on last trade history
             db.cursor.execute("SELECT active_system FROM bot_state WHERE ticker=?", (ticker,))
             sys_row = db.cursor.fetchone()
             active_sys = (2 if last_won else 1) if current_units == 0 else (sys_row[0] if sys_row else 1)
@@ -614,8 +550,7 @@ def run_daily_workflow():
         logger.info(f"LIVE EXECUTION ALERT: Order Filled!")
         logger.info(f"Action: {side} | Ticker: {ticker} | Price: ${price:.2f}")
 
-        # --- NEW: LIVE STOP LOSS TRACKER ---
-        broker.ib.sleep(1) # Give IBKR a millisecond to process
+        broker.ib.sleep(1)
         open_orders = broker.ib.reqAllOpenOrders()
         current_stop = "None Found"
         for o in open_orders:
