@@ -469,7 +469,9 @@ def run_daily_workflow():
         print("-" * 100)
         
         # Pre-fetch open orders to find stops
-        open_orders = broker.ib.reqAllOpenOrders()
+        broker.ib.reqAllOpenOrders()
+        broker.ib.sleep(1)
+        open_trades = broker.ib.openTrades()
         
         for ticker in open_positions:
             pos = positions_details[ticker]
@@ -488,9 +490,10 @@ def run_daily_workflow():
             
             # Find Stop
             stop_price = 0.0
-            for o in open_orders:
-                if o.contract.symbol == ticker and o.orderType == 'STP' and o.action == 'SELL':
-                    stop_price = o.auxPrice
+            for t in open_trades:
+                # Check directly on the contract object attached to the trade
+                if t.contract.symbol == ticker and t.order.orderType == 'STP' and t.order.action == 'SELL':
+                    stop_price = t.order.auxPrice
                     break
             
             # Risk calc
