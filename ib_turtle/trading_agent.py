@@ -451,6 +451,14 @@ def run_daily_workflow():
     active_tracking = list(set(["SPY"] + force_list + universe + open_positions + pending_orders))
     if 'API_ERROR_LOCKOUT' in active_tracking: active_tracking.remove('API_ERROR_LOCKOUT')
 
+    # -----------------------------------------------------
+    # INITIALIZE STRATEGY & SCANNER
+    # -----------------------------------------------------
+    strategy = TurtleStrategy(db, capital, force_list)
+    
+    # Check for specific BUY orders to avoid blocking pyramiding
+    pending_buys = broker.get_pending_buys()
+
     print("\n" + "="*60)
     print("📥 SYNCHRONIZING MARKET DATA...")
     for ticker in active_tracking:
@@ -566,13 +574,9 @@ def run_daily_workflow():
             print(f"{time_str:<18} | {ticker:<6} | {side:<4} | {qty:<4} | {price:<8.2f} | {pnl}")
         print("="*80) 
 
-    # -----------------------------------------------------
-    # THE SCANNER & PLAN EXECUTION
-    # -----------------------------------------------------
-    strategy = TurtleStrategy(db, capital, force_list)
-    
-    # Check for specific BUY orders to avoid blocking pyramiding
-    pending_buys = broker.get_pending_buys()
+    # ==========================================
+    # THE LIVE MONITORING LOOP 
+    # ==========================================
     
     # 1. POSITION MANAGEMENT
     if len(open_positions) > 0:
