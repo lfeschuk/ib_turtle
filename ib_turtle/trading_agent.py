@@ -134,11 +134,28 @@ class IBBroker:
         self.client_id = 0 
 
     def connect(self):
-        self.ib.connect('127.0.0.1', self.port, clientId=self.client_id, timeout=30)
-        logger.info(f"🟢 Connected to IBKR using Master Client ID: {self.client_id}")
-        self.ib.reqAutoOpenOrders(True)
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                # Increased timeout to 60s to handle slow TWS initialization
+                self.ib.connect('127.0.0.1', self.port, clientId=self.client_id, timeout=60)
+                logger.info(f"🟢 Connected to IBKR using Master Client ID: {self.client_id}")
+                self.ib.reqAutoOpenOrders(True)
+                return
+            except Exception as e:
+                logger.warning(f"⚠️ Connection attempt {attempt+1}/{max_retries} failed: {e}")
+                if attempt < max_retries - 1:
+                    logger.info("⏳ Retrying in 5 seconds...")
+                    self.ib.sleep(5)
+        
+        
+        logger.error("❌ CRITICAL: Could not connect to IBKR after multiple attempts.")
+        return False
 
     def fetch_missing_bars(self, ticker, days=300):
+        if not self.ib.isConnected():
+             return []
+             
         contract = Stock(ticker, 'SMART', 'USD')
         try:
             self.ib.qualifyContracts(contract)
@@ -156,13 +173,13 @@ class IBBroker:
                     barSizeSetting='1 day', 
                     whatToShow='TRADES', 
                     useRTH=True,
-                    timeout=20 # Explicit timeout (default is usually longer, but we want to retry faster if it hangs)
+                    timeout=20 
                 )
-                self.ib.sleep(2) # Be gentler to avoid pacing violations
+                self.ib.sleep(2) 
                 if bars: return bars
             except Exception as e:
                 logger.warning(f"⚠️ Attempt {attempt+1}/3 failed for {ticker}: {e}")
-                self.ib.sleep(5) # Wait longer before retry
+                self.ib.sleep(5) 
         
         logger.error(f"❌ Failed to fetch data for {ticker} after 3 attempts.")
         return []
@@ -481,46 +498,55 @@ def run_daily_workflow():
     
     print(f"\n{get_us_market_status()}")
     logger.info("--- WAKING UP TRADING BOT ---")
-    broker.connect()
     
-    # -----------------------------------------------------
-    # SYNC MISSED EXECUTIONS (PnL Catch-up)
-    # -----------------------------------------------------
-    # We look back 7 days to find any realized PnL we might have missed in the DB
-    print("🔎 Syncing recent executions to update Virtual Capital...")
-    recent_fills = broker.ib.reqExecutions() # Gets all by default? No, usually needs filter. 
-    # Actually reqExecutions() with no filter gets everything available from valid session time.
-    # But usually limited to 24h or so unless we specify filter.
+    connected = broker.connect()
     
-    # Let's request specific filter if needed, OR just iterate what we get.
-    # For safety, we trust IBKR to return what's relevant for 'Trade Report'.
+    # Defaults for Offline Mode
+    real_nav = db.get_capital()
+    real_cash = 0.0
+    open_positions = []
+    positions_details = {}
+    pending_orders = []
+    pending_buys = []
     
-    total_missed_pnl = 0.0
-    for fill in recent_fills:
-        if fill.commissionReport:
-             exec_id = fill.execution.execId
-             pnl = fill.commissionReport.realizedPNL
-             
-             # IBKR returns HUGE number for unrealized/invalid PnL sometimes (1.79...e308)
-             if pnl == 1.7976931348623157e308: pnl = 0.0
-             
-             if pnl != 0 and not db.trade_exists(exec_id):
-                 logger.info(f"💰 Found missing PnL: {fill.contract.symbol} | ${pnl:.2f}")
-                 db.log_trade(fill.contract.symbol, exec_id, fill.execution.price, fill.execution.shares, pnl)
-                 db.update_virtual_capital(pnl)
-                 total_missed_pnl += pnl
-    
-    if total_missed_pnl != 0:
-        print(f"✅ Synced PnL: Adjusted Capital by ${total_missed_pnl:+.2f}")
-    else:
-        print("✅ PnL is up to date.")
+    if connected:
+        # FETCH REAL CAPITAL
+        acct_vals = broker.get_account_summary()
+        real_nav = acct_vals.get('NetLiquidation', db.get_capital()) 
+        real_cash = acct_vals.get('TotalCashValue', 0.0)
+        
+        # -----------------------------------------------------
+        # SYNC MISSED EXECUTIONS (PnL Catch-up)
+        # -----------------------------------------------------
+        print("🔎 Syncing recent executions to update Virtual Capital...")
+        recent_fills = broker.get_recent_fills() # Re-use our safe wrapper
+        
+        total_missed_pnl = 0.0
+        for fill in recent_fills:
+            if fill.commissionReport:
+                 exec_id = fill.execution.execId
+                 pnl = fill.commissionReport.realizedPNL
+                 if pnl == 1.7976931348623157e308: pnl = 0.0
+                 
+                 if pnl != 0 and not db.trade_exists(exec_id):
+                     logger.info(f"💰 Found missing PnL: {fill.contract.symbol} | ${pnl:.2f}")
+                     db.log_trade(fill.contract.symbol, exec_id, fill.execution.price, fill.execution.shares, pnl)
+                     db.update_virtual_capital(pnl)
+                     total_missed_pnl += pnl
+        
+        if total_missed_pnl != 0:
+            print(f"✅ Synced PnL: Adjusted Capital by ${total_missed_pnl:+.2f}")
+        else:
+            print("✅ PnL is up to date.")
+            
+        positions_details = broker.get_positions_details()
+        open_positions = list(positions_details.keys())
+        pending_orders = broker.get_pending_orders()
+        pending_buys = broker.get_pending_buys()
 
-    # FETCH REAL CAPITAL
-    acct_vals = broker.get_account_summary()
-    real_nav = acct_vals.get('NetLiquidation', db.get_capital()) # fallback to DB if fail
-    real_cash = acct_vals.get('TotalCashValue', 0.0)
-    
     print("\n" + "="*80)
+    if not connected:
+        print(f"⚠️  OFFLINE MODE: Could not connect to IBKR. Showing cached data only.")
     print(f"💰 ACCOUNT STATUS: ${real_nav:,.2f} Net Liquidation | ${real_cash:,.2f} Cash Available")
     print("="*80)
     
@@ -553,11 +579,15 @@ def run_daily_workflow():
     print("📥 SYNCHRONIZING MARKET DATA...")
     for ticker in active_tracking:
         local_df = db.load_bars(ticker)
-        if len(local_df) < 300:
-            bars = broker.fetch_missing_bars(ticker, days=300)
-        else:
-            bars = broker.fetch_missing_bars(ticker, days=5) 
-        db.save_bars(ticker, bars)
+        
+        # Only fetch if connected
+        if connected:
+            if len(local_df) < 300:
+                bars = broker.fetch_missing_bars(ticker, days=300)
+            else:
+                bars = broker.fetch_missing_bars(ticker, days=5) 
+            db.save_bars(ticker, bars)
+            
     print("✅ Data Sync Complete.")
     print("="*60)
 
@@ -567,9 +597,12 @@ def run_daily_workflow():
         print("-" * 100)
         
         # Pre-fetch open orders to find stops
-        broker.ib.reqAllOpenOrders()
-        broker.ib.sleep(1)
-        open_trades = broker.ib.openTrades()
+        if connected:
+            broker.ib.reqAllOpenOrders()
+            broker.ib.sleep(1)
+            open_trades = broker.ib.openTrades()
+        else:
+            open_trades = []
         
         for ticker in open_positions:
             pos = positions_details[ticker]
@@ -623,15 +656,18 @@ def run_daily_workflow():
                 upgrade = input(f"   ❓ Upgrade {ticker} to System 2? (y/n): ").strip().lower()
                 if upgrade == 'y':
                     print(f"   🔄 Upgrading {ticker}...")
-                    if analysis['sell_size'] > 0:
-                        print(f"   💸 Selling {analysis['sell_size']} excess shares...")
-                        broker.liquidate_partial(ticker, analysis['sell_size'])
-                    
-                    broker.cancel_orders([ticker])
-                    broker.adjust_stop_loss(ticker, analysis['new_stop'], analysis['keep_size'])
-                    db.cursor.execute("UPDATE bot_state SET active_system=2, units_held=1 WHERE ticker=?", (ticker,))
-                    db.conn.commit()
-                    print(f"   ✅ {ticker} is now System 2.")
+                    if connected:
+                        if analysis['sell_size'] > 0:
+                            print(f"   💸 Selling {analysis['sell_size']} excess shares...")
+                            broker.liquidate_partial(ticker, analysis['sell_size'])
+                        
+                        broker.cancel_orders([ticker])
+                        broker.adjust_stop_loss(ticker, analysis['new_stop'], analysis['keep_size'])
+                        db.cursor.execute("UPDATE bot_state SET active_system=2, units_held=1 WHERE ticker=?", (ticker,))
+                        db.conn.commit()
+                        print(f"   ✅ {ticker} is now System 2.")
+                    else:
+                        print("❌ Cannot upgrade in Offline Mode.")
             
         print("-" * 100)
         
@@ -647,6 +683,8 @@ def run_daily_workflow():
             broker.ib.sleep(3) 
             positions_details = broker.get_positions_details()
             open_positions = list(positions_details.keys())
+        elif not connected:
+            print("❌ Cannot liquidate in Offline Mode.")
 
     if pending_orders and 'API_ERROR_LOCKOUT' not in pending_orders:
         print(f"\n⏳ PENDING ORDERS/TRAPS: {pending_orders}")
@@ -659,22 +697,23 @@ def run_daily_workflow():
             broker.ib.sleep(3) 
 
     # RECENT TRANSACTIONS
-    recent_fills = broker.get_recent_fills()
-    if recent_fills:
-        print("\n" + "="*80)
-        print("📜 RECENT TRANSACTIONS (Last 24h):")
-        print(f"{'TIME':<18} | {'TICKER':<6} | {'ACTION':<4} | {'QTY':<4} | {'PRICE':<8} | {'REALIZED P&L'}")
-        print("-" * 80)
-        for fill in recent_fills:
-            time_str = fill.execution.time.strftime('%H:%M:%S') if fill.execution.time else "N/A"
-            ticker = fill.contract.symbol
-            side = fill.execution.side
-            qty = fill.execution.shares
-            price = fill.execution.price
-            pnl = f"${fill.commissionReport.realizedPNL:.2f}" if fill.commissionReport and fill.commissionReport.realizedPNL != 1.7976931348623157e308 else "-"
-            
-            print(f"{time_str:<18} | {ticker:<6} | {side:<4} | {qty:<4} | {price:<8.2f} | {pnl}")
-        print("="*80) 
+    if connected:
+        recent_fills = broker.get_recent_fills()
+        if recent_fills:
+            print("\n" + "="*80)
+            print("📜 RECENT TRANSACTIONS (Last 24h):")
+            print(f"{'TIME':<18} | {'TICKER':<6} | {'ACTION':<4} | {'QTY':<4} | {'PRICE':<8} | {'REALIZED P&L'}")
+            print("-" * 80)
+            for fill in recent_fills:
+                time_str = fill.execution.time.strftime('%H:%M:%S') if fill.execution.time else "N/A"
+                ticker = fill.contract.symbol
+                side = fill.execution.side
+                qty = fill.execution.shares
+                price = fill.execution.price
+                pnl = f"${fill.commissionReport.realizedPNL:.2f}" if fill.commissionReport and fill.commissionReport.realizedPNL != 1.7976931348623157e308 else "-"
+                
+                print(f"{time_str:<18} | {ticker:<6} | {side:<4} | {qty:<4} | {price:<8.2f} | {pnl}")
+            print("="*80) 
 
     # ==========================================
     # THE LIVE MONITORING LOOP 
@@ -788,8 +827,11 @@ def run_daily_workflow():
             
             for t, s in targets:
                 if s['size'] > 0:
-                    broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
-                    db.log_trade(t, "DAY_TRAP_PLACED", s['price'])
+                    if connected:
+                        broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
+                        db.log_trade(t, "DAY_TRAP_PLACED", s['price'])
+                    else:
+                        print(f"❌ Offline Mode: Cannot place trap for {t}.")
                 else:
                     print(f"⚠️ Skipping order placement for {t}: Size is 0 (Insufficient Capital or High Risk).")
 
