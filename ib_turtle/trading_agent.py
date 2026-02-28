@@ -48,7 +48,7 @@ class DataManager:
         
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS market_data (ticker TEXT, date TEXT, open REAL, high REAL, low REAL, close REAL, volume INTEGER, UNIQUE(ticker, date))''')
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS bot_state (ticker TEXT PRIMARY KEY, last_trade_won INTEGER, virtual_capital REAL, units_held INTEGER)''')
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS trade_log (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, action TEXT, price REAL)''')
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS trade_log (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, action TEXT, price REAL, size INTEGER DEFAULT 0, pnl REAL DEFAULT 0.0)''')
         self.conn.commit()
 
         try:
@@ -89,10 +89,40 @@ class DataManager:
         row = self.cursor.fetchone()
         return row[0] if row else 0 
 
-    def log_trade(self, ticker, action, price):
+    def log_trade(self, ticker, action, price, size=0, pnl=0.0):
         date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.cursor.execute("INSERT INTO trade_log (date, ticker, action, price) VALUES (?, ?, ?, ?)", (date, ticker, action, price))
+        # Ensure we don't have duplicates for the same action/time if possible, 
+        # but for simplicity we just log everything.
+        self.cursor.execute("INSERT INTO trade_log (date, ticker, action, price, size, pnl) VALUES (?, ?, ?, ?, ?, ?)", 
+                            (date, ticker, action, price, size, pnl))
         self.conn.commit()
+
+    def update_virtual_capital(self, amount):
+        """Updates virtual capital by adding/subtracting amount."""
+        self.cursor.execute("UPDATE bot_state SET virtual_capital = virtual_capital + ? WHERE ticker='MASTER_ACCOUNT'", (amount,))
+        self.conn.commit()
+        return self.get_capital()
+
+    def get_performance_stats(self):
+        """Calculates W/L and Total PnL from trade_log."""
+        # We need to filter for actual closed trades (SLD) or manually logged PnL
+        self.cursor.execute("SELECT pnl FROM trade_log WHERE pnl != 0")
+        pnls = [row[0] for row in self.cursor.fetchall()]
+        
+        wins = len([p for p in pnls if p > 0])
+        losses = len([p for p in pnls if p <= 0])
+        total_pnl = sum(pnls)
+        total_trades = wins + losses
+        win_rate = (wins / total_trades * 100) if total_trades > 0 else 0
+        
+        return {
+            "wins": wins, "losses": losses, "total_pnl": total_pnl, "win_rate": win_rate
+        }
+
+    def trade_exists(self, exec_id):
+         # Check if we already logged this execution
+         self.cursor.execute("SELECT id FROM trade_log WHERE action=?", (exec_id,))
+         return self.cursor.fetchone() is not None
 
 # ==========================================
 # 2. THE EXECUTOR (IBBroker)
@@ -110,10 +140,32 @@ class IBBroker:
 
     def fetch_missing_bars(self, ticker, days=300):
         contract = Stock(ticker, 'SMART', 'USD')
-        self.ib.qualifyContracts(contract)
-        bars = self.ib.reqHistoricalData(contract, endDateTime='', durationStr=f'{days} D', barSizeSetting='1 day', whatToShow='TRADES', useRTH=True)
-        self.ib.sleep(1) 
-        return bars
+        try:
+            self.ib.qualifyContracts(contract)
+        except Exception as e:
+            logger.error(f"❌ Could not qualify contract {ticker}: {e}")
+            return []
+
+        for attempt in range(3):
+            try:
+                # durationStr needs to be careful. '300 D' is fine.
+                bars = self.ib.reqHistoricalData(
+                    contract, 
+                    endDateTime='', 
+                    durationStr=f'{days} D', 
+                    barSizeSetting='1 day', 
+                    whatToShow='TRADES', 
+                    useRTH=True,
+                    timeout=20 # Explicit timeout (default is usually longer, but we want to retry faster if it hangs)
+                )
+                self.ib.sleep(2) # Be gentler to avoid pacing violations
+                if bars: return bars
+            except Exception as e:
+                logger.warning(f"⚠️ Attempt {attempt+1}/3 failed for {ticker}: {e}")
+                self.ib.sleep(5) # Wait longer before retry
+        
+        logger.error(f"❌ Failed to fetch data for {ticker} after 3 attempts.")
+        return []
 
     def place_oco_buy(self, ticker, price, size, stop_price):
         contract = Stock(ticker, 'SMART', 'USD')
@@ -431,6 +483,38 @@ def run_daily_workflow():
     logger.info("--- WAKING UP TRADING BOT ---")
     broker.connect()
     
+    # -----------------------------------------------------
+    # SYNC MISSED EXECUTIONS (PnL Catch-up)
+    # -----------------------------------------------------
+    # We look back 7 days to find any realized PnL we might have missed in the DB
+    print("🔎 Syncing recent executions to update Virtual Capital...")
+    recent_fills = broker.ib.reqExecutions() # Gets all by default? No, usually needs filter. 
+    # Actually reqExecutions() with no filter gets everything available from valid session time.
+    # But usually limited to 24h or so unless we specify filter.
+    
+    # Let's request specific filter if needed, OR just iterate what we get.
+    # For safety, we trust IBKR to return what's relevant for 'Trade Report'.
+    
+    total_missed_pnl = 0.0
+    for fill in recent_fills:
+        if fill.commissionReport:
+             exec_id = fill.execution.execId
+             pnl = fill.commissionReport.realizedPNL
+             
+             # IBKR returns HUGE number for unrealized/invalid PnL sometimes (1.79...e308)
+             if pnl == 1.7976931348623157e308: pnl = 0.0
+             
+             if pnl != 0 and not db.trade_exists(exec_id):
+                 logger.info(f"💰 Found missing PnL: {fill.contract.symbol} | ${pnl:.2f}")
+                 db.log_trade(fill.contract.symbol, exec_id, fill.execution.price, fill.execution.shares, pnl)
+                 db.update_virtual_capital(pnl)
+                 total_missed_pnl += pnl
+    
+    if total_missed_pnl != 0:
+        print(f"✅ Synced PnL: Adjusted Capital by ${total_missed_pnl:+.2f}")
+    else:
+        print("✅ PnL is up to date.")
+
     # FETCH REAL CAPITAL
     acct_vals = broker.get_account_summary()
     real_nav = acct_vals.get('NetLiquidation', db.get_capital()) # fallback to DB if fail
@@ -442,7 +526,13 @@ def run_daily_workflow():
     
     # Determine which capital to use for sizing (usually NetLiquidation or a fixed allocation)
     capital = db.get_capital()
+    
+    # GET STATS
+    stats = db.get_performance_stats()
+    pnl_color = "🟢" if stats['total_pnl'] >= 0 else "🔴"
+    
     print(f"📉 SIZING MODEL: Using Fixed Capital of ${capital:,.2f} for Risk Calculations.")
+    print(f"📊 PERFORMANCE: {stats['wins']}W - {stats['losses']}L | WR: {stats['win_rate']:.1f}% | PnL: {pnl_color} ${stats['total_pnl']:+,.2f}")
     
     positions_details = broker.get_positions_details()
     open_positions = list(positions_details.keys())
@@ -525,16 +615,28 @@ def run_daily_workflow():
             pnl_str = f"{pnl_pct:+.2f}%"
             
             print(f"{ticker:<6} | {shares:<5} | {avg_cost:<8.2f} | {curr_price:<8.2f} | {pnl_str:<7} | {stop_price:<8.2f} | {risk_dist:<6} | {sys_label:<3} | {next_buy:<9}")
+
+            # CHECK FOR S2 UPGRADE
+            # logic: if we are S1, and current price > 55d high (which is 'trigger_price' in action 'TRANSITION')
+            if analysis and analysis.get('action') == "TRANSITION":
+                print(f"   🌟 ELIGIBLE FOR SYSTEM 2 UPGRADE! Price ${curr_price:.2f} >= 55d High ${analysis['trigger_price']:.2f}")
+                upgrade = input(f"   ❓ Upgrade {ticker} to System 2? (y/n): ").strip().lower()
+                if upgrade == 'y':
+                    print(f"   🔄 Upgrading {ticker}...")
+                    if analysis['sell_size'] > 0:
+                        print(f"   💸 Selling {analysis['sell_size']} excess shares...")
+                        broker.liquidate_partial(ticker, analysis['sell_size'])
+                    
+                    broker.cancel_orders([ticker])
+                    broker.adjust_stop_loss(ticker, analysis['new_stop'], analysis['keep_size'])
+                    db.cursor.execute("UPDATE bot_state SET active_system=2, units_held=1 WHERE ticker=?", (ticker,))
+                    db.conn.commit()
+                    print(f"   ✅ {ticker} is now System 2.")
             
         print("-" * 100)
         
-        sys_choice = input("\nType TICKERS to manually UPGRADE to System 2 (55d) (e.g. TSM), or press ENTER: ").strip().upper()
-        if sys_choice:
-            targets = [x.strip() for x in sys_choice.split(',')]
-            for t in targets:
-                db.cursor.execute("UPDATE bot_state SET active_system=2, last_trade_won=1 WHERE ticker=?", (t,))
-            db.conn.commit()
-            print(f"✅ Master Override: {targets} are now locked into System 2.")
+        # REMOVED THE MANUAL UPGRADE MENU COZ WE HAVE IT IN-LOOP NOW
+        # But kept 'LIQUIDATE' below
             
         choice = input("Type TICKERS to LIQUIDATE (e.g. MSFT,AAPL), 'ALL', or press ENTER to hold: ").strip().upper()
         if choice:
