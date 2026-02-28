@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 # ==========================================
 # 0. MARKET HOURS CALCULATOR
 # ==========================================
+# SILENCE VERBOSE IBKR LOGS
+logging.getLogger('ib_insync').setLevel(logging.WARNING)
+
 def get_us_market_status():
     est = pytz.timezone('US/Eastern')
     now_est = datetime.datetime.now(est)
@@ -160,7 +163,49 @@ class IBBroker:
                     pending_tickers.append(t.contract.symbol)
             return list(set(pending_tickers))
         except Exception as e:
+            return list(set(pending_tickers))
+        except Exception as e:
             return ['API_ERROR_LOCKOUT']
+
+    def get_account_summary(self):
+        """Fetches real-time NetLiquidation and TotalCashValue."""
+        try:
+            # accountSummary returns unique values for all accounts
+            # we trigger a request and wait a moment or use the cached values if we can
+            # ib_insync 'accountSummary()' request is blocking and returns list of AccountSummary objects
+            summary = self.ib.accountSummary()
+            vals = {v.tag: float(v.value) for v in summary if v.tag in ['NetLiquidation', 'TotalCashValue', 'AvailableFunds']}
+            return vals
+        except Exception as e:
+            logger.error(f"Failed to fetch account summary: {e}")
+            return {}
+
+    def get_recent_fills(self):
+        """Returns fills from the last 24 hours."""
+        try:
+            fills = self.ib.reqExecutions() # Returns list of Fill objects
+            current_time = datetime.datetime.now(datetime.timezone.utc)
+            one_day_ago = current_time - datetime.timedelta(days=1)
+            
+            recent = []
+            for fill in fills:
+                # fill.execution.time is usually distinctively timezone aware or naive depending on setting
+                # wrapper ensures it calls with UTC if possible or we check
+                t = fill.execution.time
+                if t is None: continue
+                # simple safeguard for timezone naive/aware comparison
+                if t.tzinfo is None:
+                    t = t.replace(tzinfo=datetime.timezone.utc)
+                
+                if t > one_day_ago:
+                    recent.append(fill)
+            
+            # Sort by time, most recent last
+            recent.sort(key=lambda x: x.execution.time)
+            return recent
+        except Exception as e:
+            logger.error(f"Failed to fetch recent fills: {e}")
+            return []
 
     # --- NEW: BUY ORDER FILTER ---
     def get_pending_buys(self):
@@ -357,7 +402,11 @@ class TurtleStrategy:
 
         is_forced = ticker in self.force_list
 
-        if size <= 0: return {"action": "SKIP", "reason": f"ATR (${atr:.2f}) is too high for current risk limit (${adj_risk_amt:.2f}). Required size is 0."}
+        if size <= 0:
+             # return {"action": "SKIP", "reason": f"ATR (${atr:.2f}) is too high for current risk limit (${adj_risk_amt:.2f}). Required size is 0."}
+             # USER REQUEST: Show signal even if size is 0 (No Cash / High Risk)
+             pass 
+
         if not (is_forced or (macro_safe and rs_safe)): return {"action": "SKIP", "reason": f"Failed Filters. RS is {rs} (Needs 70). SPY Macro Safe: {macro_safe}"}
         if current_close >= entry_price: return {"action": "SKIP", "reason": f"Already Broken Out. Current (${current_close:.2f}) is above the target trap level (${entry_price:.2f}). Waiting for pullback."}
 
@@ -382,8 +431,18 @@ def run_daily_workflow():
     logger.info("--- WAKING UP TRADING BOT ---")
     broker.connect()
     
+    # FETCH REAL CAPITAL
+    acct_vals = broker.get_account_summary()
+    real_nav = acct_vals.get('NetLiquidation', db.get_capital()) # fallback to DB if fail
+    real_cash = acct_vals.get('TotalCashValue', 0.0)
+    
+    print("\n" + "="*80)
+    print(f"💰 ACCOUNT STATUS: ${real_nav:,.2f} Net Liquidation | ${real_cash:,.2f} Cash Available")
+    print("="*80)
+    
+    # Determine which capital to use for sizing (usually NetLiquidation or a fixed allocation)
     capital = db.get_capital()
-    logger.info(f"💰 Available Virtual Capital: ${capital:,.2f}")
+    print(f"📉 SIZING MODEL: Using Fixed Capital of ${capital:,.2f} for Risk Calculations.")
     
     positions_details = broker.get_positions_details()
     open_positions = list(positions_details.keys())
@@ -405,9 +464,60 @@ def run_daily_workflow():
     print("="*60)
 
     if open_positions:
-        print(f"\n📂 ACTIVE POSITIONS: {open_positions}")
+        print(f"\n📂 ACTIVE POSITIONS:")
+        print(f"{'TICKER':<6} | {'SIZE':<5} | {'ENTRY':<8} | {'CURRENT':<8} | {'PnL %':<7} | {'STOP':<8} | {'RISK':<6} | {'SYS':<3} | {'NEXT BUY':<9}")
+        print("-" * 100)
         
-        sys_choice = input("Type TICKERS to manually UPGRADE to System 2 (55d) (e.g. TSM), or press ENTER: ").strip().upper()
+        # Pre-fetch open orders to find stops
+        open_orders = broker.ib.reqAllOpenOrders()
+        
+        for ticker in open_positions:
+            pos = positions_details[ticker]
+            avg_cost = pos["avg_cost"]
+            shares = pos["shares"]
+            
+            # Get current price from loaded bars (most recent close)
+            # Warning: load_bars might be slightly delayed if market is live, but we just synced.
+            df = db.load_bars(ticker)
+            if df.empty:
+                print(f"{ticker:<6} | Data Error")
+                continue
+                
+            curr_price = df['close'].iloc[-1]
+            pnl_pct = ((curr_price - avg_cost) / avg_cost) * 100
+            
+            # Find Stop
+            stop_price = 0.0
+            for o in open_orders:
+                if o.contract.symbol == ticker and o.orderType == 'STP' and o.action == 'SELL':
+                    stop_price = o.auxPrice
+                    break
+            
+            # Risk calc
+            risk_dist = f"{((curr_price - stop_price)/curr_price)*100:.1f}%" if stop_price > 0 else "N/A"
+            
+            # System Status
+            # We need to peek into DB or just infer/re-run analyze_open_position
+            # analyze_open_position calculates 'pyramid_price' too
+            analysis = strategy.analyze_open_position(ticker, df, avg_cost, shares)
+            
+            sys_label = "S1"
+            next_buy = "N/A"
+            
+            if analysis:
+                if "sys" in analysis: sys_label = analysis["sys"]
+                if "pyramid_price" in analysis: next_buy = f"${analysis['pyramid_price']:.2f}"
+                elif analysis["action"] == "MAX_UNITS": next_buy = "MAX"
+                elif analysis["action"] == "TRANSITION": next_buy = "TRANS"
+            
+            # Colorize PnL
+            pnl_str = f"{pnl_pct:+.2f}%"
+            
+            print(f"{ticker:<6} | {shares:<5} | {avg_cost:<8.2f} | {curr_price:<8.2f} | {pnl_str:<7} | {stop_price:<8.2f} | {risk_dist:<6} | {sys_label:<3} | {next_buy:<9}")
+            
+        print("-" * 100)
+        
+        sys_choice = input("\nType TICKERS to manually UPGRADE to System 2 (55d) (e.g. TSM), or press ENTER: ").strip().upper()
         if sys_choice:
             targets = [x.strip() for x in sys_choice.split(',')]
             for t in targets:
@@ -434,6 +544,24 @@ def run_daily_workflow():
             db.log_trade("MANUAL_CANCEL", str(targets), 0)
             print("⏳ Waiting for IBKR server...")
             broker.ib.sleep(3) 
+
+    # RECENT TRANSACTIONS
+    recent_fills = broker.get_recent_fills()
+    if recent_fills:
+        print("\n" + "="*80)
+        print("📜 RECENT TRANSACTIONS (Last 24h):")
+        print(f"{'TIME':<18} | {'TICKER':<6} | {'ACTION':<4} | {'QTY':<4} | {'PRICE':<8} | {'REALIZED P&L'}")
+        print("-" * 80)
+        for fill in recent_fills:
+            time_str = fill.execution.time.strftime('%H:%M:%S') if fill.execution.time else "N/A"
+            ticker = fill.contract.symbol
+            side = fill.execution.side
+            qty = fill.execution.shares
+            price = fill.execution.price
+            pnl = f"${fill.commissionReport.realizedPNL:.2f}" if fill.commissionReport and fill.commissionReport.realizedPNL != 1.7976931348623157e308 else "-"
+            
+            print(f"{time_str:<18} | {ticker:<6} | {side:<4} | {qty:<4} | {price:<8.2f} | {pnl}")
+        print("="*80) 
 
     # -----------------------------------------------------
     # THE SCANNER & PLAN EXECUTION
@@ -550,8 +678,11 @@ def run_daily_workflow():
                     targets = [] 
             
             for t, s in targets:
-                broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
-                db.log_trade(t, "DAY_TRAP_PLACED", s['price'])
+                if s['size'] > 0:
+                    broker.place_oco_buy(t, s['price'], s['size'], s['stop'])
+                    db.log_trade(t, "DAY_TRAP_PLACED", s['price'])
+                else:
+                    print(f"⚠️ Skipping order placement for {t}: Size is 0 (Insufficient Capital or High Risk).")
 
     # ==========================================
     # THE LIVE MONITORING LOOP 
