@@ -141,7 +141,7 @@ class IBBroker:
                 self.ib.connect('127.0.0.1', self.port, clientId=self.client_id, timeout=60)
                 logger.info(f"🟢 Connected to IBKR using Master Client ID: {self.client_id}")
                 self.ib.reqAutoOpenOrders(True)
-                return
+                return True
             except Exception as e:
                 logger.warning(f"⚠️ Connection attempt {attempt+1}/{max_retries} failed: {e}")
                 if attempt < max_retries - 1:
@@ -500,6 +500,8 @@ def run_daily_workflow():
     logger.info("--- WAKING UP TRADING BOT ---")
     
     connected = broker.connect()
+    logger.info(f"Broker connection returned: {connected}")
+    print(f"DEBUG: connected value is {connected}")
     
     # Defaults for Offline Mode
     real_nav = db.get_capital()
@@ -510,6 +512,7 @@ def run_daily_workflow():
     pending_buys = []
     
     if connected:
+        print("DEBUG: Inside if connected block")
         # FETCH REAL CAPITAL
         acct_vals = broker.get_account_summary()
         real_nav = acct_vals.get('NetLiquidation', db.get_capital()) 
@@ -545,6 +548,7 @@ def run_daily_workflow():
         pending_buys = broker.get_pending_buys()
 
     print("\n" + "="*80)
+    print(f"DEBUG: Checking if not connected. connected={connected}")
     if not connected:
         print(f"⚠️  OFFLINE MODE: Could not connect to IBKR. Showing cached data only.")
     print(f"💰 ACCOUNT STATUS: ${real_nav:,.2f} Net Liquidation | ${real_cash:,.2f} Cash Available")
