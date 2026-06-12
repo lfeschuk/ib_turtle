@@ -145,6 +145,7 @@ class IBBroker:
         try:
             self.ib.connect('127.0.0.1', self.port, clientId=self.client_id)
             logger.info(f"🟢 Options Automation Pipeline Online. Client ID: {self.client_id}")
+            self.ib.reqMarketDataType(3)  # Use delayed market data if not subscribed
             return True
         except Exception as e:
             logger.error(f"❌ Connection to TWS failed: {e}")

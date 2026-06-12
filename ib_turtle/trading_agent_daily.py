@@ -138,6 +138,7 @@ class IBBroker:
         try:
             self.ib.connect('127.0.0.1', self.port, clientId=self.client_id)
             logger.info(f"🟢 Trading System Active. Connected via Client ID: {self.client_id}")
+            self.ib.reqMarketDataType(3)  # Use delayed market data if not subscribed
             return True
         except Exception as e:
             logger.error(f"❌ Connection to TWS failed: {e}. Check that API Settings allow port {self.port}")
