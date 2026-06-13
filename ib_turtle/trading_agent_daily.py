@@ -138,7 +138,18 @@ class IBBroker:
         try:
             self.ib.connect('127.0.0.1', self.port, clientId=self.client_id)
             logger.info(f"🟢 Trading System Active. Connected via Client ID: {self.client_id}")
-            self.ib.reqMarketDataType(3)  # Use delayed market data if not subscribed
+            
+            # Detect if paper account or live account
+            accounts = self.ib.managedAccounts()
+            self.is_paper = any(acc.startswith('DU') for acc in accounts)
+            
+            if self.is_paper:
+                logger.info("ℹ️ Paper Trading account detected. Requesting delayed market data (Type 3).")
+                self.ib.reqMarketDataType(3)
+            else:
+                logger.info("ℹ️ Live Trading account detected. Requesting real-time market data (Type 1).")
+                self.ib.reqMarketDataType(1)
+                
             return True
         except Exception as e:
             logger.error(f"❌ Connection to TWS failed: {e}. Check that API Settings allow port {self.port}")
@@ -340,34 +351,54 @@ def run_live_bot():
         except Exception as err:
             logger.error(f"Error inside live processing loop: {err}")
 
-    # Polling heartbeat loop - reqRealTimeBars does not support delayed data on paper accounts.
-    # We poll QQQ historical data instead to detect new completed bars.
-    logger.info(f"Listening to {heartbeat_ticker} 5-minute heartbeat via delayed polling...")
-    last_processed_time = None
-    
-    try:
-        while True:
-            broker.ib.sleep(15)  # Yield execution and sleep for 15 seconds
-            
-            # Fetch latest heartbeat bar
-            df_heartbeat = broker.get_historical_dataframe(heartbeat_ticker, duration='1 D', size='5 mins')
-            if df_heartbeat.empty:
-                continue
+    if broker.is_paper:
+        # Polling heartbeat loop - reqRealTimeBars does not support delayed data on paper accounts.
+        # We poll QQQ historical data instead to detect new completed bars.
+        logger.info(f"Listening to {heartbeat_ticker} 5-minute heartbeat via delayed polling...")
+        last_processed_time = None
+        
+        try:
+            while True:
+                broker.ib.sleep(15)  # Yield execution and sleep for 15 seconds
                 
-            latest_bar_time = df_heartbeat.index[-1]
-            
-            if last_processed_time is None:
-                last_processed_time = latest_bar_time
-                logger.info(f"Initialized heartbeat at bar time: {latest_bar_time}")
-                scan_and_execute()
-            elif latest_bar_time > last_processed_time:
-                last_processed_time = latest_bar_time
-                logger.info(f"🟢 Heartbeat: New 5-minute bar detected at {latest_bar_time}. Executing scan...")
-                scan_and_execute()
+                # Fetch latest heartbeat bar
+                df_heartbeat = broker.get_historical_dataframe(heartbeat_ticker, duration='1 D', size='5 mins')
+                if df_heartbeat.empty:
+                    continue
+                    
+                latest_bar_time = df_heartbeat.index[-1]
                 
-    except KeyboardInterrupt:
-        print("\n🛑 Shutting down execution arrays smoothly. Tracking state preserved.")
-        broker.ib.disconnect()
+                if last_processed_time is None:
+                    last_processed_time = latest_bar_time
+                    logger.info(f"Initialized heartbeat at bar time: {latest_bar_time}")
+                    scan_and_execute()
+                elif latest_bar_time > last_processed_time:
+                    last_processed_time = latest_bar_time
+                    logger.info(f"🟢 Heartbeat: New 5-minute bar detected at {latest_bar_time}. Executing scan...")
+                    scan_and_execute()
+                    
+        except KeyboardInterrupt:
+            print("\n🛑 Shutting down execution arrays smoothly. Tracking state preserved.")
+            broker.ib.disconnect()
+    else:
+        # Live accounts use push-based realtime bars for maximum precision and speed
+        logger.info(f"Listening to {heartbeat_ticker} 5-minute heartbeat via push-based real-time bars...")
+        heartbeat_contract = Stock(heartbeat_ticker, 'SMART', 'USD')
+        broker.ib.qualifyContracts(heartbeat_contract)
+        realtime_bars = broker.ib.reqRealTimeBars(heartbeat_contract, 5, 'TRADES', useRTH=True)
+        
+        def on_bar_update(bars, hasNewBar):
+            if hasNewBar:
+                scan_and_execute()
+
+        realtime_bars.updateEvent += on_bar_update
+        
+        try:
+            broker.ib.run()
+        except KeyboardInterrupt:
+            print("\n🛑 Shutting down execution arrays smoothly. Tracking state preserved.")
+            broker.ib.cancelRealTimeBars(realtime_bars)
+            broker.ib.disconnect()
 
 if __name__ == "__main__":
     run_live_bot()

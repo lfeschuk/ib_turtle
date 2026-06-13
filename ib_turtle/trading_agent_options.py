@@ -145,7 +145,18 @@ class IBBroker:
         try:
             self.ib.connect('127.0.0.1', self.port, clientId=self.client_id)
             logger.info(f"🟢 Options Automation Pipeline Online. Client ID: {self.client_id}")
-            self.ib.reqMarketDataType(3)  # Use delayed market data if not subscribed
+            
+            # Detect if paper account or live account
+            accounts = self.ib.managedAccounts()
+            self.is_paper = any(acc.startswith('DU') for acc in accounts)
+            
+            if self.is_paper:
+                logger.info("ℹ️ Paper Trading account detected. Requesting delayed market data (Type 3).")
+                self.ib.reqMarketDataType(3)
+            else:
+                logger.info("ℹ️ Live Trading account detected. Requesting real-time market data (Type 1).")
+                self.ib.reqMarketDataType(1)
+                
             return True
         except Exception as e:
             logger.error(f"❌ Connection to TWS failed: {e}")
