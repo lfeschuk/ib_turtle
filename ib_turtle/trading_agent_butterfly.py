@@ -242,7 +242,7 @@ def run_live_bot():
     
     wing_width = 10
     trade_qty = 1
-    min_premium_target = 7.50
+    min_premium_target = 8.00
     
     # Track state daily
     last_eval_date = None
