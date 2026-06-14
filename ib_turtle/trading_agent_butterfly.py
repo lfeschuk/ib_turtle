@@ -133,6 +133,15 @@ class IBBroker:
         price = ticker.last if not math.isnan(ticker.last) else ticker.close
         self.ib.cancelMktData(contract)
         return price
+        
+    def get_vix_price(self):
+        contract = Index('VIX', 'CBOE')
+        self.ib.qualifyContracts(contract)
+        ticker = self.ib.reqMktData(contract, '', False, False)
+        self.ib.sleep(1.5)
+        price = ticker.last if not math.isnan(ticker.last) else ticker.close
+        self.ib.cancelMktData(contract)
+        return price
 
     def resolve_option_contract(self, strike, right, expiry_str):
         contract = Option('SPX', expiry_str, strike, right, 'CBOE', multiplier='100', currency='USD')
@@ -241,8 +250,9 @@ def run_live_bot():
     logger.info(get_us_market_status())
     
     wing_width = 10
-    trade_qty = 1
     min_premium_target = 8.00
+    risk_allocation_pct = 0.05   # 5% capital risk allocation
+    max_vix_limit = 20.0        # Max VIX threshold
     
     # Track state daily
     last_eval_date = None
@@ -277,26 +287,43 @@ def run_live_bot():
                 if "20:20" <= current_time_str <= "20:40":
                     if not entered_today:
                         spx_price = broker.get_spx_price()
-                        if spx_price is not None and not math.isnan(spx_price):
-                            center_strike = round(spx_price / 5) * 5
-                            premium = broker.get_butterfly_premium(center_strike, wing_width)
-                            
-                            if premium is not None:
-                                # Update daily maximum premium seen
-                                if premium > max_premium_seen_today:
-                                    max_premium_seen_today = premium
+                        vix_price = broker.get_vix_price()
+                        
+                        if spx_price is not None and not math.isnan(spx_price) and vix_price is not None and not math.isnan(vix_price):
+                            # VIX filter check
+                            if vix_price <= max_vix_limit:
+                                center_strike = round(spx_price / 5) * 5
+                                premium = broker.get_butterfly_premium(center_strike, wing_width)
                                 
-                                logger.info(f"👀 Scanning premium: Current premium is ${premium:.2f} (Target: ${min_premium_target:.2f}, Max seen today: ${max_premium_seen_today:.2f})")
-                                
-                                if premium >= min_premium_target:
-                                    logger.info(f"🎯 TRIGGER: Premium ${premium:.2f} meets the ${min_premium_target:.2f} target inside the window! Executing entry...")
-                                    trade = broker.execute_iron_butterfly(center_strike=center_strike, wing_width=wing_width, action='ENTRY_CREDIT', qty=trade_qty)
-                                    if trade:
-                                        credit_filled = broker.fetch_combo_execution_premium(trade)
-                                        db.log_transaction("SPX", "BUTTERFLY_ENTRY", center_strike, credit_filled, trade_qty)
-                                        db.update_position_state("SPX", "ACTIVE", center_strike, credit_filled, trade_qty)
-                                        entered_today = True
-                                        db.print_visible_ledger()
+                                if premium is not None:
+                                    if premium > max_premium_seen_today:
+                                        max_premium_seen_today = premium
+                                    
+                                    # Calculate dynamic quantity based on 5% capital risk allocation
+                                    risk_per_contract = (wing_width - premium) * 100.0
+                                    max_risk_allowed = db.get_capital() * risk_allocation_pct
+                                    
+                                    trade_qty = max(1, int(math.floor(max_risk_allowed / risk_per_contract)))
+                                    # Cap based on actual margin/capital availability
+                                    max_margin_possible = max(1, int(math.floor(db.get_capital() / risk_per_contract)))
+                                    trade_qty = min(trade_qty, max_margin_possible)
+                                    
+                                    logger.info(f"👀 Scanning: VIX={vix_price:.2f} (Pass) | SPX={spx_price:.2f} | Strike={center_strike} | Premium=${premium:.2f} (Target: ${min_premium_target:.2f}, Qty: {trade_qty})")
+                                    
+                                    if premium >= min_premium_target:
+                                        logger.info(f"🎯 TRIGGER: Premium ${premium:.2f} meets target! Entering {trade_qty} contracts...")
+                                        trade = broker.execute_iron_butterfly(center_strike=center_strike, wing_width=wing_width, action='ENTRY_CREDIT', qty=trade_qty)
+                                        if trade:
+                                            credit_filled = broker.fetch_combo_execution_premium(trade)
+                                            db.log_transaction("SPX", "BUTTERFLY_ENTRY", center_strike, credit_filled, trade_qty)
+                                            db.update_position_state("SPX", "ACTIVE", center_strike, credit_filled, trade_qty)
+                                            entered_today = True
+                                            db.print_visible_ledger()
+                            else:
+                                if not skipped_today_logged:
+                                    logger.warning(f"🚫 VIX LIMIT FILTER: VIX is {vix_price:.2f} (above maximum {max_vix_limit:.2f} limit). Skipping today's trade.")
+                                    skipped_today_logged = True
+                                    entered_today = True  # Stop checking for the day
                                         
                 # If window has closed (passed 20:40 IST), and we haven't entered or logged a skip today
                 elif current_time_str > "20:40":
@@ -310,19 +337,20 @@ def run_live_bot():
             elif state["side"] == "ACTIVE":
                 target_strike = state["center_strike"]
                 entry_credit = state["credit"]
+                active_qty = state["qty"]
                 
                 # Emergency Time Cut-off (22:58 IST / 3:58 PM EST, 2 minutes before market close)
                 if now_ist.hour == 22 and now_ist.minute >= 58:
                     logger.warning(f"⚠️ TIME-CUT REACHED ({current_time_str} IST). Closing position before market close...")
                     
-                    broker.execute_iron_butterfly(center_strike=target_strike, wing_width=wing_width, action='EXIT_DEBIT', qty=trade_qty)
+                    broker.execute_iron_butterfly(center_strike=target_strike, wing_width=wing_width, action='EXIT_DEBIT', qty=active_qty)
                     
                     spx_price = broker.get_spx_price()
                     close_distance = abs(spx_price - target_strike) if spx_price else 10.0
                     
-                    final_pnl = (entry_credit - min(wing_width, close_distance)) * 100 * trade_qty
+                    final_pnl = (entry_credit - min(wing_width, close_distance)) * 100 * active_qty
                     
-                    db.log_transaction("SPX", "TIME_CUT_EXIT", target_strike, entry_credit, trade_qty, pnl=final_pnl)
+                    db.log_transaction("SPX", "TIME_CUT_EXIT", target_strike, entry_credit, active_qty, pnl=final_pnl)
                     db.update_position_state("SPX", "FLAT", 0.0, 0.0, 0)
                     db.print_visible_ledger()
 
