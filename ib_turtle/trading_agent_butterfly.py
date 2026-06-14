@@ -279,11 +279,11 @@ def run_live_bot():
                 logger.info(f"🌅 New trading day initialized: {today_str}")
 
             # ------------------------------------------------------------------
-            # ENTRY WINDOW LOGIC BLOCK (1:20 PM to 1:40 PM EST / 20:20 to 20:40 IST)
+            # ENTRY LOGIC BLOCK (Executes exactly at 1:30 PM EST / 20:30 IST)
             # ------------------------------------------------------------------
             if state["side"] == "FLAT" and not is_weekend:
-                # Check if we are inside the 20-minute window
-                if "20:20" <= current_time_str <= "20:40":
+                # Check if we are at the exact entry minute
+                if current_time_str == "20:30":
                     if not entered_today:
                         spx_price = broker.get_spx_price()
                         vix_price = broker.get_vix_price()
@@ -295,12 +295,9 @@ def run_live_bot():
                                 premium = broker.get_butterfly_premium(center_strike, wing_width)
                                 
                                 if premium is not None:
-                                    if premium > max_premium_seen_today:
-                                        max_premium_seen_today = premium
+                                    logger.info(f"👀 1:30 PM Entry Conditions: VIX={vix_price:.2f} (Pass) | SPX={spx_price:.2f} | Strike={center_strike} | Premium=${premium:.2f}")
+                                    logger.info(f"🎯 TRIGGER: Entering trade for {trade_qty} contract(s)...")
                                     
-                                    logger.info(f"👀 Scanning: VIX={vix_price:.2f} (Pass) | SPX={spx_price:.2f} | Strike={center_strike} | Premium=${premium:.2f} (Qty: {trade_qty})")
-                                    
-                                    logger.info(f"🎯 TRIGGER: Entering {trade_qty} contract(s)...")
                                     trade = broker.execute_iron_butterfly(center_strike=center_strike, wing_width=wing_width, action='ENTRY_CREDIT', qty=trade_qty)
                                     if trade:
                                         credit_filled = broker.fetch_combo_execution_premium(trade)
@@ -314,10 +311,10 @@ def run_live_bot():
                                     skipped_today_logged = True
                                     entered_today = True  # Stop checking for the day
                                         
-                # If window has closed (passed 20:40 IST), and we haven't entered or logged a skip today
-                elif current_time_str > "20:40":
+                # If time has passed 20:30 IST and we haven't entered or logged a skip today
+                elif current_time_str > "20:30":
                     if not entered_today and not skipped_today_logged:
-                        logger.warning(f"🚫 SKIP TRADE: 1:20-1:40 PM window closed. No trade executed today (max premium seen was ${max_premium_seen_today:.2f}).")
+                        logger.warning("🚫 SKIP TRADE: 1:30 PM entry time has passed. Skipping trade execution for today.")
                         skipped_today_logged = True
             
             # ------------------------------------------------------------------
