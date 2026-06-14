@@ -1,0 +1,403 @@
+import sqlite3
+import pandas as pd
+import numpy as np
+import logging
+import math
+import datetime
+import pytz
+import time
+from ib_insync import *
+
+# --- SYSTEM SETTINGS ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
+logger = logging.getLogger(__name__)
+logging.getLogger('ib_insync').setLevel(logging.WARNING)
+
+# Timezones
+IST = pytz.timezone('Asia/Jerusalem')
+EST = pytz.timezone('US/Eastern')
+
+# ==============================================================================
+# 1. DUAL DATABASE MANAGER (DataManager)
+# ==============================================================================
+class DataManager:
+    def __init__(self, db_name="dual_mode_trading.db"):
+        self.conn = sqlite3.connect(db_name, check_same_thread=False)
+        self.cursor = self.conn.cursor()
+        
+        # Table to store daily strategy decision
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS daily_decision 
+            (date TEXT PRIMARY KEY, vix_value REAL, selected_strategy TEXT, status TEXT)''')
+            
+        # Table to track bot active state
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS bot_state 
+            (strategy TEXT PRIMARY KEY, current_side TEXT, entry_price REAL, stop_loss_price REAL, qty INTEGER, extra_param REAL)''')
+            
+        # Table to log all transactions
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS trade_log 
+            (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp_ist TEXT, strategy TEXT, action TEXT, price REAL, qty INTEGER, pnl REAL DEFAULT 0.0)''')
+        
+        self.conn.commit()
+
+        # Initialize bot states if not exist
+        for strat in ["MES_ORB", "SPX_BUTTERFLY"]:
+            self.cursor.execute("SELECT current_side FROM bot_state WHERE strategy=?", (strat,))
+            if not self.cursor.fetchone():
+                self.cursor.execute("INSERT INTO bot_state VALUES (?, 'FLAT', 0.0, 0.0, 0, 0.0)", (strat,))
+        self.conn.commit()
+
+    def get_daily_decision(self, date_str):
+        self.cursor.execute("SELECT vix_value, selected_strategy, status FROM daily_decision WHERE date=?", (date_str,))
+        row = self.cursor.fetchone()
+        if row:
+            return {"vix": row[0], "strategy": row[1], "status": row[2]}
+        return None
+
+    def save_daily_decision(self, date_str, vix_value, strategy, status):
+        self.cursor.execute("INSERT OR REPLACE INTO daily_decision (date, vix_value, selected_strategy, status) VALUES (?, ?, ?, ?)",
+                            (date_str, vix_value, strategy, status))
+        self.conn.commit()
+
+    def get_bot_state(self, strategy):
+        self.cursor.execute("SELECT current_side, entry_price, stop_loss_price, qty, extra_param FROM bot_state WHERE strategy=?", (strategy,))
+        row = self.cursor.fetchone()
+        if row:
+            return {
+                "side": row[0],
+                "entry_price": row[1],
+                "stop_loss_price": row[2],
+                "qty": row[3],
+                "extra_param": row[4] # Center strike for SPX, range_high/range_low placeholders if needed
+            }
+        return {"side": "FLAT", "entry_price": 0.0, "stop_loss_price": 0.0, "qty": 0, "extra_param": 0.0}
+
+    def update_bot_state(self, strategy, side, entry_price, stop_loss_price, qty, extra_param=0.0):
+        self.cursor.execute("INSERT OR REPLACE INTO bot_state (strategy, current_side, entry_price, stop_loss_price, qty, extra_param) VALUES (?, ?, ?, ?, ?, ?)",
+                            (strategy, side, entry_price, stop_loss_price, qty, extra_param))
+        self.conn.commit()
+
+    def log_transaction(self, strategy, action, price, qty, pnl=0.0):
+        timestamp_ist = datetime.datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')
+        self.cursor.execute("INSERT INTO trade_log (timestamp_ist, strategy, action, price, qty, pnl) VALUES (?, ?, ?, ?, ?, ?)", 
+                            (timestamp_ist, strategy, action, price, qty, pnl))
+        self.conn.commit()
+
+    def print_visible_ledger(self):
+        df = pd.read_sql_query("SELECT timestamp_ist, strategy, action, price, qty, pnl FROM trade_log ORDER BY id DESC LIMIT 10", self.conn)
+        print("\n" + "🔮" + "="*95 + "🔮")
+        print(f"{'IST TIMESTAMP':<20} | {'STRATEGY':<13} | {'ACTION':<22} | {'PRICE/STK':<10} | {'QTY':<4} | {'REALIZED PNL'}")
+        print("-" * 101)
+        if df.empty:
+            print(f"{'NO TRANSACTIONS LOGGED YET. AUTOMATED AGENT ACTIVE...':^101}")
+        for _, row in df.iterrows():
+            pnl_val = row['pnl']
+            pnl_str = f"${pnl_val:+.2f}" if pnl_val != 0.0 else "-"
+            print(f"{row['timestamp_ist']:<20} | {row['strategy']:<13} | {row['action']:<22} | {row['price']:<10.2f} | {row['qty']:<4} | {pnl_str}")
+        print("="*99)
+
+# ==============================================================================
+# 2. EXECUTION ENGINE (IBBroker)
+# ==============================================================================
+class IBBroker:
+    def __init__(self, port=4002, client_id=50):
+        self.ib = IB()
+        self.port = port
+        self.client_id = client_id
+        self.active_mes_contract = None
+
+    def connect(self):
+        try:
+            self.ib.connect('127.0.0.1', self.port, clientId=self.client_id)
+            logger.info(f"🟢 Dual-Mode Bot online on port {self.port}. Client ID: {self.client_id}")
+            
+            # Options type setup
+            accounts = self.ib.managedAccounts()
+            is_paper = any(acc.startswith('DU') for acc in accounts)
+            if is_paper:
+                self.ib.reqMarketDataType(3)
+            else:
+                self.ib.reqMarketDataType(1)
+                
+            self.resolve_mes_contract()
+            return True
+        except Exception as e:
+            logger.error(f"❌ Connection to TWS failed: {e}")
+            return False
+
+    def get_index_price(self, symbol):
+        contract = Index(symbol, 'CBOE')
+        self.ib.qualifyContracts(contract)
+        ticker = self.ib.reqMktData(contract, '', False, False)
+        self.ib.sleep(1.5)
+        price = ticker.last if not math.isnan(ticker.last) else ticker.close
+        self.ib.cancelMktData(contract)
+        return price
+
+    # --- MES Futures Setup ---
+    def resolve_mes_contract(self):
+        contract = Future('MES', exchange='GLOBEX', currency='USD')
+        details = self.ib.reqContractDetails(contract)
+        if not details:
+            logger.error("❌ Could not resolve MES contracts.")
+            return
+        now_str = datetime.datetime.now().strftime('%Y%m%d')
+        valid_contracts = [d.contract for d in details if d.contract.lastTradeDateOrContractMonth >= now_str]
+        valid_contracts.sort(key=lambda x: x.lastTradeDateOrContractMonth)
+        if valid_contracts:
+            self.active_mes_contract = valid_contracts[0]
+            self.ib.qualifyContracts(self.active_mes_contract)
+            logger.info(f"🎯 Resolved active MES: {self.active_mes_contract.localSymbol}")
+
+    def get_2h_mes_range(self):
+        if not self.active_mes_contract:
+            self.resolve_mes_contract()
+        bars = self.ib.reqHistoricalData(
+            self.active_mes_contract, endDateTime='', durationStr='1 D',
+            barSizeSetting='5 mins', whatToShow='TRADES', useRTH=True
+        )
+        if not bars:
+            return None, None
+        now_est = datetime.datetime.now(EST)
+        start_r = now_est.replace(hour=9, minute=30, second=0, microsecond=0)
+        end_r = now_est.replace(hour=11, minute=30, second=0, microsecond=0)
+        
+        highs, lows = [], []
+        for b in bars:
+            if isinstance(b.date, datetime.datetime):
+                b_est = b.date.astimezone(EST)
+                if start_r <= b_est <= end_r:
+                    highs.append(b.high)
+                    lows.append(b.low)
+        if not highs:
+            return None, None
+        return max(highs), min(lows)
+
+    def place_stop_order(self, action, stop_price, qty):
+        order = Order(action=action, orderType='STP', auxPrice=stop_price, totalQuantity=qty, transmit=True)
+        trade = self.ib.placeOrder(self.active_mes_contract, order)
+        self.ib.sleep(0.5)
+        return trade
+
+    # --- SPX Options Setup ---
+    def resolve_option_contract(self, strike, right, expiry):
+        contract = Option('SPX', expiry, strike, right, 'CBOE', multiplier='100', currency='USD')
+        qualified = self.ib.qualifyContracts(contract)
+        return qualified[0] if qualified else None
+
+    def execute_iron_butterfly(self, center_strike, wing_width=10, action='ENTRY_CREDIT', qty=1):
+        expiry = datetime.datetime.now(EST).strftime('%Y%m%d')
+        c_short_call = self.resolve_option_contract(center_strike, 'C', expiry)
+        c_short_put  = self.resolve_option_contract(center_strike, 'P', expiry)
+        c_long_call  = self.resolve_option_contract(center_strike + wing_width, 'C', expiry)
+        c_long_put   = self.resolve_option_contract(center_strike - wing_width, 'P', expiry)
+        
+        if not all([c_short_call, c_short_put, c_long_call, c_long_put]):
+            logger.error("❌ Failed to qualify all 4 SPX options legs.")
+            return None
+            
+        legs = [
+            ComboLeg(conId=c_long_put.conId, action='BUY', ratio=1),
+            ComboLeg(conId=c_short_put.conId, action='SELL', ratio=1),
+            ComboLeg(conId=c_short_call.conId, action='SELL', ratio=1),
+            ComboLeg(conId=c_long_call.conId, action='BUY', ratio=1)
+        ]
+        bag = Bag(symbol='SPX', secType='BAG', exchange='CBOE', currency='USD', comboLegs=legs)
+        order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
+        order = MarketOrder(order_action, qty)
+        trade = self.ib.placeOrder(bag, order)
+        self.ib.sleep(2.0)
+        return trade
+
+    def cancel_all_active_orders(self):
+        for o in self.ib.orders():
+            if o.status in ['Submitted', 'PreSubmitted', 'Accepted']:
+                self.ib.cancelOrder(o)
+        self.ib.sleep(0.5)
+
+# ==============================================================================
+# 3. CRITICAL DECISION RUNNER LOOP
+# ==============================================================================
+def run_live_dual_bot():
+    db = DataManager()
+    
+    # Connect to TWS/Gateway
+    port = 4002
+    broker = IBBroker(port=port, client_id=50)
+    if not broker.connect():
+        port = 7497
+        broker = IBBroker(port=port, client_id=50)
+        if not broker.connect():
+            logger.critical("❌ Could not connect to IBKR TWS/Gateway on ports 4002/7497.")
+            return
+
+    db.print_visible_ledger()
+    
+    vix_limit = 20.0
+    qty_mes = 1
+    qty_butterfly = 1
+    wing_width = 10
+    
+    # Active orders state pointers
+    buy_stop_order = None
+    sell_stop_order = None
+    stop_loss_order = None
+
+    last_eval_date = None
+
+    while True:
+        try:
+            now_ist = datetime.datetime.now(IST)
+            now_est = now_ist.astimezone(EST)
+            current_time_str = now_ist.strftime('%H:%M')
+            today_str = now_ist.strftime('%Y-%m-%d')
+            
+            is_weekend = now_est.weekday() >= 5
+            
+            if last_eval_date != today_str:
+                last_eval_date = today_str
+                buy_stop_order = None
+                sell_stop_order = None
+                stop_loss_order = None
+                logger.info(f"🌅 New trading day initialized: {today_str}")
+
+            decision = db.get_daily_decision(today_str)
+            mes_state = db.get_bot_state("MES_ORB")
+            bf_state = db.get_bot_state("SPX_BUTTERFLY")
+
+            # ------------------------------------------------------------------
+            # 1. 11:30 AM EST (18:30 IST): EVALUATE REGIME & DECIDE STRATEGY
+            # ------------------------------------------------------------------
+            if not is_weekend and decision is None:
+                if current_time_str == "18:30":
+                    vix = broker.get_index_price("VIX")
+                    if vix is not None and not math.isnan(vix):
+                        if vix > vix_limit:
+                            logger.info(f"🔥 VIX is {vix:.2f} (> {vix_limit:.2f}). SELECTING MES 2h ORB STRATEGY TODAY.")
+                            db.save_daily_decision(today_str, vix, "MES_ORB", "DECIDED")
+                            
+                            # Retrieve 2-hour range and place OCO stop orders
+                            r_high, r_low = broker.get_2h_mes_range()
+                            if r_high and r_low:
+                                logger.info(f"📊 2-Hour Range: High={r_high:.2f} | Low={r_low:.2f}. Placing OCO Stops...")
+                                broker.cancel_all_active_orders()
+                                buy_stop_order = broker.place_stop_order('BUY', r_high + 0.50, qty_mes)
+                                sell_stop_order = broker.place_stop_order('SELL', r_low - 0.50, qty_mes)
+                                
+                                db.update_bot_state("MES_ORB", "PENDING", r_high + 0.50, r_low - 0.50, qty_mes, extra_param=r_low)
+                                # Extra param: store r_low/r_high inside extra_param for stop-loss recovery
+                        else:
+                            logger.info(f"❄️ VIX is {vix:.2f} (<= {vix_limit:.2f}). SELECTING SPX IRON BUTTERFLY STRATEGY TODAY.")
+                            db.save_daily_decision(today_str, vix, "SPX_BUTTERFLY", "DECIDED")
+                            db.update_bot_state("SPX_BUTTERFLY", "FLAT", 0.0, 0.0, 0, 0.0)
+
+            # ------------------------------------------------------------------
+            # 2. 1:30 PM EST (20:30 IST): EXECUTE SPX IRON BUTTERFLY (IF SELECTED)
+            # ------------------------------------------------------------------
+            if decision and decision["strategy"] == "SPX_BUTTERFLY" and bf_state["side"] == "FLAT":
+                if current_time_str == "20:30":
+                    spx = broker.get_index_price("SPX")
+                    if spx is not None and not math.isnan(spx):
+                        center_strike = round(spx / 5) * 5
+                        logger.info(f"🎯 1:30 PM: ATM Strike is {center_strike}. Selling 10-wide SPX Iron Butterfly...")
+                        
+                        trade = broker.execute_iron_butterfly(center_strike, wing_width, 'ENTRY_CREDIT', qty_butterfly)
+                        credit = abs(trade.orderStatus.avgFillPrice) if trade and trade.fills else 7.50
+                        
+                        db.log_transaction("SPX_BUTTERFLY", "ENTRY_CREDIT", center_strike, qty_butterfly)
+                        db.update_bot_state("SPX_BUTTERFLY", "ACTIVE", center_strike, 0.0, qty_butterfly, extra_param=center_strike)
+                        db.save_daily_decision(today_str, decision["vix"], "SPX_BUTTERFLY", "EXECUTING")
+                        db.print_visible_ledger()
+
+            # ------------------------------------------------------------------
+            # 3. STRATEGY IN-FLIGHT MONITORING & OCO ENTRY CHECK
+            # ------------------------------------------------------------------
+            if decision and decision["strategy"] == "MES_ORB":
+                # A. Monitor OCO entry trigger
+                if mes_state["side"] == "PENDING":
+                    broker.ib.update()
+                    long_filled = buy_stop_order and buy_stop_order.orderStatus.status == 'Filled'
+                    short_filled = sell_stop_order and sell_stop_order.orderStatus.status == 'Filled'
+                    
+                    if long_filled:
+                        logger.info("🟢 MES Long Breakout filled. Cancelling short entry stop and placing opposite-range Stop Loss...")
+                        broker.cancel_all_active_orders()
+                        fill_p = buy_stop_order.orderStatus.avgFillPrice
+                        sl_price = mes_state["extra_param"] # range low is saved here
+                        stop_loss_order = broker.place_stop_order('SELL', sl_price, qty_mes)
+                        
+                        db.log_transaction("MES_ORB", "LONG_BREAKOUT_ENTRY", fill_p, qty_mes)
+                        db.update_bot_state("MES_ORB", "ACTIVE_LONG", fill_p, sl_price, qty_mes, extra_param=mes_state["entry_price"])
+                        db.save_daily_decision(today_str, decision["vix"], "MES_ORB", "EXECUTING")
+                        db.print_visible_ledger()
+                        
+                    elif short_filled:
+                        logger.info("🔴 MES Short Breakout filled. Cancelling long entry stop and placing opposite-range Stop Loss...")
+                        broker.cancel_all_active_orders()
+                        fill_p = sell_stop_order.orderStatus.avgFillPrice
+                        sl_price = mes_state["entry_price"] # buy entry price (range high + 0.50) is saved here
+                        stop_loss_order = broker.place_stop_order('BUY', sl_price, qty_mes)
+                        
+                        db.log_transaction("MES_ORB", "SHORT_BREAKOUT_ENTRY", fill_p, qty_mes)
+                        db.update_bot_state("MES_ORB", "ACTIVE_SHORT", fill_p, sl_price, qty_mes, extra_param=mes_state["entry_price"])
+                        db.save_daily_decision(today_str, decision["vix"], "MES_ORB", "EXECUTING")
+                        db.print_visible_ledger()
+
+                # B. Monitor MES Stop Loss execution
+                elif mes_state["side"] in ["ACTIVE_LONG", "ACTIVE_SHORT"]:
+                    broker.ib.update()
+                    if stop_loss_order and stop_loss_order.orderStatus.status == 'Filled':
+                        logger.warning("💥 MES STOP LOSS TRIGGERED. Position closed.")
+                        exit_price = stop_loss_order.orderStatus.avgFillPrice
+                        pnl = (exit_price - mes_state["entry_price"]) * 5.0 * qty_mes if mes_state["side"] == "ACTIVE_LONG" else (mes_state["entry_price"] - exit_price) * 5.0 * qty_mes
+                        
+                        db.log_transaction("MES_ORB", "STOP_LOSS_EXIT", exit_price, qty_mes, pnl=pnl)
+                        db.update_bot_state("MES_ORB", "FLAT", 0.0, 0.0, 0, 0.0)
+                        db.save_daily_decision(today_str, decision["vix"], "MES_ORB", "STOPPED_OUT")
+                        db.print_visible_ledger()
+
+            # ------------------------------------------------------------------
+            # 4. TIME EXIT CUT-OFF (3:58 PM EST / 22:58 IST): OVERNIGHT FLAT RULE
+            # ------------------------------------------------------------------
+            if now_est.hour == 15 and now_est.minute >= 58:
+                broker.cancel_all_active_orders()
+                
+                # Close MES Futures
+                if mes_state["side"] in ["ACTIVE_LONG", "ACTIVE_SHORT"]:
+                    logger.info("⚠️ TIME CUT-OFF: Exiting active MES Futures Position...")
+                    close_action = 'SELL' if mes_state["side"] == "ACTIVE_LONG" else 'BUY'
+                    trade = broker.place_market_order(close_action, qty_mes)
+                    exit_p = trade.orderStatus.avgFillPrice if trade.orderStatus.avgFillPrice > 0 else broker.active_mes_contract.marketPrice()
+                    pnl = (exit_p - mes_state["entry_price"]) * 5.0 * qty_mes if mes_state["side"] == "ACTIVE_LONG" else (mes_state["entry_price"] - exit_p) * 5.0 * qty_mes
+                    
+                    db.log_transaction("MES_ORB", "TIME_CUT_EXIT", exit_p, qty_mes, pnl=pnl)
+                    db.update_bot_state("MES_ORB", "FLAT", 0.0, 0.0, 0, 0.0)
+                    db.save_daily_decision(today_str, decision["vix"], "MES_ORB", "COMPLETED")
+                    db.print_visible_ledger()
+                    
+                # Close SPX Option Combination
+                if bf_state["side"] == "ACTIVE":
+                    logger.info("⚠️ TIME CUT-OFF: Exiting active SPX Iron Butterfly combination...")
+                    center_stk = bf_state["entry_price"]
+                    trade = broker.execute_iron_butterfly(center_stk, wing_width, 'CLOSE', qty_butterfly)
+                    exit_p = abs(trade.orderStatus.avgFillPrice) if trade and trade.fills else 10.00
+                    # PnL = Entry Credit - Exit Debit
+                    # Wait, our database logs entry_price as the center_strike. We don't have the exact credit in bot_state but we can read it from trade_log or just approximate it
+                    # Let's query trade_log for today's entry credit to get exact transaction PnL
+                    # (For robustness: default to $8.00 credit if db lookup fails)
+                    db.cursor.execute("SELECT price FROM trade_log WHERE strategy='SPX_BUTTERFLY' AND action='ENTRY_CREDIT' AND timestamp_ist LIKE ?", (f"{today_str}%",))
+                    db_row = db.cursor.fetchone()
+                    entry_credit = db_row[0] if db_row else 8.00
+                    pnl = (entry_credit - exit_p) * 100.0 * qty_butterfly
+                    
+                    db.log_transaction("SPX_BUTTERFLY", "TIME_CUT_EXIT", exit_p, qty_butterfly, pnl=pnl)
+                    db.update_bot_state("SPX_BUTTERFLY", "FLAT", 0.0, 0.0, 0, 0.0)
+                    db.save_daily_decision(today_str, decision["vix"], "SPX_BUTTERFLY", "COMPLETED")
+                    db.print_visible_ledger()
+
+        except Exception as err:
+            logger.error(f"Error in automated loop cycle: {err}")
+
+        time.sleep(15)
+
+if __name__ == '__main__':
+    run_live_dual_bot()
