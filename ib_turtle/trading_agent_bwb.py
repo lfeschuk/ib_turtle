@@ -1,0 +1,238 @@
+import sqlite3
+import pandas as pd
+import numpy as np
+import logging
+import math
+import datetime
+import pytz
+import time
+from ib_insync import *
+
+# --- SYSTEM SETTINGS ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
+logger = logging.getLogger(__name__)
+logging.getLogger('ib_insync').setLevel(logging.WARNING)
+
+# Timezones
+IST = pytz.timezone('Asia/Jerusalem')
+EST = pytz.timezone('US/Eastern')
+
+# ==============================================================================
+# 1. STATE ARCHITECTURE (DataManager)
+# ==============================================================================
+class DataManager:
+    def __init__(self, db_name="spx_bwb_state.db"):
+        self.conn = sqlite3.connect(db_name, check_same_thread=False)
+        self.cursor = self.conn.cursor()
+        
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS bot_state 
+            (ticker TEXT PRIMARY KEY, current_side TEXT, entry_strike REAL, entry_credit REAL, qty INTEGER)''')
+        
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS trade_log 
+            (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp_ist TEXT, ticker TEXT, action TEXT, strike REAL, price REAL, qty INTEGER, pnl REAL DEFAULT 0.0)''')
+        self.conn.commit()
+
+        # Initialize BWB state
+        self.cursor.execute("SELECT current_side FROM bot_state WHERE ticker='SPX_BWB'")
+        if not self.cursor.fetchone():
+            self.cursor.execute("INSERT INTO bot_state VALUES ('SPX_BWB', 'FLAT', 0.0, 0.0, 0)")
+            self.conn.commit()
+
+    def get_position_state(self):
+        self.cursor.execute("SELECT current_side, entry_strike, entry_credit, qty FROM bot_state WHERE ticker='SPX_BWB'")
+        row = self.cursor.fetchone()
+        if row:
+            return {"side": row[0], "strike": row[1], "credit": row[2], "qty": row[3]}
+        return {"side": "FLAT", "strike": 0.0, "credit": 0.0, "qty": 0}
+
+    def update_position_state(self, side, strike, credit, qty):
+        self.cursor.execute("INSERT OR REPLACE INTO bot_state (ticker, current_side, entry_strike, entry_credit, qty) VALUES ('SPX_BWB', ?, ?, ?, ?)",
+                            (side, strike, credit, qty))
+        self.conn.commit()
+
+    def log_transaction(self, action, strike, price, qty, pnl=0.0):
+        timestamp_ist = datetime.datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')
+        self.cursor.execute("INSERT INTO trade_log (timestamp_ist, ticker, action, strike, price, qty, pnl) VALUES (?, 'SPX_BWB', ?, ?, ?, ?, ?)", 
+                            (timestamp_ist, action, strike, price, qty, pnl))
+        self.conn.commit()
+
+    def print_visible_ledger(self):
+        df = pd.read_sql_query("SELECT timestamp_ist, action, strike, price, qty, pnl FROM trade_log ORDER BY id DESC LIMIT 10", self.conn)
+        print("\n" + "🍗" + "="*85 + "🍗")
+        print(f"{'IST TIMESTAMP':<20} | {'ACTION':<22} | {'ATM STRIKE':<10} | {'PRICE':<8} | {'QTY':<4} | {'REALIZED PNL'}")
+        print("-" * 91)
+        if df.empty:
+            print(f"{'NO TRANSACTIONS LOGGED YET. AWAITING 1:30 PM EST ENTRY WINDOW...':^91}")
+        for _, row in df.iterrows():
+            pnl_val = row['pnl']
+            pnl_str = f"${pnl_val:+.2f}" if pnl_val != 0.0 else "-"
+            print(f"{row['timestamp_ist']:<20} | {row['action']:<22} | {row['strike']:<10.1f} | {row['price']:<8.2f} | {row['qty']:<4} | {pnl_str}")
+        print("="*89)
+
+# ==============================================================================
+# 2. OPTIONS EXECUTION INTERFACE (IBBroker)
+# ==============================================================================
+class IBBroker:
+    def __init__(self, port=4002, client_id=60):
+        self.ib = IB()
+        self.port = port
+        self.client_id = client_id
+
+    def connect(self):
+        try:
+            self.ib.connect('127.0.0.1', self.port, clientId=self.client_id)
+            logger.info(f"🟢 SPX BWB Agent online on port {self.port}. Client ID: {self.client_id}")
+            
+            # Paper trading check
+            accounts = self.ib.managedAccounts()
+            is_paper = any(acc.startswith('DU') for acc in accounts)
+            if is_paper:
+                self.ib.reqMarketDataType(3)
+            else:
+                self.ib.reqMarketDataType(1)
+            return True
+        except Exception as e:
+            logger.error(f"❌ Connection to TWS failed: {e}")
+            return False
+
+    def get_index_price(self, symbol):
+        contract = Index(symbol, 'CBOE')
+        self.ib.qualifyContracts(contract)
+        ticker = self.ib.reqMktData(contract, '', False, False)
+        self.ib.sleep(1.5)
+        price = ticker.last if not math.isnan(ticker.last) else ticker.close
+        self.ib.cancelMktData(contract)
+        return price
+
+    def resolve_option_contract(self, strike, right, expiry):
+        contract = Option('SPX', expiry, strike, right, 'CBOE', multiplier='100', currency='USD')
+        qualified = self.ib.qualifyContracts(contract)
+        return qualified[0] if qualified else None
+
+    def execute_put_bwb(self, center_strike, upper_gap=10, lower_gap=20, action='ENTRY_CREDIT', qty=1):
+        expiry = datetime.datetime.now(EST).strftime('%Y%m%d')
+        
+        # Resolve BWB Put Legs:
+        # Long 1: ATM + upper_gap
+        # Short 2: ATM
+        # Long 1: ATM - lower_gap
+        c_long_upper = self.resolve_option_contract(center_strike + upper_gap, 'P', expiry)
+        c_short      = self.resolve_option_contract(center_strike, 'P', expiry)
+        c_long_lower = self.resolve_option_contract(center_strike - lower_gap, 'P', expiry)
+        
+        if not all([c_long_upper, c_short, c_long_lower]):
+            logger.error("❌ Failed to qualify all 3 Put BWB options legs.")
+            return None
+            
+        legs = [
+            ComboLeg(conId=c_long_lower.conId, action='BUY', ratio=1),
+            ComboLeg(conId=c_short.conId, action='SELL', ratio=2),
+            ComboLeg(conId=c_long_upper.conId, action='BUY', ratio=1)
+        ]
+        
+        bag = Bag(symbol='SPX', secType='BAG', exchange='CBOE', currency='USD', comboLegs=legs)
+        
+        # To enter (sell combination for net credit): place 'BUY' order (combos priced negatively)
+        # To close: place 'SELL' order
+        order_action = 'BUY' if action == 'ENTRY_CREDIT' else 'SELL'
+        order = MarketOrder(order_action, qty)
+        
+        trade = self.ib.placeOrder(bag, order)
+        self.ib.sleep(2.0)
+        return trade
+
+# ==============================================================================
+# 3. RUNNER LOOP
+# ==============================================================================
+def run_live_bwb_bot():
+    db = DataManager()
+    
+    port = 4002
+    broker = IBBroker(port=port, client_id=60)
+    if not broker.connect():
+        port = 7497
+        broker = IBBroker(port=port, client_id=60)
+        if not broker.connect():
+            logger.critical("❌ Could not connect to IBKR TWS/Gateway on ports 4002/7497.")
+            return
+            
+    db.print_visible_ledger()
+    
+    max_vix_limit = 20.0
+    trade_qty = 1
+    upper_g = 10
+    lower_g = 20
+    
+    last_eval_date = None
+    entered_today = False
+    skipped_today = False
+
+    while True:
+        try:
+            now_ist = datetime.datetime.now(IST)
+            now_est = now_ist.astimezone(EST)
+            current_time_str = now_ist.strftime('%H:%M')
+            today_str = now_ist.strftime('%Y-%m-%d')
+            
+            is_weekend = now_est.weekday() >= 5
+            
+            state = db.get_position_state()
+
+            # Reset daily trackers
+            if last_eval_date != today_str:
+                last_eval_date = today_str
+                entered_today = False
+                skipped_today = False
+                logger.info(f"🌅 New BWB trading day initialized: {today_str}")
+
+            # ------------------------------------------------------------------
+            # ENTRY BLOCK (Executes exactly at 1:30 PM EST / 20:30 IST)
+            # ------------------------------------------------------------------
+            if state["side"] == "FLAT" and not is_weekend and not skipped_today:
+                if current_time_str == "20:30":
+                    if not entered_today:
+                        vix = broker.get_index_price("VIX")
+                        if vix is not None and not math.isnan(vix):
+                            if vix <= max_vix_limit:
+                                spx = broker.get_index_price("SPX")
+                                if spx is not None and not math.isnan(spx):
+                                    center_strike = round(spx / 5) * 5
+                                    logger.info(f"🎯 1:30 PM BWB Entry: VIX={vix:.2f} | SPX={spx:.2f} | ATM Strike={center_strike}")
+                                    
+                                    trade = broker.execute_put_bwb(center_strike, upper_g, lower_g, 'ENTRY_CREDIT', trade_qty)
+                                    credit = abs(trade.orderStatus.avgFillPrice) if trade and trade.fills else 2.00
+                                    
+                                    db.log_transaction("ENTRY_CREDIT", center_strike, credit, trade_qty)
+                                    db.update_position_state("ACTIVE", center_strike, credit, trade_qty)
+                                    entered_today = True
+                                    db.print_visible_ledger()
+                            else:
+                                logger.warning(f"🚫 VIX is {vix:.2f} (above {max_vix_limit:.2f}). Skipping BWB entry today.")
+                                skipped_today = True
+
+            # ------------------------------------------------------------------
+            # EXIT BLOCK (Executes exactly at 3:58 PM EST / 22:58 IST)
+            # ------------------------------------------------------------------
+            if state["side"] == "ACTIVE":
+                if now_est.hour == 15 and now_est.minute >= 58:
+                    logger.info("⚠️ TIME CUT-OFF REACHED. Closing Put BWB position at market...")
+                    
+                    trade = broker.execute_put_bwb(state["strike"], upper_g, lower_g, 'CLOSE', trade_qty)
+                    exit_price = abs(trade.orderStatus.avgFillPrice) if trade and trade.fills else 0.0
+                    
+                    # PnL = Entry Credit - Exit Cost
+                    # Note: Since the combo is priced negatively (credit), at expiration/close the exit debit is positive.
+                    # PnL = (Entry Credit - Exit Debit) * 100
+                    pnl = (state["credit"] - exit_price) * 100.0 * trade_qty
+                    
+                    db.log_transaction("TIME_CUT_EXIT", state["strike"], exit_price, trade_qty, pnl=pnl)
+                    db.update_position_state("FLAT", 0.0, 0.0, 0)
+                    db.print_visible_ledger()
+
+        except Exception as err:
+            logger.error(f"Error in BWB loop cycle: {err}")
+
+        time.sleep(15)
+
+if __name__ == '__main__':
+    run_live_bwb_bot()
