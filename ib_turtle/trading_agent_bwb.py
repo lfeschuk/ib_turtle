@@ -161,7 +161,7 @@ def run_live_bwb_bot():
     max_vix_limit = 20.0
     trade_qty = 1
     upper_g = 10
-    lower_g = 20
+    lower_g = 15
     
     last_eval_date = None
     entered_today = False
