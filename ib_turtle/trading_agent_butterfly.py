@@ -250,8 +250,7 @@ def run_live_bot():
     logger.info(get_us_market_status())
     
     wing_width = 10
-    min_premium_target = 8.00
-    risk_allocation_pct = 0.05   # 5% capital risk allocation
+    trade_qty = 1               # Fixed 1 contract per trade
     max_vix_limit = 20.0        # Max VIX threshold
     
     # Track state daily
@@ -299,26 +298,16 @@ def run_live_bot():
                                     if premium > max_premium_seen_today:
                                         max_premium_seen_today = premium
                                     
-                                    # Calculate dynamic quantity based on 5% capital risk allocation
-                                    risk_per_contract = (wing_width - premium) * 100.0
-                                    max_risk_allowed = db.get_capital() * risk_allocation_pct
+                                    logger.info(f"👀 Scanning: VIX={vix_price:.2f} (Pass) | SPX={spx_price:.2f} | Strike={center_strike} | Premium=${premium:.2f} (Qty: {trade_qty})")
                                     
-                                    trade_qty = max(1, int(math.floor(max_risk_allowed / risk_per_contract)))
-                                    # Cap based on actual margin/capital availability
-                                    max_margin_possible = max(1, int(math.floor(db.get_capital() / risk_per_contract)))
-                                    trade_qty = min(trade_qty, max_margin_possible)
-                                    
-                                    logger.info(f"👀 Scanning: VIX={vix_price:.2f} (Pass) | SPX={spx_price:.2f} | Strike={center_strike} | Premium=${premium:.2f} (Target: ${min_premium_target:.2f}, Qty: {trade_qty})")
-                                    
-                                    if premium >= min_premium_target:
-                                        logger.info(f"🎯 TRIGGER: Premium ${premium:.2f} meets target! Entering {trade_qty} contracts...")
-                                        trade = broker.execute_iron_butterfly(center_strike=center_strike, wing_width=wing_width, action='ENTRY_CREDIT', qty=trade_qty)
-                                        if trade:
-                                            credit_filled = broker.fetch_combo_execution_premium(trade)
-                                            db.log_transaction("SPX", "BUTTERFLY_ENTRY", center_strike, credit_filled, trade_qty)
-                                            db.update_position_state("SPX", "ACTIVE", center_strike, credit_filled, trade_qty)
-                                            entered_today = True
-                                            db.print_visible_ledger()
+                                    logger.info(f"🎯 TRIGGER: Entering {trade_qty} contract(s)...")
+                                    trade = broker.execute_iron_butterfly(center_strike=center_strike, wing_width=wing_width, action='ENTRY_CREDIT', qty=trade_qty)
+                                    if trade:
+                                        credit_filled = broker.fetch_combo_execution_premium(trade)
+                                        db.log_transaction("SPX", "BUTTERFLY_ENTRY", center_strike, credit_filled, trade_qty)
+                                        db.update_position_state("SPX", "ACTIVE", center_strike, credit_filled, trade_qty)
+                                        entered_today = True
+                                        db.print_visible_ledger()
                             else:
                                 if not skipped_today_logged:
                                     logger.warning(f"🚫 VIX LIMIT FILTER: VIX is {vix_price:.2f} (above maximum {max_vix_limit:.2f} limit). Skipping today's trade.")
@@ -328,7 +317,7 @@ def run_live_bot():
                 # If window has closed (passed 20:40 IST), and we haven't entered or logged a skip today
                 elif current_time_str > "20:40":
                     if not entered_today and not skipped_today_logged:
-                        logger.warning(f"🚫 SKIP TRADE: 1:20-1:40 PM window closed. Max premium seen today was ${max_premium_seen_today:.2f} (below the required ${min_premium_target:.2f} target). Skipping today.")
+                        logger.warning(f"🚫 SKIP TRADE: 1:20-1:40 PM window closed. No trade executed today (max premium seen was ${max_premium_seen_today:.2f}).")
                         skipped_today_logged = True
             
             # ------------------------------------------------------------------
