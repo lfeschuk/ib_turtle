@@ -189,7 +189,8 @@ def run_live_bwb_bot():
             # ENTRY BLOCK (Executes exactly at 1:30 PM EST / 20:30 IST)
             # ------------------------------------------------------------------
             if state["side"] == "FLAT" and not is_weekend and not skipped_today:
-                if current_time_str == "20:30":
+                # Trigger at 20:30 IST, or catch up if bot started late during the afternoon (before 21:00 IST)
+                if current_time_str == "20:30" or ("20:30" < current_time_str < "21:00"):
                     if not entered_today:
                         vix = broker.get_index_price("VIX")
                         if vix is not None and not math.isnan(vix):

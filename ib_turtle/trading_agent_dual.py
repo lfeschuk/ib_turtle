@@ -268,7 +268,8 @@ def run_live_dual_bot():
             # 1. 11:30 AM EST (18:30 IST): EVALUATE REGIME & DECIDE STRATEGY
             # ------------------------------------------------------------------
             if not is_weekend and decision is None:
-                if current_time_str == "18:30":
+                # Trigger at exactly 18:30 IST, or catch up if bot started late during the trading day (before market close)
+                if current_time_str == "18:30" or ("18:30" < current_time_str < "22:55"):
                     vix = broker.get_index_price("VIX")
                     if vix is not None and not math.isnan(vix):
                         if vix > vix_limit:
@@ -284,7 +285,6 @@ def run_live_dual_bot():
                                 sell_stop_order = broker.place_stop_order('SELL', r_low - 0.50, qty_mes)
                                 
                                 db.update_bot_state("MES_ORB", "PENDING", r_high + 0.50, r_low - 0.50, qty_mes, extra_param=r_low)
-                                # Extra param: store r_low/r_high inside extra_param for stop-loss recovery
                         else:
                             logger.info(f"❄️ VIX is {vix:.2f} (<= {vix_limit:.2f}). SELECTING SPX IRON BUTTERFLY STRATEGY TODAY.")
                             db.save_daily_decision(today_str, vix, "SPX_BUTTERFLY", "DECIDED")
