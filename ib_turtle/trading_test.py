@@ -46,27 +46,27 @@ def resolve_option_contract(ib, strike, right, expiry):
 
 def get_leg_mid_price(ib, contract):
     ticker = ib.reqMktData(contract, '', False, False)
-    ib.sleep(2.0)
+    # Poll for up to 5 seconds to allow delayed feed to populate
+    for _ in range(10):
+        ib.sleep(0.5)
+        if not math.isnan(ticker.bid) and not math.isnan(ticker.ask) and ticker.bid > 0 and ticker.ask > 0:
+            break
+            
     bid = ticker.bid
     ask = ticker.ask
     ib.cancelMktData(contract)
     
     if not math.isnan(bid) and not math.isnan(ask) and bid > 0 and ask > 0:
         return round((bid + ask) / 2, 2)
-        
-    # Fallback to historical 1-minute bar midpoint
-    bars = ib.reqHistoricalData(
-        contract, endDateTime='', durationStr='600 S',
-        barSizeSetting='1 min', whatToShow='MIDPOINT', useRTH=True
-    )
-    if bars:
-        return round(bars[-1].close, 2)
-    return 0.0
+    return None
 
 def calculate_combo_mid_price(ib, legs_with_contracts):
     net_mid = 0.0
     for leg, contract in legs_with_contracts:
         price = get_leg_mid_price(ib, contract)
+        if price is None:
+            logger.warning(f"⚠️ Could not retrieve bid/ask quotes for leg {contract.localSymbol}.")
+            return None
         factor = 1.0 if leg.action.upper() == 'BUY' else -1.0
         logger.info(f"   Leg {contract.localSymbol}: {leg.action} (Ratio {leg.ratio}) | Est. Mid Price = {price}")
         net_mid += leg.ratio * factor * price
@@ -101,19 +101,20 @@ def execute_iron_butterfly_limit(ib, center_strike, wing_width=10, action='ENTRY
     logger.info("Calculating Iron Butterfly Net Mid Price...")
     lmt_price = calculate_combo_mid_price(ib, legs_map)
     
-    # If closing, we buy back the combo (reverse the sign)
-    if action == 'CLOSE':
-        # Closing is a BUY order. We pay the positive net debit.
-        # But wait, if we calculated net SELL price, buying it back is the same value but positive.
-        lmt_price = abs(lmt_price)
-        
     bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
     order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
     
-    order = LimitOrder(order_action, qty, lmtPrice=lmt_price, tif='DAY')
+    if lmt_price is not None:
+        if action == 'CLOSE':
+            lmt_price = abs(lmt_price)
+        order = LimitOrder(order_action, qty, lmtPrice=lmt_price, tif='DAY')
+        logger.info(f"Submitting Iron Butterfly Limit Order: {order_action} {qty} combo @ Limit Price: {lmt_price}...")
+    else:
+        # Fallback to Market Order if pricing fails
+        order = MarketOrder(order_action, qty, tif='DAY')
+        logger.warning(f"⚠️ Pricing failed. Falling back to Market Order for {order_action} {qty} combo...")
+        
     trade = ib.placeOrder(bag, order)
-    
-    logger.info(f"Submitting Iron Butterfly Limit Order: {order_action} {qty} combo @ Limit Price: {lmt_price}...")
     while not trade.isDone():
         ib.sleep(0.5)
     return trade
@@ -143,16 +144,20 @@ def execute_put_bwb_limit(ib, center_strike, upper_gap=10, lower_gap=20, action=
     logger.info("Calculating Put BWB Net Mid Price...")
     lmt_price = calculate_combo_mid_price(ib, legs_map)
     
-    if action == 'CLOSE':
-        lmt_price = abs(lmt_price)
-        
     bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
     order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
     
-    order = LimitOrder(order_action, qty, lmtPrice=lmt_price, tif='DAY')
+    if lmt_price is not None:
+        if action == 'CLOSE':
+            lmt_price = abs(lmt_price)
+        order = LimitOrder(order_action, qty, lmtPrice=lmt_price, tif='DAY')
+        logger.info(f"Submitting BWB Limit Order: {order_action} {qty} combo @ Limit Price: {lmt_price}...")
+    else:
+        # Fallback to Market Order if pricing fails
+        order = MarketOrder(order_action, qty, tif='DAY')
+        logger.warning(f"⚠️ Pricing failed. Falling back to Market Order for {order_action} {qty} combo...")
+        
     trade = ib.placeOrder(bag, order)
-    
-    logger.info(f"Submitting BWB Limit Order: {order_action} {qty} combo @ Limit Price: {lmt_price}...")
     while not trade.isDone():
         ib.sleep(0.5)
     return trade
