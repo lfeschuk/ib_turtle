@@ -62,7 +62,7 @@ def execute_iron_butterfly(ib, center_strike, wing_width=10, action='ENTRY_CREDI
     ]
     bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
     order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
-    order = MarketOrder(order_action, qty)
+    order = MarketOrder(order_action, qty, tif='DAY')
     trade = ib.placeOrder(bag, order)
     
     logger.info(f"Submitting Iron Butterfly Order: {order_action} {qty} combo...")
@@ -87,7 +87,7 @@ def execute_put_bwb(ib, center_strike, upper_gap=10, lower_gap=20, action='ENTRY
     ]
     bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
     order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
-    order = MarketOrder(order_action, qty)
+    order = MarketOrder(order_action, qty, tif='DAY')
     trade = ib.placeOrder(bag, order)
     
     logger.info(f"Submitting BWB Order: {order_action} {qty} combo...")
