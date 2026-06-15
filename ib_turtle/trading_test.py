@@ -9,6 +9,7 @@ from ib_insync import *
 # Logging setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s | %(levelname)s | %(message)s')
 logger = logging.getLogger(__name__)
+logging.getLogger('ib_insync').setLevel(logging.WARNING)
 
 EST = pytz.timezone('US/Eastern')
 
