@@ -107,7 +107,7 @@ class IBBroker:
 
     def resolve_mes_contract(self):
         # Resolve active front-month contract
-        contract = Future('MES', multiplier='5', exchange='GLOBEX', currency='USD')
+        contract = Future('MES', multiplier='5', exchange='CME', currency='USD')
         details = self.ib.reqContractDetails(contract)
         if not details:
             logger.error("❌ Could not retrieve MES contract details.")
