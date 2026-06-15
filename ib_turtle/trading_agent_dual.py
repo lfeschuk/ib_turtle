@@ -281,6 +281,7 @@ def run_live_dual_bot():
     stop_loss_order = None
 
     last_eval_date = None
+    last_standby_log_minute = None
 
     while True:
         try:
@@ -327,6 +328,7 @@ def run_live_dual_bot():
                             logger.info(f"❄️ VIX is {vix:.2f} (<= {vix_limit:.2f}). SELECTING SPX IRON BUTTERFLY STRATEGY TODAY.")
                             db.save_daily_decision(today_str, vix, "SPX_BUTTERFLY", "DECIDED")
                             db.update_bot_state("SPX_BUTTERFLY", "FLAT", 0.0, 0.0, 0, 0.0)
+                            logger.info("⏳ Standby until 1:30 PM EST (20:30 IST) to execute SPX Iron Butterfly...")
                     else:
                         logger.warning("⚠️ VIX price query returned NaN or None. Retrying VIX evaluation on next tick...")
 
@@ -334,6 +336,11 @@ def run_live_dual_bot():
             # 2. 1:30 PM EST (20:30 IST): EXECUTE SPX IRON BUTTERFLY (IF SELECTED)
             # ------------------------------------------------------------------
             if decision and decision["strategy"] == "SPX_BUTTERFLY" and bf_state["side"] == "FLAT":
+                if current_time_str < "20:30":
+                    if last_standby_log_minute != current_time_str:
+                        last_standby_log_minute = current_time_str
+                        logger.info(f"⏳ Standby: Time is {current_time_str}. Waiting for 20:30 IST entry window...")
+                
                 if current_time_str == "20:30":
                     spx = broker.get_index_price("SPX")
                     if spx is not None and not math.isnan(spx):
