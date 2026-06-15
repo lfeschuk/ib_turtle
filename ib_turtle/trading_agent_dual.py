@@ -135,7 +135,7 @@ class IBBroker:
 
     # --- MES Futures Setup ---
     def resolve_mes_contract(self):
-        contract = Future('MES', exchange='GLOBEX', currency='USD')
+        contract = Future('MES', multiplier='5', exchange='GLOBEX', currency='USD')
         details = self.ib.reqContractDetails(contract)
         if not details:
             logger.error("❌ Could not resolve MES contracts.")
