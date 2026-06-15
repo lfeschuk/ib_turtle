@@ -156,16 +156,72 @@ class IBBroker:
             return False
 
     def get_historical_dataframe(self, ticker, duration='5 D', size='5 mins'):
-        contract = Stock(ticker, 'SMART', 'USD')
-        self.ib.qualifyContracts(contract)
-        bars = self.ib.reqHistoricalData(
-            contract, endDateTime='', durationStr=duration,
-            barSizeSetting=size, whatToShow='TRADES', useRTH=True
-        )
-        if not bars: return pd.DataFrame()
-        df = util.asDataFrame(bars)
-        df.set_index('date', inplace=True)
-        return df
+        if self.is_paper:
+            # Fetch from Yahoo Finance to avoid paid subscription requirements for paper accounts
+            yahoo_interval = '5m'
+            if 'hour' in size or '1 hour' in size:
+                yahoo_interval = '1h'
+            
+            yahoo_range = '5d'
+            if '20' in duration:
+                yahoo_range = '20d'
+            elif '3' in duration:
+                yahoo_range = '3d'
+                
+            import urllib.request
+            import json
+            import pytz
+            
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval={yahoo_interval}&range={yahoo_range}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+            }
+            try:
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    res = json.loads(response.read().decode())
+                    result = res['chart']['result'][0]
+                    timestamps = result['timestamp']
+                    quote = result['indicators']['quote'][0]
+                    opens = quote['open']
+                    highs = quote['high']
+                    lows = quote['low']
+                    closes = quote['close']
+                    volumes = quote['volume']
+                    
+                    records = []
+                    est = pytz.timezone('US/Eastern')
+                    for i in range(len(timestamps)):
+                        if opens[i] is None or closes[i] is None:
+                            continue
+                        dt = datetime.datetime.fromtimestamp(timestamps[i], datetime.timezone.utc).astimezone(est)
+                        records.append({
+                            "date": dt,
+                            "open": float(opens[i]),
+                            "high": float(highs[i]),
+                            "low": float(lows[i]),
+                            "close": float(closes[i]),
+                            "volume": int(volumes[i])
+                        })
+                    df = pd.DataFrame(records)
+                    if not df.empty:
+                        df.set_index('date', inplace=True)
+                    return df
+            except Exception as e:
+                logger.error(f"Error fetching Yahoo Finance historical bars for {ticker}: {e}")
+            return pd.DataFrame()
+        else:
+            # Live account with subscriptions
+            contract = Stock(ticker, 'SMART', 'USD')
+            self.ib.qualifyContracts(contract)
+            bars = self.ib.reqHistoricalData(
+                contract, endDateTime='', durationStr=duration,
+                barSizeSetting=size, whatToShow='TRADES', useRTH=True
+            )
+            if not bars: return pd.DataFrame()
+            df = util.asDataFrame(bars)
+            df.set_index('date', inplace=True)
+            return df
 
     def fire_market_order(self, ticker, action, size):
         contract = Stock(ticker, 'SMART', 'USD')
