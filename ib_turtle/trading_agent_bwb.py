@@ -109,8 +109,8 @@ class IBBroker:
         # Fallback to historical 1-minute bar if streaming data is NaN on startup
         logger.info(f"Ticker price for {symbol} is NaN. Fetching latest historical bar as fallback...")
         bars = self.ib.reqHistoricalData(
-            contract, endDateTime='', durationStr='1 D',
-            barSizeSetting='1 min', whatToShow='TRADES', useRTH=True
+            contract, endDateTime='', durationStr='600 S',
+            barSizeSetting='1 min', whatToShow='MIDPOINT', useRTH=True
         )
         if bars:
             return bars[-1].close
