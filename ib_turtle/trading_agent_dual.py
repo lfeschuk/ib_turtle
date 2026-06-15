@@ -128,10 +128,22 @@ class IBBroker:
         contract = Index(symbol, 'CBOE')
         self.ib.qualifyContracts(contract)
         ticker = self.ib.reqMktData(contract, '', False, False)
-        self.ib.sleep(1.5)
+        self.ib.sleep(2.0)
         price = ticker.last if not math.isnan(ticker.last) else ticker.close
         self.ib.cancelMktData(contract)
-        return price
+        
+        if price is not None and not math.isnan(price):
+            return price
+            
+        # Fallback to historical 1-minute bar if streaming data is NaN on startup
+        logger.info(f"Ticker price for {symbol} is NaN. Fetching latest historical bar as fallback...")
+        bars = self.ib.reqHistoricalData(
+            contract, endDateTime='', durationStr='1 D',
+            barSizeSetting='1 min', whatToShow='TRADES', useRTH=True
+        )
+        if bars:
+            return bars[-1].close
+        return None
 
     # --- MES Futures Setup ---
     def resolve_mes_contract(self):
@@ -289,6 +301,8 @@ def run_live_dual_bot():
                             logger.info(f"❄️ VIX is {vix:.2f} (<= {vix_limit:.2f}). SELECTING SPX IRON BUTTERFLY STRATEGY TODAY.")
                             db.save_daily_decision(today_str, vix, "SPX_BUTTERFLY", "DECIDED")
                             db.update_bot_state("SPX_BUTTERFLY", "FLAT", 0.0, 0.0, 0, 0.0)
+                    else:
+                        logger.warning("⚠️ VIX price query returned NaN or None. Retrying VIX evaluation on next tick...")
 
             # ------------------------------------------------------------------
             # 2. 1:30 PM EST (20:30 IST): EXECUTE SPX IRON BUTTERFLY (IF SELECTED)

@@ -99,10 +99,22 @@ class IBBroker:
         contract = Index(symbol, 'CBOE')
         self.ib.qualifyContracts(contract)
         ticker = self.ib.reqMktData(contract, '', False, False)
-        self.ib.sleep(1.5)
+        self.ib.sleep(2.0)
         price = ticker.last if not math.isnan(ticker.last) else ticker.close
         self.ib.cancelMktData(contract)
-        return price
+        
+        if price is not None and not math.isnan(price):
+            return price
+            
+        # Fallback to historical 1-minute bar if streaming data is NaN on startup
+        logger.info(f"Ticker price for {symbol} is NaN. Fetching latest historical bar as fallback...")
+        bars = self.ib.reqHistoricalData(
+            contract, endDateTime='', durationStr='1 D',
+            barSizeSetting='1 min', whatToShow='TRADES', useRTH=True
+        )
+        if bars:
+            return bars[-1].close
+        return None
 
     def resolve_option_contract(self, strike, right, expiry):
         contract = Option('SPX', expiry, strike, right, 'CBOE', multiplier='100', currency='USD')
@@ -207,9 +219,13 @@ def run_live_bwb_bot():
                                     db.update_position_state("ACTIVE", center_strike, credit, trade_qty)
                                     entered_today = True
                                     db.print_visible_ledger()
+                                else:
+                                    logger.warning("⚠️ SPX price query returned NaN or None. Retrying on next tick...")
                             else:
                                 logger.warning(f"🚫 VIX is {vix:.2f} (above {max_vix_limit:.2f}). Skipping BWB entry today.")
                                 skipped_today = True
+                        else:
+                            logger.warning("⚠️ VIX price query returned NaN or None. Retrying on next tick...")
 
             # ------------------------------------------------------------------
             # EXIT BLOCK (Executes exactly at 3:58 PM EST / 22:58 IST)
