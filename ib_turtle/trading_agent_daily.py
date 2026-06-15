@@ -370,7 +370,7 @@ def run_live_bot():
                         
                         # Stop Loss distance filter check: must not exceed 1% of stock price
                         if price > 0 and (stop_dist / price) > 0.01:
-                            logger.info(f"⏭️ [SKIP] {ticker} Stop Loss distance {stop_dist:.2f} exceeds 1% of price {price:.2f}. Volatility too high.")
+                            logger.debug(f"⏭️ [SKIP] {ticker} Stop Loss distance {stop_dist:.2f} exceeds 1% of price {price:.2f}. Volatility too high.")
                             continue
                             
                         capital = db.get_capital()
@@ -430,7 +430,6 @@ def run_live_bot():
                     scan_and_execute()
                 elif latest_bar_time > last_processed_time:
                     last_processed_time = latest_bar_time
-                    logger.info(f"🟢 Heartbeat: New 5-minute bar detected at {latest_bar_time}. Executing scan...")
                     scan_and_execute()
                     
         except KeyboardInterrupt:
