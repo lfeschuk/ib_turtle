@@ -124,6 +124,26 @@ class IBBroker:
             logger.error(f"❌ Connection to TWS failed: {e}")
             return False
 
+    def get_index_price_yahoo(self, symbol):
+        import urllib.request
+        import json
+        yahoo_symbol = "^VIX" if symbol == "VIX" else "^GSPC"
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yahoo_symbol}?interval=1m&range=1d"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+        }
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = json.loads(response.read().decode())
+                meta = data['chart']['result'][0]['meta']
+                price = meta.get('regularMarketPrice')
+                if price is not None:
+                    return float(price)
+        except Exception as e:
+            logger.error(f"Error fetching index price from Yahoo Finance for {symbol}: {e}")
+        return None
+
     def get_index_price(self, symbol):
         contract = Index(symbol, 'CBOE')
         self.ib.qualifyContracts(contract)
@@ -135,8 +155,14 @@ class IBBroker:
         if price is not None and not math.isnan(price):
             return price
             
-        # Fallback to historical 1-minute bar if streaming data is NaN on startup
-        logger.info(f"Ticker price for {symbol} is NaN. Fetching latest historical bar as fallback...")
+        # Fallback 1: Yahoo Finance (instant, real-time, free)
+        logger.info(f"Ticker price for {symbol} is NaN on TWS. Fetching from Yahoo Finance...")
+        yahoo_price = self.get_index_price_yahoo(symbol)
+        if yahoo_price is not None:
+            return yahoo_price
+
+        # Fallback 2: Historical 1-minute bar from TWS (fail-safe)
+        logger.info(f"Yahoo Finance failed. Fetching latest historical bar from TWS...")
         bars = self.ib.reqHistoricalData(
             contract, endDateTime='', durationStr='600 S',
             barSizeSetting='1 min', whatToShow='MIDPOINT', useRTH=True
