@@ -144,7 +144,7 @@ class IBBroker:
         return price
 
     def resolve_option_contract(self, strike, right, expiry_str):
-        contract = Option('SPX', expiry_str, strike, right, 'CBOE', multiplier='100', currency='USD')
+        contract = Option(symbol='SPX', lastTradeDateOrContractMonth=expiry_str, strike=strike, right=right, exchange='CBOE', multiplier='100', currency='USD')
         qualified = self.ib.qualifyContracts(contract)
         if qualified:
             return qualified[0]
