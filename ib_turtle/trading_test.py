@@ -60,7 +60,7 @@ def execute_iron_butterfly(ib, center_strike, wing_width=10, action='ENTRY_CREDI
         ComboLeg(conId=c_short_call.conId, action='SELL', ratio=1),
         ComboLeg(conId=c_long_call.conId, action='BUY', ratio=1)
     ]
-    bag = Bag(symbol='SPX', secType='BAG', exchange='CBOE', currency='USD', comboLegs=legs)
+    bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
     order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
     order = MarketOrder(order_action, qty)
     trade = ib.placeOrder(bag, order)
@@ -85,7 +85,7 @@ def execute_put_bwb(ib, center_strike, upper_gap=10, lower_gap=20, action='ENTRY
         ComboLeg(conId=c_short_put.conId, action='SELL', ratio=2),
         ComboLeg(conId=c_long_put.conId, action='BUY', ratio=1)
     ]
-    bag = Bag(symbol='SPX', secType='BAG', exchange='CBOE', currency='USD', comboLegs=legs)
+    bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
     order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
     order = MarketOrder(order_action, qty)
     trade = ib.placeOrder(bag, order)

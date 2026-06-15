@@ -168,7 +168,7 @@ class IBBroker:
             ComboLeg(conId=c_long_upper.conId, action='BUY', ratio=1)
         ]
         
-        bag = Bag(symbol='SPX', secType='BAG', exchange='CBOE', currency='USD', comboLegs=legs)
+        bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
         
         # To enter (sell combination for net credit): place 'BUY' order (combos priced negatively)
         # To close: place 'SELL' order

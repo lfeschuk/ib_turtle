@@ -202,7 +202,7 @@ class IBBroker:
             ComboLeg(conId=c_long_call.conId, action='BUY', ratio=1)
         ]
         
-        combo_contract = Bag(symbol='SPX', secType='BAG', exchange='CBOE', currency='USD', comboLegs=legs)
+        combo_contract = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
         
         # When structured as Buy Wings / Sell Center, a Market BUY order executes the structure as a net debit
         # To establish it as a net credit entry, we route it via a Market 'SELL' command.

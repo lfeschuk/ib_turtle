@@ -239,7 +239,7 @@ class IBBroker:
             ComboLeg(conId=c_short_call.conId, action='SELL', ratio=1),
             ComboLeg(conId=c_long_call.conId, action='BUY', ratio=1)
         ]
-        bag = Bag(symbol='SPX', secType='BAG', exchange='CBOE', currency='USD', comboLegs=legs)
+        bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
         order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
         order = MarketOrder(order_action, qty)
         trade = self.ib.placeOrder(bag, order)
