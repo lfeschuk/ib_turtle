@@ -141,7 +141,7 @@ class IBBroker:
             
             # Detect if paper account or live account
             accounts = self.ib.managedAccounts()
-            self.is_paper = any(acc.startswith('DU') for acc in accounts)
+            self.is_paper = (self.port in [4002, 7497]) or any(acc.upper().startswith(('DU', 'DF')) for acc in accounts)
             
             if self.is_paper:
                 logger.info("ℹ️ Paper Trading account detected. Requesting delayed market data (Type 3).")

@@ -90,6 +90,15 @@ class IBBroker:
         try:
             self.ib.connect('127.0.0.1', self.port, clientId=self.client_id)
             logger.info(f"🟢 MES Breakout Agent online on port {self.port}. Client ID: {self.client_id}")
+            
+            # Paper trading check
+            accounts = self.ib.managedAccounts()
+            self.is_paper = (self.port in [4002, 7497]) or any(acc.upper().startswith(('DU', 'DF')) for acc in accounts)
+            if self.is_paper:
+                self.ib.reqMarketDataType(3)
+            else:
+                self.ib.reqMarketDataType(1)
+                
             self.resolve_mes_contract()
             return True
         except Exception as e:

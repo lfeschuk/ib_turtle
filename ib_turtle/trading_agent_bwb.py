@@ -85,7 +85,7 @@ class IBBroker:
             
             # Paper trading check
             accounts = self.ib.managedAccounts()
-            is_paper = any(acc.startswith('DU') for acc in accounts)
+            is_paper = (self.port in [4002, 7497]) or any(acc.upper().startswith(('DU', 'DF')) for acc in accounts)
             if is_paper:
                 self.ib.reqMarketDataType(3)
             else:
