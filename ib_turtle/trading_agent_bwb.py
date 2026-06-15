@@ -173,7 +173,7 @@ class IBBroker:
         # To enter (sell combination for net credit): place 'BUY' order (combos priced negatively)
         # To close: place 'SELL' order
         order_action = 'BUY' if action == 'ENTRY_CREDIT' else 'SELL'
-        order = MarketOrder(order_action, qty)
+        order = MarketOrder(order_action, qty, tif='DAY')
         
         trade = self.ib.placeOrder(bag, order)
         self.ib.sleep(2.0)

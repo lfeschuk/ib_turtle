@@ -241,7 +241,7 @@ class IBBroker:
         ]
         bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
         order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
-        order = MarketOrder(order_action, qty)
+        order = MarketOrder(order_action, qty, tif='DAY')
         trade = self.ib.placeOrder(bag, order)
         self.ib.sleep(2.0)
         return trade
