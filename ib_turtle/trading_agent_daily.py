@@ -83,7 +83,7 @@ class DataManager:
 
     def log_transaction(self, ticker, action, price, size, pnl=0.0, explanation=""):
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.cursor.execute("INSERT INTO trade_log (timestamp, ticker, action, price, size, pnl, explanation) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+        self.cursor.execute("INSERT INTO trade_log (timestamp, ticker, action, price, size, pnl, explanation) VALUES (?, ?, ?, ?, ?, ?, ?)", 
                             (timestamp, ticker, action, price, size, pnl, explanation))
         if pnl != 0.0:
             self.cursor.execute("UPDATE bot_state SET virtual_capital = virtual_capital + ? WHERE ticker='MASTER_ACCOUNT'", (pnl,))
@@ -226,7 +226,7 @@ class IBBroker:
     def fire_market_order(self, ticker, action, size):
         contract = Stock(ticker, 'SMART', 'USD')
         self.ib.qualifyContracts(contract)
-        order = MarketOrder(action, size)
+        order = MarketOrder(action, size, tif='DAY')
         trade = self.ib.placeOrder(contract, order)
         logger.info(f"🚀 Fired {action} Market Order for {size} shares of {ticker}.")
         return trade
