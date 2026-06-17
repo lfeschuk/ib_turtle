@@ -339,7 +339,7 @@ def run_live_dual_bot():
                 if current_time_str < "20:30":
                     if last_standby_log_minute != current_time_str:
                         last_standby_log_minute = current_time_str
-                        logger.info(f"⏳ Standby: Time is {current_time_str}. Waiting for 20:30 IST entry window...")
+                        logger.debug(f"⏳ Standby: Time is {current_time_str}. Waiting for 20:30 IST entry window...")
                 
                 if current_time_str == "20:30":
                     spx = broker.get_index_price("SPX")
