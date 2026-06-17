@@ -142,6 +142,21 @@ class IBBroker:
             return bars[-1].close
         return None
 
+    def get_leg_mid_price(self, contract):
+        ticker = self.ib.reqMktData(contract, '', False, False)
+        # Poll for up to 5 seconds to let the delayed/live feed load
+        for _ in range(10):
+            self.ib.sleep(0.5)
+            if not math.isnan(ticker.bid) and not math.isnan(ticker.ask) and ticker.bid > 0 and ticker.ask > 0:
+                break
+        bid = ticker.bid
+        ask = ticker.ask
+        self.ib.cancelMktData(contract)
+        
+        if not math.isnan(bid) and not math.isnan(ask) and bid > 0 and ask > 0:
+            return (bid + ask) / 2
+        return None
+
     def resolve_option_contract(self, strike, right, expiry):
         contract = Option(symbol='SPX', lastTradeDateOrContractMonth=expiry, strike=strike, right=right, exchange='CBOE', multiplier='100', currency='USD')
         qualified = self.ib.qualifyContracts(contract)
@@ -150,10 +165,6 @@ class IBBroker:
     def execute_put_bwb(self, center_strike, upper_gap=10, lower_gap=20, action='ENTRY_CREDIT', qty=1):
         expiry = datetime.datetime.now(EST).strftime('%Y%m%d')
         
-        # Resolve BWB Put Legs:
-        # Long 1: ATM + upper_gap
-        # Short 2: ATM
-        # Long 1: ATM - lower_gap
         c_long_upper = self.resolve_option_contract(center_strike + upper_gap, 'P', expiry)
         c_short      = self.resolve_option_contract(center_strike, 'P', expiry)
         c_long_lower = self.resolve_option_contract(center_strike - lower_gap, 'P', expiry)
@@ -162,6 +173,26 @@ class IBBroker:
             logger.error("❌ Failed to qualify all 3 Put BWB options legs.")
             return None
             
+        # 1. Fetch mid-prices for each leg
+        p_upper = self.get_leg_mid_price(c_long_upper)
+        p_center = self.get_leg_mid_price(c_short)
+        p_lower = self.get_leg_mid_price(c_long_lower)
+        
+        # Calculate net credit collected (2 * short_center - long_upper - long_lower)
+        net_credit = None
+        if all(p is not None for p in [p_upper, p_center, p_lower]):
+            net_credit = round((2.0 * p_center) - p_upper - p_lower, 2)
+            logger.info(f"   BWB Legs Mid: Upper={p_upper:.2f} | Center={p_center:.2f} | Lower={p_lower:.2f} | Calculated Net Credit={net_credit:.2f}")
+
+        # Check entry rules
+        if action == 'ENTRY_CREDIT':
+            if net_credit is None:
+                logger.error("❌ Aborting BWB Entry: Unable to fetch option leg bid/ask quotes.")
+                return None
+            if net_credit <= 0.00:
+                logger.warning(f"🚫 BWB Entry aborted: Calculated net credit is negative/flat ({net_credit:.2f}). We require a net premium to enter.")
+                return None
+                
         legs = [
             ComboLeg(conId=c_long_lower.conId, action='BUY', ratio=1),
             ComboLeg(conId=c_short.conId, action='SELL', ratio=2),
@@ -169,14 +200,22 @@ class IBBroker:
         ]
         
         bag = Bag(symbol='SPX', exchange='CBOE', currency='USD', comboLegs=legs)
-        
-        # To enter (sell combination for net credit): place 'BUY' order (combos priced negatively)
-        # To close: place 'SELL' order
         order_action = 'BUY' if action == 'ENTRY_CREDIT' else 'SELL'
-        order = MarketOrder(order_action, qty, tif='DAY')
         
+        if net_credit is not None:
+            # Combo limit price is negative when buying a credit combo
+            lmt_price = round(p_lower - 2.0 * p_center + p_upper, 2)
+            order = LimitOrder(order_action, qty, lmtPrice=lmt_price, tif='DAY')
+            logger.info(f"Submitting BWB Limit Order: {order_action} {qty} combo @ Limit Price: {lmt_price} (Est Credit: {abs(lmt_price):.2f})...")
+        else:
+            # Closing fallback to Market Order if pricing fails
+            order = MarketOrder(order_action, qty, tif='DAY')
+            logger.warning(f"⚠️ Close BWB pricing failed. Falling back to Market Order to ensure flat exit.")
+            
         trade = self.ib.placeOrder(bag, order)
-        self.ib.sleep(2.0)
+        # Wait until order is filled / completed
+        while not trade.isDone():
+            self.ib.sleep(0.5)
         return trade
 
 # ==============================================================================
@@ -239,12 +278,15 @@ def run_live_bwb_bot():
                                     logger.info(f"🎯 1:30 PM BWB Entry: VIX={vix:.2f} | SPX={spx:.2f} | ATM Strike={center_strike}")
                                     
                                     trade = broker.execute_put_bwb(center_strike, upper_g, lower_g, 'ENTRY_CREDIT', trade_qty)
-                                    credit = abs(trade.orderStatus.avgFillPrice) if trade and trade.fills else 2.00
-                                    
-                                    db.log_transaction("ENTRY_CREDIT", center_strike, credit, trade_qty)
-                                    db.update_position_state("ACTIVE", center_strike, credit, trade_qty)
-                                    entered_today = True
-                                    db.print_visible_ledger()
+                                    if trade is not None and trade.orderStatus.status == 'Filled':
+                                        credit = abs(trade.orderStatus.avgFillPrice)
+                                        db.log_transaction("ENTRY_CREDIT", center_strike, credit, trade_qty)
+                                        db.update_position_state("ACTIVE", center_strike, credit, trade_qty)
+                                        entered_today = True
+                                        db.print_visible_ledger()
+                                    else:
+                                        logger.warning("🚫 Put BWB Entry did not execute or fill (credit threshold not met or quoting failed). Skipping entry for today.")
+                                        skipped_today = True
                                 else:
                                     logger.warning("⚠️ SPX price query returned NaN or None. Retrying on next tick...")
                             else:
