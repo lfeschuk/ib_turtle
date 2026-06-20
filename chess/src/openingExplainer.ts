@@ -362,7 +362,8 @@ export function getOpeningMovesForPage(page: any): ChessMove[] {
     .replace(/\d+\.+/g, '')
     .replace(/\s+/g, ' ')
     .trim()
-    .split(' ');
+    .split(' ')
+    .filter(token => !/^\d+$/.test(token));
 
   const result: ChessMove[] = [];
   let moveNum = 1;

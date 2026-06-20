@@ -1202,7 +1202,9 @@ export function getFullIllustrativeGamesList(): SampleBookPage[] {
   return COMPACT_68_GAMES.map(g => {
     // Generate moves chronology with correct player color alternates
     const movesList: ChessMove[] = [];
-    const initialMovesList = g.initial ? g.initial.trim().split(/\s+/) : [];
+    const initialMovesList = g.initial 
+      ? g.initial.trim().split(/\s+/).filter(token => !/^\d+$/.test(token)) 
+      : [];
     const initialMovesCount = initialMovesList.length;
     let isWhiteTurn = initialMovesCount % 2 === 0;
     let currentMoveNumber = Math.floor(initialMovesCount / 2) + 1;
