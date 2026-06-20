@@ -1,0 +1,42 @@
+The Four Pawns Attack
+passed pawn but has given up his important dark-squared bishop and
+Black may be able to set up a blockade on the d6-square.
+
+7 en Aa 67
+E oY Eo) EO. BE 7
+y ZY ra 2 IR
+tit wid [fiw wilt
+Bom ath |B meat
+Griz 7 BROZ a 7
+CB. nan |B TAR
+1 AE a ]
+I= & 758 B&F 718
+Diagram 16 Diagram 17
+Does Black have a trick? Is White better here or not?
+8...dxeb 9 Nxeb
+9 fxe5 Qxd1+ 10 Bxd1 Ng4 is not good for White. 9 Qxd8 Rxd8 10
+Nxeb is an important alternative. After 10...Nc5 11 Bf3 Be6 there are
+two lines (Diagram 17):
+1) 12 Nd5, at first glance, looks fantastic for White. He is a pawn up
+with knights on 5 and d5. What more could you ask? Strangely
+enough, after 12...Nfd7! it is Black who has the better game. He is go-
+ing to exchange one of the knights and kick the other one away with
+...c6. It turns out that behind the beautiful facade White's position is
+rather unhealthy. If White now plays 13 Nxc7?! he is in trouble after
+13...Nxe5! 14 fxe5 Nd3+ 15 Kf1 Bxc4!. Instead, Naumann-Gallagher,
+Hastings 1990/91, continued 13 Nxd7 Rxd7 14 0-0 c¢6 15 Ne3 Rd4! 16
+b3 Nxed 17 Bb2 Nd2! with a good game for Black.
+2) 12 0-0! leads to a totally drawn position after 12...Nfd7 13 Nxd7
+Bd4+! 14 Kh1 Rxd7 15 Nd5 c6 16 Be3! cxd5 17 Bxd4 dxe4 18 Bxc5
+exf3 19 Rxf3 Bxc4.
+9..Ncb 10 Bf3 Qxd1+ 11 Kxd1 Rd8+ 12 Kc2
+The best square for the king. After 12 Ke2 Be6 13 Nd5 Nfd7! play is
+similar to the previous note.
+12..Nfxe4!
+As this leads to a forced draw Black can try 12...Be6. | have analysed
+this extensively and concluded that the game is about equal.
+13 Nxe4 Bf5 14 Rel Bxe5! 15 fxe5 Rd4 (Diagram 18) 16 Kc3
+16 b3 is an extremely risky winning attempt. After 16...Nxe4 17 Kb2
+Nc5 18 Ka3 Nd3 19 Rd1 Re8!? Black's main idea will be to checkmate
+White by transferring a rook to the a-file.
+135

@@ -1,0 +1,40 @@
+White Plays an Early h2-h3
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 h3 0-0 (Diagram 1)
+FALE EOL
+A Ta 7a de JANG
+ttt riat
+Y RR de
+wok ail
+ow
+wimim_ wm
+vB 0 BL
+HAH
+Diagram 1
+The quiet 5 h3
+Why does White play h3? ~
+The move h2-h3 has two main ideas. The first is to support the ad-
+vance g2-g4. This is played both to gain space on the kingside and to
+dissuade Black from playing ...f7-f5. The second idea is to pave the
+way for Be3 without having to worry about .. Ng4. Very often the
+bishop will go to g5 first but if Black attacks it with ..h7-h6 then it
+drops back to e3. The intentions behind h3 are similar to those behind
+£3 in the Samisch Variation but the two variations usually lead to
+quite different types of games. In the favour of h2-h3 is the fact that
+White can still develop the king's knight to its natural home {3 and
+that the dark squares are not further weakened On the other hand,
+h2-h3 does nothing to protect the all important ed-square.
+How does Black battle against these h3 systems?
+The first thing Black needs to do is stake his claim in the centre. It is
+possible to play with ...c7-¢5 but this takes us into the Modern Benoni
+and outside the scope of this book. Anyway, it is more rehable for
+Black to play the traditional ...e7-e5. Black will usually play for ...f7-
+{5 even after White has played g2-g4. The move ..Qe8 to unpin the
+knight on f6 is a useful tool if Black doesn’t want to let White have it
+all his own way on the kingside. On other occasions Black will ad-
+vance on the queenside (...c7-c6, ...a7-a5, ...a5-a4, ...Qa5 are all typical
+moves) while sometimes he tries to play on both sides of the board si-
+multaneously. The basic rule for Black is that he must play actively
+and with purpose. If he dithers in the opening then he might find that
+White suddenly has a clamp all over the board and that it is too late
+for offensive action. Then he will just have to await his fate.
+151

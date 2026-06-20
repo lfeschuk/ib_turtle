@@ -1,0 +1,23 @@
+{
+  "short_name": "Chess Codex",
+  "name": "Chess Codex & Book Digitizer",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/ios-filled/512/000000/chess-board.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://img.icons8.com/ios-filled/192/000000/chess-board.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FAF8F5",
+  "theme_color": "#FAF8F5",
+  "display": "standalone",
+  "orientation": "portrait"
+}

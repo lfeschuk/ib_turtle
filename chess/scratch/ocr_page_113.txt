@@ -1,0 +1,48 @@
+Starting Out: The King’s Indian
+
+14 f4 Nf7
+14...c44 15 Kh2 Nd3 enables Black to establish a strong knight on d3
+but the problem is that after 16 5! his bishop is locked out of the
+game. The text is designed to make sure that the bishop escapes be.
+fore White plays e5.
+15 Nxf7 Bd4+! 16 Kh2 Rxf7 17 e5 Nc7 18 Ned Nd5 19 h4!
+The bishop on d4 may look very nice but there is one major drawback
+to its position - it is totally cut off from the defence of his king
+19..Qd8 20 h5 Rg7 21 Ng5 gxh5?
+This is a rather panicky move. Black had the right idea when he
+brought his queen back to defend on move 19. He should have contin.
+ued in that vein and played 21...Qe8.
+22 Qxh5 Qe7 23 Bed Bd7 24 Qh3 c4 25 Rb1 b5 26 Kg2! (Diagram
+11)
+White wishes to transfer a rook to the h-file in order to make his at-
+tack irresistible.
+26...c5 27 f5! Bxeb 28 fxe6 Bce6 29 Rf7 Rxf7 30 exf7+ Kf8 31 Qh6+
+Black resigns
+The bishop on c6 is the first to bite the dust.
+—-OTOponTh eS Bo feted
+Game 43
+OI Filippov M Lyrberg
+Minsk 1996
+1 Nf3 Nf6 2 c4 g6 3 d4 Bg7 4 g3 0-0 5 Bg2 d6 6 Nc3 Nbd7 7 0-0 e5
+Bedab9h3
+We have already seen that White is very fond of the move h2-h3. In
+this particular instance it may not be the most accurate as it allows
+Black to carry out his queenside advance. Let's have a look at a couple
+of important alternatives.
+1) 9 Rel is well met by 9..exd4 10 Nxd4 Ngd!. The first point is that if
+White takes on g4 Black takes on d4 and this simplification is in
+Black's favour. Secondly, if White kicks the knight with 11 h3 Black
+replies 11...Qf6! counter-attacking against the knight on d4
+2) 9 Qe2 is played quite often as now 9...b5?! 10 cxb5 axb5 11 Rd1! is
+quite promising for White. After 9 Qc2 Black usually reverts to the
+Gallagher System as White will no longer be able to play the move
+Qxd6. For example, 9...exd4 10 Nxd4 Re8 11 Rd1 RbS followed by the
+usual advance on the queenside.
+9..b5!
+This may look like a sacrifice but the pawn can't be taken. After 10
+xb axb5 11 Nxb5? Ba6! Black wins material. After 9...b5 the central
+situation has become very tense. White must now decide what pawn
+exchanges he is going to make.
+10 cxb5
+
+12

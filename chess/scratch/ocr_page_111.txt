@@ -1,0 +1,43 @@
+‘Starting Out: The King's Indian
+We are now going to take a look at a couple of alternatives to ex-
+changing on d4. They arc the old main line with 8 . ¢6 and the quite
+fashionable continuation 8 ..a6.
+8...c6 takes control of the square d3 and opens a path to the queenside
+for the black queen. Black tries to hold the centre for a while but at
+some point, unless White takes action first, he usually takes on d4 to
+gain use of the 5 and c5-squares for his knights. White, as usual, will
+Just be looking to consolidate in the early stages of the game. If he can
+neutralise Black's early tricks his space advantage should give him
+some advantage in the latter stages of the game. This, at any rate,
+was the theory until the move 10 ¢5!? turned up. This line 1s covered
+mn Game 42.
+The move 8...a6 1s a tricky and flexible waiting move. The basic idea
+is the same as in the Gallagher Variation - to aim for active play on
+the queenside with ...b7-b5. This time, though, Black delays his deci-
+sion on whether to exchange on d4. It all depends on what White does
+next. The basic rule 1s that if Black can play b5 without having to
+concede the centre (...e5xd4) then he will do so.
+Theoretical?
+The hine with 10 ¢5 in Game 421s very theoretical while White must
+certainly know about the trap in the 9...Qa5 line. If Black 1s going to
+play 8...a6 he should at least know against which moves he exchanges
+on d4 and which he can play the immediate ..b5
+Statistics
+After 8...¢6 9 h3 (this takes in all the transpositions from 8 h3 c6 9 e4)
+White has scored a very healthy 61% in around 3500 games. Black
+fares better with 8. .a6 where White has scored 55% from 450 games.
+Despite the preponderance of games with 8. ¢6 Black is playing 8..a6
+at least as often nowadays.
+Hlustrative Games
+Game 42
+(J Filippov M Sepp
+Novgorod 1995
+1 Nf3 Nf6 2 c4 g6 3 d4 Bg7 4 Nc3 0-0 5 g3 d6 6 Bg2 Nbd7 7 0-0 e5
+8e4.c69h3 Qb6
+9..Qa5"? is another idea. In the main linc there 1s a nasty trap that
+White should know about. After 10 Rel exd4 11 Nxd4 Ne5 12 Bfl Re8
+13 Be3 Be6 14 Nxe6 Rxe6 White has quite often played 15 Rb1? (Dia-
+gram 9) with the idea of playing b4
+Exercise 7: What does Black play now?
+Better here are 15 Kg2 and. perhaps better, 13 Rb1 followed by b2-b1
+10

@@ -1,0 +1,1299 @@
+{
+  "book_title": "Starting Out: The King's Indian",
+  "exercises": [
+    {
+      "id": "game_35_istratescu_akopian_2001",
+      "title": "Game 35: Istratescu vs. Akopian (Ohrid 2001)",
+      "description": "Digitized from PDF pages 96 to 97.",
+      "textContext": "Extracted from Starting Out: The King's Indian. Chapter 5: S\u00e4misch Variation.",
+      "preparsedJson": {
+        "game_id": "game_35",
+        "white": "Istratescu",
+        "black": "Akopian",
+        "event": "Ohrid 2001",
+        "initial_moves": "1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 6. Be3 e5 7. Nge2 c6 8. Qd2 Nbd7 9. O-O-O",
+        "interactive_section": {
+          "starting_move": 9,
+          "moves": [
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "a6",
+              "commentary": "White can also launch a kingside attack with any one of 10 g4, 10 h4 or 10 Bh6. Black will then retaliate with moves such as ...b7-b5 and ...Qa5. In practice Black has usually won the mating race."
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "Kb1",
+              "commentary": ""
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "b5",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "c5!?",
+              "commentary": "11 c5 has been known for some time but underestimated until recently. Its main supporter is the German Grandmaster Graf, formerly known as the Uzbek Grandmaster Nenashev. Confused?"
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "b4",
+              "commentary": "Black has two pawn captures. 11...dxc5 is obviously bad because of 12 dxe5, while 11...exd4 12 Nxd4 dxc5 13 Nxc6 is less clear but also promising for White. Black has also tried 11...Qe7 but the position after 12 cxd6 Qxd6 13 dxe5 Qxd2 14 Rxd2 Nxe5 15 Nc1, with the idea of Nb3-c5, looks quite pleasant for White."
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Na4",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "d5",
+              "commentary": "Old theory said that 12...Qa5 13 b3 was fine for Black, but 13 Qe2 is the improvement."
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "dxe5",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Nxe5",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Nb6",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Rb8",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Ng3",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Be6?!",
+              "commentary": "After this White gets a powerful bind in the centre. 15...Qe7 or 15...Re8 have been suggested as better tries."
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Bd4",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Qc7",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "f4!",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Ned7",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "e5",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Ne4",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "Bf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "Bd3",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "dxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "Bc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Rfe8",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "h3",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Bf8",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "g4",
+              "commentary": "(Diagram 20) Black is getting crushed all over the board"
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Nxc5",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "gxf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Rxb6",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "fxg6",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "hxg6",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "Qe3",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "B",
+              "move": "Nd7",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "W",
+              "move": "Bxb6",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "B",
+              "move": "Nxb6",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "W",
+              "move": "Qxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "B",
+              "move": "c5",
+              "commentary": ""
+            },
+            {
+              "move_number": 29,
+              "player": "W",
+              "move": "h4",
+              "commentary": "Black resigns"
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_35_side_11_dxc5",
+            "name": "Alternative 11...dxc5",
+            "description": "Black captures on c5 immediately.",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "dxc5",
+                "commentary": "obviously bad because of 12 dxe5"
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "dxe5",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_35_side_11_exd4",
+            "name": "Alternative 11...exd4",
+            "description": "Black captures on d4.",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "exd4",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "Nxd4",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "dxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Nxc6",
+                "commentary": "is less clear but also promising for White"
+              }
+            ]
+          },
+          {
+            "id": "game_35_side_11_qe7",
+            "name": "Alternative 11...Qe7",
+            "description": "Black plays 11...Qe7.",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Qe7",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "cxd6",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "Qxd6",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "dxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Qxd2+",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Rxd2",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Nxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Nc1",
+                "commentary": "with the idea of Nb3-c5, looks quite pleasant for White"
+              }
+            ]
+          },
+          {
+            "id": "game_35_side_12_qa5",
+            "name": "Alternative 12...Qa5",
+            "description": "Black plays 12...Qa5.",
+            "startingMoveIndex": 5,
+            "moves": [
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "Qa5",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "b3",
+                "commentary": "was fine for Black, but 13 Qe2 is the improvement"
+              }
+            ]
+          },
+          {
+            "id": "game_35_side_15_qe7",
+            "name": "Alternative 15...Qe7",
+            "description": "Black plays 15...Qe7 instead of 15...Be6?!.",
+            "startingMoveIndex": 11,
+            "moves": [
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Qe7",
+                "commentary": "suggested as better try"
+              }
+            ]
+          },
+          {
+            "id": "game_35_side_15_re8",
+            "name": "Alternative 15...Re8",
+            "description": "Black plays 15...Re8 instead of 15...Be6?!.",
+            "startingMoveIndex": 11,
+            "moves": [
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Re8",
+                "commentary": "suggested as better try"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "game_36_kuzmin_sakaev_1993",
+      "title": "Game 36: A. Kuzmin vs. Sakaev (Doha 1993)",
+      "description": "Digitized from PDF pages 97 to 99.",
+      "textContext": "Extracted from Starting Out: The King's Indian. Chapter 5: S\u00e4misch Variation.",
+      "preparsedJson": {
+        "game_id": "game_36",
+        "white": "A. Kuzmin",
+        "black": "Sakaev",
+        "event": "Doha 1993",
+        "initial_moves": "1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 6. Be3 e5 7. d5 Nh5",
+        "interactive_section": {
+          "starting_move": 8,
+          "moves": [
+            {
+              "move_number": 8,
+              "player": "W",
+              "move": "Qd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 8,
+              "player": "B",
+              "move": "f5",
+              "commentary": "8...Qh4+ is interesting when on 9 Bf2 Black can play either 9...Qf4 or 9...Qe7. The critical line is 9 g3 Nxg3 10 Qf2 (10 Bf2? Nxf1 11 Bxh4 Nxd2) 10...Nxf1! 11 Qxh4 Nxe3. This is Bronstein's famous queen sacrifice. After either 12 Ke2 or 12 Qf2 Black plays 12...Nxc4 and has two minor pieces and two pawns for the queen. Normally, not quite enough, but he also has a very compact position which will be hard to break down. The theoretical verdict is slightly better for White but anything can happen in such a position."
+            },
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "O-O-O",
+              "commentary": ""
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "Nd7",
+              "commentary": "9...f4 would condemn Black to a passive game. NOTE: In the King's Indian it is not normally a good idea for Black to block the position with ...f4 when White's king is on the queenside."
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "exf5!?",
+              "commentary": ""
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "gxf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Bd3",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Nc5",
+              "commentary": "11...e4 12 fxe4 f4 13 Bf2 Ne5 is a thematic blockading sacrifice that can occur in a number of King's Indian variations. Here it is thought that Black has insufficient compensation after 14 Nf3."
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Bc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Qh4",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "b3",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "e4?!",
+              "commentary": "13...Qe7 is better, retreating after having forced White to weaken the long diagonal."
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Bg5!",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Bxc3",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Bxh4",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Bxd2+",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Kxd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Nf4",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "Nh3",
+              "commentary": "It would be a mistake for Black to take on h3 as the white rooks and bishops could whip up a strong attack against the exposed black king."
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Ng6",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Bf2",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "f4",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Bxc5",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "exf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "gxf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "Bxh3",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "Bd4",
+              "commentary": "(Diagram 22)"
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Bf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "h4",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Bxc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "Kxc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Rf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "h5",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Ne5",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "Rdg1+",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "Kf7",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "Bxe5",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "B",
+              "move": "Rxe5",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "W",
+              "move": "Rh4",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "B",
+              "move": "Rf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "W",
+              "move": "Rgg4",
+              "commentary": "White wins a pawn and tortured Black until the 75th move before agreeing a draw."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_36_side_8_qh4",
+            "name": "Alternative 8...Qh4+ (Bronstein Queen Sacrifice)",
+            "description": "Black plays 8...Qh4+ initiating a queen sacrifice.",
+            "startingMoveIndex": 0,
+            "moves": [
+              {
+                "move_number": 8,
+                "player": "B",
+                "move": "Qh4+",
+                "commentary": "on 9 Bf2 Black can play either 9...Qf4 or 9...Qe7."
+              },
+              {
+                "move_number": 9,
+                "player": "W",
+                "move": "g3",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "Nxg3",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "Qf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "Nxf1!",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "Qxh4",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Nxe3",
+                "commentary": "This is Bronstein's famous queen sacrifice. After either 12 Ke2 or 12 Qf2 Black plays 12...Nxc4 and has two minor pieces and two pawns for the queen."
+              }
+            ]
+          },
+          {
+            "id": "game_36_side_9_f4",
+            "name": "Alternative 9...f4",
+            "description": "Black plays 9...f4.",
+            "startingMoveIndex": 2,
+            "moves": [
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "f4",
+                "commentary": "would condemn Black to a passive game"
+              }
+            ]
+          },
+          {
+            "id": "game_36_side_11_e4",
+            "name": "Alternative 11...e4",
+            "description": "Black plays 11...e4.",
+            "startingMoveIndex": 6,
+            "moves": [
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "e4",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "fxe4",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "f4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Bf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Ne5",
+                "commentary": "is a thematic blockading sacrifice... Black has insufficient compensation after 14 Nf3"
+              }
+            ]
+          },
+          {
+            "id": "game_36_side_13_qe7",
+            "name": "Alternative 13...Qe7",
+            "description": "Black plays 13...Qe7 instead of 13...e4?!.",
+            "startingMoveIndex": 10,
+            "moves": [
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Qe7",
+                "commentary": "is better, retreating after having forced White to weaken the long diagonal"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "game_37_hauchard_krakops_1997",
+      "title": "Game 37: Hauchard vs. Krakops (Cappelle la Grande 1997)",
+      "description": "Digitized from PDF pages 100 to 101.",
+      "textContext": "Extracted from Starting Out: The King's Indian. Chapter 5: S\u00e4misch Variation.",
+      "preparsedJson": {
+        "game_id": "game_37",
+        "white": "Hauchard",
+        "black": "Krakops",
+        "event": "Cappelle la Grande 1997",
+        "initial_moves": "1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. f3 O-O 6. Bg5 c5 7. d5 e6 8. Qd2 exd5",
+        "interactive_section": {
+          "starting_move": 9,
+          "moves": [
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "Nxd5!?",
+              "commentary": "White takes advantage of the pin to try and establish a stronghold on the weak d5-square."
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "Be6",
+              "commentary": ""
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "Ne2",
+              "commentary": ""
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "Nc6!?",
+              "commentary": "The text seemingly allows White to gain complete control over d5 but Black has spotted a tactical solution to his positional problems."
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Nec3",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Bxd5",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Nxd5",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "h6!",
+              "commentary": "(Diagram 25)"
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Nxf6+",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Bxf6",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Bxh6",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Bxb2!",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Rb1",
+              "commentary": "Black's idea was to meet 15 Qxb2 with 15...Qh4+. White tries to avoid this exchange but after the next move he has no choice. TIP: If you couldn't solve the exercise above, try again now!"
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Bc3!",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Qxc3",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Qh4+",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "g3",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Qxh6",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Qd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Qh5",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Bg2",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "Nd4",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "O-O",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "b6",
+              "commentary": "(Diagram 26) At first glance it looks like Black is doing well because he has a massive knight on d4 and White a passive bishop on g2. However, White has more play with his pawns so he is not worse. Black, in particular, must stop White from playing e4-e5 under favourable circumstances."
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "f4",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Rae8",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "Rbe1",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Kg7",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "h3",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "f6",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "a4",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Re7",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "a5",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "bxa5!?",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "Qxa5",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "B",
+              "move": "Nc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "W",
+              "move": "g4",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "B",
+              "move": "Qh8",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "W",
+              "move": "Re2",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "B",
+              "move": "Nd4",
+              "commentary": ""
+            },
+            {
+              "move_number": 29,
+              "player": "W",
+              "move": "Ref2",
+              "commentary": ""
+            },
+            {
+              "move_number": 29,
+              "player": "B",
+              "move": "Qh4",
+              "commentary": "I'm slightly puzzled as to why Black didn't go here straightaway."
+            },
+            {
+              "move_number": 30,
+              "player": "W",
+              "move": "Qa6",
+              "commentary": ""
+            },
+            {
+              "move_number": 30,
+              "player": "B",
+              "move": "Rd7",
+              "commentary": ""
+            },
+            {
+              "move_number": 31,
+              "player": "W",
+              "move": "e5",
+              "commentary": ""
+            },
+            {
+              "move_number": 31,
+              "player": "B",
+              "move": "fxe5",
+              "commentary": ""
+            },
+            {
+              "move_number": 32,
+              "player": "W",
+              "move": "fxe5",
+              "commentary": ""
+            },
+            {
+              "move_number": 32,
+              "player": "B",
+              "move": "Rxf2",
+              "commentary": ""
+            },
+            {
+              "move_number": 33,
+              "player": "W",
+              "move": "Rxf2",
+              "commentary": ""
+            },
+            {
+              "move_number": 33,
+              "player": "B",
+              "move": "dxe5",
+              "commentary": ""
+            },
+            {
+              "move_number": 34,
+              "player": "W",
+              "move": "Qc8",
+              "commentary": ""
+            },
+            {
+              "move_number": 34,
+              "player": "B",
+              "move": "Qe7",
+              "commentary": ""
+            },
+            {
+              "move_number": 35,
+              "player": "W",
+              "move": "Bd5",
+              "commentary": ""
+            },
+            {
+              "move_number": 35,
+              "player": "B",
+              "move": "Rd8",
+              "commentary": ""
+            },
+            {
+              "move_number": 36,
+              "player": "W",
+              "move": "Qa6",
+              "commentary": ""
+            },
+            {
+              "move_number": 36,
+              "player": "B",
+              "move": "Rf8",
+              "commentary": ""
+            },
+            {
+              "move_number": 37,
+              "player": "W",
+              "move": "Rxf8",
+              "commentary": ""
+            },
+            {
+              "move_number": 37,
+              "player": "B",
+              "move": "Qxf8",
+              "commentary": ""
+            },
+            {
+              "move_number": 38,
+              "player": "W",
+              "move": "Qxa7+",
+              "commentary": ""
+            },
+            {
+              "move_number": 38,
+              "player": "B",
+              "move": "Kh6",
+              "commentary": ""
+            },
+            {
+              "move_number": 39,
+              "player": "W",
+              "move": "Kg2",
+              "commentary": ""
+            },
+            {
+              "move_number": 39,
+              "player": "B",
+              "move": "Ne2",
+              "commentary": ""
+            },
+            {
+              "move_number": 40,
+              "player": "W",
+              "move": "h4",
+              "commentary": ""
+            },
+            {
+              "move_number": 40,
+              "player": "B",
+              "move": "Nf4+",
+              "commentary": ""
+            },
+            {
+              "move_number": 41,
+              "player": "W",
+              "move": "Kg3",
+              "commentary": ""
+            },
+            {
+              "move_number": 41,
+              "player": "B",
+              "move": "Ne2+",
+              "commentary": ""
+            },
+            {
+              "move_number": 42,
+              "player": "W",
+              "move": "Kg2",
+              "commentary": ""
+            },
+            {
+              "move_number": 42,
+              "player": "B",
+              "move": "Nf4+",
+              "commentary": ""
+            },
+            {
+              "move_number": 43,
+              "player": "W",
+              "move": "Kg3",
+              "commentary": ""
+            },
+            {
+              "move_number": 43,
+              "player": "B",
+              "move": "Ne2+",
+              "commentary": "Draw agreed"
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_37_side_13_bxh6",
+            "name": "Alternative 13 Bxh6 (Exercise 6)",
+            "description": "White plays 13 Bxh6 instead of 13 Nxf6+.",
+            "startingMoveIndex": 7,
+            "moves": [
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Bxh6",
+                "commentary": "Exercise 6: What does Black have in mind after 13 Bxh6?"
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Nxd5",
+                "commentary": "Black clears the f6-knight to open the diagonal for the queen."
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "exd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Qh4+",
+                "commentary": "Boom! The royal fork, winning a piece."
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "g3",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Qxh6",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "Qxh6",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Bxh6",
+                "commentary": ""
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+Starting Out: The King’s Indian
+promising for White. Black has also tried 11...Qe7 but the position af-
+ter 12 cxd6 Qxd6 13 dxe5 Qxd2 14 Rxd2 Nxed 15 Nel, with the idea of
+Nb3-c5, looks quite pleasant for White.
+12 Na4 d5
+Old theory said that 12..Qa5 13 b3 was fine for Black, but 13 Qe2 is
+the improvement.
+13 dxe5 Nxe5 14 Nb6 Rb8 15 Ng3 Be6?!
+After this White gets a powerful bind in the centre. 15...Qe7 or
+15...Re8 have been suggested as better tries.
+16 Bd4 Qc7 17 £4! Ned7 18 e5 Ned 19 Nxed Bf5 20 Bd3 dxed 21
+Bc2 Rfe8 22 h3 Bf8 23 g4 (Diagram 20)
+Black is getting crushed all over the board
+23...Nxc5 24 gxf5 Rxb6 25 fxg6 hxg6 26 Qe3 Nd7 27 Bxb6 Nxb6
+28 Qxe4 5 29 ha Black resigns
+Game 36
+OJ AKuzmin B Sakaev
+Doha 1993
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 £3 0-0 6 Be3 e5 7d5 Nh5
+7...¢6 is the main alternative, with which Black battles for space on
+the queenside. With the text he concentrates on kingside play.
+8Qd2f5
+8..Qhd+ is interesting when on 9 Bf2 Black can play either 9..Qf4 or
+9..Qe7. The critical line is 9 g3 Nxg3 10 Qf2 (10 Bf2? Nxf1 11 Bxh4
+Nxd2) 10...Nxf1! 11 Qxh4 Nxe3 (Diagram 21). This is Bronstein's fa-
+mous queen sacrifice. After either 12 Ke2 or 12 Qf2 Black plays
+12...Nxc4 and has two minor pieces and two pawns for the queen.
+Normally, not quite enough, but he also has a very compact position
+which will be hard to break down. The theoretical verdict is slightly
+better for White but anything can happen in such a position.
+9 0-0-0 Nd7
+9..£4 would condemn Black to a passive game.
+
+[J NOTE: In the King's Indian It is not normally a good idea for Black to
+block the position with ...f4 when White's king is on the queenside.
+10 exf5!? gxf5 11 Bd3 Nc
+11...e4 12 fxe4 f4 13 Bf2 Ne5 is a thematic blockading sacrifice that
+can occur in a number of King's Indian variations. Here it is thought
+that Black has insufficient compensation after 14 Nf3
+12 Bc2 Qh4 13 b3 ed?!
+13...Qe7 is better, retreating after having forced White to weaken the
+long diagonal.
+
+14 Bgb! Bxc3 15 Bxh4 Bxd2+ 16 Kxd2 Nf4 17 Nh3
+It would be a mistake for Black to take on h3 as the white rooks and
+9%

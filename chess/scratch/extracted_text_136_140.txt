@@ -1,0 +1,175 @@
+--- PHYSICAL PAGE 136 ---
+The Four Pawns Attack
+passed pawn but has given up his important dark-squared bishop and
+Black may be able to set up a blockade on the d6-square.
+
+7 en Aa 67
+E oY Eo) EO. BE 7
+y ZY ra 2 IR
+tit wid [fiw wilt
+Bom ath |B meat
+Griz 7 BROZ a 7
+CB. nan |B TAR
+1 AE a ]
+I= & 758 B&F 718
+Diagram 16 Diagram 17
+Does Black have a trick? Is White better here or not?
+8...dxeb 9 Nxeb
+9 fxe5 Qxd1+ 10 Bxd1 Ng4 is not good for White. 9 Qxd8 Rxd8 10
+Nxeb is an important alternative. After 10...Nc5 11 Bf3 Be6 there are
+two lines (Diagram 17):
+1) 12 Nd5, at first glance, looks fantastic for White. He is a pawn up
+with knights on 5 and d5. What more could you ask? Strangely
+enough, after 12...Nfd7! it is Black who has the better game. He is go-
+ing to exchange one of the knights and kick the other one away with
+...c6. It turns out that behind the beautiful facade White's position is
+rather unhealthy. If White now plays 13 Nxc7?! he is in trouble after
+13...Nxe5! 14 fxe5 Nd3+ 15 Kf1 Bxc4!. Instead, Naumann-Gallagher,
+Hastings 1990/91, continued 13 Nxd7 Rxd7 14 0-0 c¢6 15 Ne3 Rd4! 16
+b3 Nxed 17 Bb2 Nd2! with a good game for Black.
+2) 12 0-0! leads to a totally drawn position after 12...Nfd7 13 Nxd7
+Bd4+! 14 Kh1 Rxd7 15 Nd5 c6 16 Be3! cxd5 17 Bxd4 dxe4 18 Bxc5
+exf3 19 Rxf3 Bxc4.
+9..Ncb 10 Bf3 Qxd1+ 11 Kxd1 Rd8+ 12 Kc2
+The best square for the king. After 12 Ke2 Be6 13 Nd5 Nfd7! play is
+similar to the previous note.
+12..Nfxe4!
+As this leads to a forced draw Black can try 12...Be6. | have analysed
+this extensively and concluded that the game is about equal.
+13 Nxe4 Bf5 14 Rel Bxe5! 15 fxe5 Rd4 (Diagram 18) 16 Kc3
+16 b3 is an extremely risky winning attempt. After 16...Nxe4 17 Kb2
+Nc5 18 Ka3 Nd3 19 Rd1 Re8!? Black's main idea will be to checkmate
+White by transferring a rook to the a-file.
+135
+
+
+--- PHYSICAL PAGE 137 ---
+Starting Out: The King's Indian
+7 2 Eo %
+I.
+Diagram 18
+Black regains the piece
+16..Rd3+ 17 Kc2 Rd4 18 Kc3 Rd3+ 19 Kb4
+Of course White could have just repeated here. Instead he heads for
+the hills and we end up with a much prettier finish.
+19..Na6+ 20 Kab b6+! 21 Kxa6 Bc8+ 22 Kbs Bd7+ 23 Ka6 Be8+
+24 Kb5 Bd7+ Draw agreed
+Game 53
+OJ Parker WM Gallagher
+Bnttish League, Birmingham 2001
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 £4 0-0 6 Nf3 Na6 7 Bd3 Bg4!?
+The immediate 7...e5 is also possible and after 8 fxe5 dxeb 9 d5 Black
+usually chooses between 9...c6 and 9...Nh5. It is not so good to play
+9...Nc5 now as White can just keep his e-pawn protected with 10 Be2.
+80-0
+If White plays 8 Be3 then Black can change plan with 8...c5 9 d5 e6
+8..Nd7
+8...e5 9 fxe5 Nd7 10 Be3 c¢5! leads to the same position but White has
+other options on his 10th move. After the text Black threatens to take
+on d4 and 9 d5 c6 is fine for Black.
+9 Be3 eb 10 fxe5 ¢5! (Diagram 19)
+Black's central play has been most original (well, it was the first time
+it was played). At the end of the complications he will have gained
+control of e5. The main point is that 11 exd6 loses to 11 ..cxd4.
+11 d5 Nxe5 12 Be2 Nxf3+ 13 Bxf3 Bxf3 14 Qxf3 Qe7
+The game now revolves around the e5-square. If White can push e4-¢5
+Black will be in serious trouble. Black will have to play ...f6 to stop
+this but only after he has activated his bishop.
+136
+
+
+--- PHYSICAL PAGE 138 ---
+The Four Pawns Attack
+BE) ¥ ES BED
+a w 7a 7 dn WY
+trEAmtot [rim & 1
+al x T17 wx XL
+mimimew | milim wm
+| DAoE | Eid Eom
+AE 8 Gan (aE B® Lam
+BH ERS 7 BEES
+Diagram 19 Diagram 20
+Black undermines the dark squares Nerther side can make progress
+15 Bf4 Nc7 16 Qg3 Rad8 17 Kh1 Bd4! 18 Rael f6 19 Ne2 Be5 20
+Ngl Bxf4
+This position was once thought to be better for White as Black
+adopted the incorrect plan of pushing the queenside pawns. What he
+has to do is manoeuvre the knight from c7 to e5.
+21 Qxf4 Na6! 22 Qd2 Rde8
+I decided to wait for Nf3 before moving my knight again. That is be-
+cause White still has the option of playing Nh3-f4. In that case | want
+the knight back on ¢7 to cover e6 and can occupy e5 with the queen
+23 Nf3 Nb8! 24 Qc3 Nd7 25 b3 Ne5 (Diagram 20) 26 Nd2 Draw
+agreed
+It is very difficult for either side to improve their position.
+Game 54
+0 Videki M Gallagher
+Kecskemet 1990
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 f4 0-0 6 Nf3 Na6 7 e5!?
+The most aggressive move at White's disposal.
+7..Nd7 8 ¢5?!
+But this is taking things too far. White gives up a pawn to secure a
+far advanced centre but Black can easily break it up. Others:
+1) 8 h4, with the idea of mating Black down the h-file. Black must re-
+act in the centre before it's too late. He can either play 8...c5 or
+8...dxeb 9 fxe5 cb. If White recaptures 9 dxe5 then 9...Nc5 10 Be3 Bg4
+11 Be2 {6 gives Black good play according to Vaisser.
+2) 8 Be2 c5 9 exd6 exd6 10 0-0 Nb6 11 d5 and, by roundabout means,
+we have reached the same pawn structure as in Game 50. After
+11...Bg4 12 h3 Bxf3 13 Rxf3 {5 14 Bd2 Nc7 15 Bd3 Qf6 16 Kh1 Rae8
+137
+
+
+--- PHYSICAL PAGE 139 ---
+Starting Out: The King's Indian
+the game was level in Summerscale-Sasikiran, British Ch 1999.
+8...dxcbh 9 d5 (Diagram 21)
+EEE EQ EE ue
+all B Ei |B w Ei
+NS EOE | jE BE Wi
+ne ®A7R 7%, 7/8
+Diagram 21 Diagram 22
+Is the whrte centre strong or weak? The endgame 1s good for Black
+9..Nb6 10 a3 Nb8s!
+The knight was no longer doing anything on a6 The plan 1s to play
+..¢7-¢6 and break up White's big centre. 10.. 6!? 1s also good
+11 Be3 c6 12 dxc6 Nxc6 13 Bxcb Bg4 14 Be2 Re8 15 Qxd8 Rfxd8
+16 Rd1 Rxd1+ 17 Kxd1 Bxf3!
+The start of a combination that leads to a better endgame for Black.
+18 Bxf3 Nxe5! 19 Bxb6 Nxf3 20 Bxa7 Bxc3 21 bxc3 Rxc3! 22 gxf3
+Rxa3 (Diagram 22)
+Black now threatens ...Rxa7 and ...Ral+. White can't play 23 Bd4 be-
+cause of ...Rd3+ so the only move to save the piece 1s 23 Bgl. Then the
+simplest 1s to play 23...Rxf3 followed by ...Rxf4 with excellent winning
+chances for Black. Videk: preferred a rook ending a pawn down
+23 Rel Rxa7 24 Rxe7 Kg7 25 h4 Kf6 26 Rc7 Ra4 27 f5 Rf4 28
+fxg6 hxgé 29 Ke2 b5 30 Rc6+ Ke7 31 h5 gxh5 32 Re5 bd 33 Rxh5
+Kdé6 34 Ke3 Rcd 35 Rf b3 36 Rb5 Re3+ 37 Ked Kc6 38 Rb8 Kes
+39 f4 Rc4+ 40 Ke5 Rb4 41 Rc8+ Kb5 White resigns
+Summary
+ee eee
+1) In the main line of the Four Pawns Attack 9...Bg4 1s Black's most
+reliable line 9...Re8 1s also fine but only if you are willing to get in-
+volved in a tactical slugfest. 9...b5 is best left to the historians.
+2) White's alternatives to the main line are not without venom 7
+dxc5, in particular, is a difficult variation where Black will have to
+play well to equalise.
+3) 6...Naé is not a bad choice and these days enjoys almost equal
+status to 6. .c5.
+138
+
+
+--- PHYSICAL PAGE 140 ---
+Chapter Eight
+The Averbakh Variation
+7), Black Plays (for) ...c7-c5
+7, Black Plays (for) ...e7-e5 (also 6...Na6)
+7
+7/87
+Ja
+IN
+a
+% Sam y
+BF
+
+

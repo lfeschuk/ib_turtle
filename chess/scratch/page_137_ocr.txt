@@ -1,0 +1,32 @@
+Starting Out: The King's Indian
+7 2 Eo %
+I.
+Diagram 18
+Black regains the piece
+16..Rd3+ 17 Kc2 Rd4 18 Kc3 Rd3+ 19 Kb4
+Of course White could have just repeated here. Instead he heads for
+the hills and we end up with a much prettier finish.
+19..Na6+ 20 Kab b6+! 21 Kxa6 Bc8+ 22 Kbs Bd7+ 23 Ka6 Be8+
+24 Kb5 Bd7+ Draw agreed
+Game 53
+OJ Parker WM Gallagher
+Bnttish League, Birmingham 2001
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 £4 0-0 6 Nf3 Na6 7 Bd3 Bg4!?
+The immediate 7...e5 is also possible and after 8 fxe5 dxeb 9 d5 Black
+usually chooses between 9...c6 and 9...Nh5. It is not so good to play
+9...Nc5 now as White can just keep his e-pawn protected with 10 Be2.
+80-0
+If White plays 8 Be3 then Black can change plan with 8...c5 9 d5 e6
+8..Nd7
+8...e5 9 fxe5 Nd7 10 Be3 c¢5! leads to the same position but White has
+other options on his 10th move. After the text Black threatens to take
+on d4 and 9 d5 c6 is fine for Black.
+9 Be3 eb 10 fxe5 ¢5! (Diagram 19)
+Black's central play has been most original (well, it was the first time
+it was played). At the end of the complications he will have gained
+control of e5. The main point is that 11 exd6 loses to 11 ..cxd4.
+11 d5 Nxe5 12 Be2 Nxf3+ 13 Bxf3 Bxf3 14 Qxf3 Qe7
+The game now revolves around the e5-square. If White can push e4-¢5
+Black will be in serious trouble. Black will have to play ...f6 to stop
+this but only after he has activated his bishop.
+136

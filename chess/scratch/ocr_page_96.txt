@@ -1,0 +1,38 @@
+The Samisch Variation
+Statistics
+At last White fights back. In the line with 7 Nge2 he has scored an
+excellent 60% in 1779 games. With 7 d5 he has notched up a very re-
+spectable 57% in nearly 3000 games.
+Nlustrative Games
+Game 35
+OJ Istratescu I Akopian
+European Championship, Ohrid 2001
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 £3 0-0 6 Be3 e5 7 Nge2 c6 8
+Qd2 Nbd7 9 0-0-0
+In Karpov-Kasparov, Linares 1993, White played the slightly cow-
+ardly 9 Rd1 and suffered one of the most humiliating defeats of his
+career. After 21 moves Karpov had seven pieces left (not including
+pawns) and they were all on the back rank!
+9..a6 10 Kb1
+White can also launch a kingside attack with any one of 10 g4, 10 h4
+or 10 Bh6. Black will then retaliate with moves such as ..b7-b5 and
+..Qab. In practice Black has usually won the mating race.
+10...b5 11 ¢5!? (Diagram 19)
+AY K=7y/ ary re
+VEE Een [EF BELEN
+7 4 Ye 2
+tuts Ath [1010 Hii
+7 A 5g 3 NY
+ork KG | Va AE EAL
+moo Nim | mom EE:
+A ETT
+(F/B7A7H BY 7X
+Diagram 19 Diagram 20
+White piles the pressure on Black's position is a nightmare
+11 ¢5 has been known for some time but underestimated until re-
+cently. Its main supporter is the German Grandmaster Graf, formerly
+known as the Uzbek Grandmaster Nenashev. Confused?
+11..b4
+Black has two pawn captures. 11...dxc5 is obviously bad because of 12
+dxeb, while 11...exd4 12 Nxd4 dxc5 13 Nxc6 is less clear but also
+95

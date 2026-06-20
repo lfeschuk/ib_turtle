@@ -1,0 +1,37 @@
+—_—ee
+
+Solution to Exercises
+Exercise 1: 9 Nxe5 is just a bad move. After 9...Nxed! 10 Nxe4 Bxe5
+Black has the better game after both 11 Bg5 Rd4! and 11 0-0 Nc6. His
+forces are more effectively placed and the d4-square makes a nice
+home for any number of black pieces.
+Exercise 2: He would have been mated after 26... Rxh2+! 27 Bxh2
+Qh7. The sacrifice doesn't work after 26 Bxg4 as White can interpose
+a piece on h3 or hs.
+Exercise 3: 18..Qh4!! - a wonderful move which vacates the h5-
+square for the black knight. If White now plays 19 Nxc7 then after
+19...Nh5 he gets checkmated. Black is threatening ..Ng3 mate Here
+are White's attempts to stop it:
+1) 20 Bf2 Qxh2+!! 21 Kxh2 Ng3+ 22 Kgl Rh1 mate.
+2) 20 h3 Ng3+ 21 Kh2 Bxh3!
+3) 20 g3 Nxg3+ 21 Kg2 Bh3+ 22 Kf2 Nh1 double checkmate (still just
+1 point).
+The only chance for White after 18...Qh4!! is to play the sad 19 g3 to
+prevent ..Nh5. After 19...fxg3 20 Nxc7 (20 Ng2 Qh3!) 20...Ngé! Black
+still has a decisive attack, although the variations are quite compli-
+cated. I'll just show one: 21 Nxa8? Qxh2+! 22 Bxh2 Rxh2+ 23 Kgl Nf4
+24 Rf2 Nh3+ 25 Kf1 Rxf2 mate.
+Exercise 4: 18 Rxd6! wins a crucial pawn as 18...Qxd6?? 19 c5+ costs
+Black his queen
+Exercise 5: 11 Bxh6, which 1s not that bad a move, is met by
+11...Nxed! 12 fxe4 Qhd+ 13 g3 Qxh6 14 Qxh6 Bxh6 15 Nxd6 Rd8
+when Black has good compensation for the pawn. This is an impor-
+tant tactic in many hnes of the King's Indian. Often 1t will be more
+devastating than 1n this example.
+Exercise 6: After 13 Bxh6”? Nxe4! 14 fxe4 Qh4+ Black regains the
+piece with advantage
+Exercise 7: 15..Nxe4! 16 Nxe4? (16 b4 limits the damage; Black re-
+plies 16...Nxc3) 16..Qxel! 17 Qxel Nf3+ 18 Kh1 Nxel 19 Rxel Rxed
+and Black emerges with a decisive matenal advantage.
+
+175

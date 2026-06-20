@@ -1,0 +1,1057 @@
+{
+  "book_title": "Starting Out: The King's Indian",
+  "exercises": [
+    {
+      "id": "game_63_kavalek_kasparov_1982",
+      "title": "Game 63: Kavalek vs. Kasparov (Bugojno 1982)",
+      "description": "Illustrative Game for White Plays an Early h2-h3. Shows Black meeting 8 Be3 with 8...Nh5 and launching a typical kingside attack, with a piece sacrifice on f3 leading to a win.",
+      "textContext": "Pages 161-162 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "game_63",
+        "white": "Kavalek",
+        "black": "Kasparov",
+        "event": "Bugojno 1982",
+        "initial_moves": "1 d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 Nf3 O-O 6 h3 e5 7 d5 Na6 8 Be3",
+        "interactive_section": {
+          "starting_move": 8,
+          "moves": [
+            {
+              "move_number": 8,
+              "player": "B",
+              "move": "Nh5",
+              "commentary": "Black prepares ...f7-f5 in the most active fashion. This is the line that has put most White players off playing 8 Be3."
+            },
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "Nh2",
+              "commentary": "This strange-looking move prevents the immediate 9...f5 as after 10 exf5 Black can no longer recapture with the pawn. That explains the thinking behind Black's next move."
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "Qe8",
+              "commentary": ""
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "Be2",
+              "commentary": ""
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "Nf4",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Bf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "f5",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "h4?!",
+              "commentary": "White's ambitious strategy is based on playing g3 to expel the knight (12 g3 Nxh3 is good for Black) but this is too risky with his king still in the centre. He should have played 12 O-O with a roughly level game after 12...Nc5."
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Qe7",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "g3",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Nb4!",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Qb3?",
+              "commentary": "Kavalek had no doubt been shocked by Black's previous move but it is suicidal to keep his king in the centre. He had to play 14 O-O against which Kasparov intended 14...g5!."
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Nfd3+!",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Ke2",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "f4",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Bd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "fxg3?",
+              "commentary": "Kasparov gives 16...Nxf2! 17 Kxf2 Nd3+ 18 Kg2 (18 Ke2 Nc5 followed by ...fxg3) 18...fxg3 19 Kxg3 and now the further sacrifice 19...Rf4! with a decisive attack."
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "fxg3",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Rxf3!",
+              "commentary": "The start of a beautiful sacrifice."
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Nxf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Bg4",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Raf1",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "Rf8",
+              "commentary": "(Diagram 15) Black now threatens 20...Rxf3 21 Rxf3 Bxf3+ 22 Kxf3 Qf6+ followed by an invasion on f2. To meet this White must defend the f2-square."
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "Nd1?",
+              "commentary": "Kavalek does it the wrong way. He should have played 20 Be3! as this also gives his king a new square on d2. According to Kasparov this leads to a draw after the decoy sacrifice 20...Bh6!."
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "Qf7!",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "Be3",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Bxf3+",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "Kd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Qd7",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "Rhg1",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Qh3",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "a3",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Bxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "Rxf8+",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "Bxf8",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "axb4",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "B",
+              "move": "Qh2+",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "W",
+              "move": "Kc3",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "B",
+              "move": "Ne1",
+              "commentary": "White resigns. An excellent game from Black."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_63_side_1",
+            "name": "Alternative 8...Nc5",
+            "description": "Black plays 8...Nc5 instead of 8...Nh5.",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 8,
+                "player": "B",
+                "move": "Nc5",
+                "commentary": "The plan that Black used in Game 62 is also playable here."
+              },
+              {
+                "move_number": 9,
+                "player": "W",
+                "move": "Nd2",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "a5",
+                "commentary": "After 8...Nc5 9 Nd2 a5 10 g4 c6 11 Be2, the position is the same as in Game 62 except that Black has a pawn on h7 instead of h6. This difference makes the way Black played in the previous game unattractive (11...Bd7 12 g5!), but introduces new possibilities."
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "g4",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "c6",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "Be2",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_63_side_2",
+            "name": "Dolmatov's Pawn Sacrifice 11...a4!",
+            "description": "Dolmatov's pawn sacrifice after 8...Nc5.",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 8,
+                "player": "B",
+                "move": "Nc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "W",
+                "move": "Nd2",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "a5",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "g4",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "c6",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "Be2",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "a4!",
+                "commentary": "Dolmatov has patented the pawn sacrifice 11...a4!. The point is that White has to give up his important dark-squared bishop to win the pawn."
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "Bxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "dxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Nxa4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Qa5",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Nc3",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Bh6!",
+                "commentary": "Note this last move wouldn't have been available with a pawn on h6. If White doesn't take the pawn Black plays ...Qa5 with pressure on the queenside."
+              }
+            ]
+          },
+          {
+            "id": "game_63_side_3",
+            "name": "Alternative 10...f5 with 12 O-O",
+            "description": "Black plays 10...f5 and White responds with 12 O-O.",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "f5",
+                "commentary": "10...f5 is a major alternative which Kasparov has also played."
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "exf5",
+                "commentary": "Black's main idea is to meet 11 exf5 with 11...Nf4"
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Nf4",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "O-O",
+                "commentary": "White should settle for the roughly level position that arises after 12 O-O Bxf5."
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "Bxf5",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_63_side_4",
+            "name": "Alternative 10...f5 with 12 Bxf4",
+            "description": "Black plays 10...f5 and White plays 12 Bxf4.",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "f5",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "exf5",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Nf4",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "Bxf4",
+                "commentary": "Rather than risk 12 Bxf4 exf4 13 fxg6 Qxg6 14 Kf1 Nc5 when Black has excellent compensation for the pawn."
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "exf4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "fxg6",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Qxg6",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Kf1",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Nc5",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_63_side_5",
+            "name": "Alternative 12 g3",
+            "description": "White plays 12 g3 instead of 12 h4?!.",
+            "startingMoveIndex": 6,
+            "moves": [
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "g3",
+                "commentary": "White's ambitious strategy is based on playing g3 to expel the knight but this is too risky with his king still in the centre."
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "Nxh3",
+                "commentary": "This is good for Black."
+              }
+            ]
+          },
+          {
+            "id": "game_63_side_6",
+            "name": "Alternative 16...Nxf2! with 18 Kg2",
+            "description": "Black plays 16...Nxf2! and White replies 18 Kg2.",
+            "startingMoveIndex": 15,
+            "moves": [
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Nxf2!",
+                "commentary": "Kasparov gives 16...Nxf2!"
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "Kxf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "Nd3+",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "W",
+                "move": "Kg2",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "B",
+                "move": "fxg3",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Kxg3",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "B",
+                "move": "Rf4!",
+                "commentary": "With a decisive attack."
+              }
+            ]
+          },
+          {
+            "id": "game_63_side_7",
+            "name": "Alternative 16...Nxf2! with 18 Ke2",
+            "description": "Black plays 16...Nxf2! and White replies 18 Ke2.",
+            "startingMoveIndex": 15,
+            "moves": [
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Nxf2!",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "Kxf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "Nd3+",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "W",
+                "move": "Ke2",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "B",
+                "move": "Nc5",
+                "commentary": "Followed by ...fxg3."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "theory_5_bd3",
+      "title": "Theory: 5 Bd3",
+      "description": "Introduction to the 5 Bd3 variation. Strategy and main lines after 5 Bd3.",
+      "textContext": "Pages 164-165 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "theory_5_bd3",
+        "white": "Theory",
+        "black": "Theory",
+        "event": "Chapter 10: Other Systems",
+        "initial_moves": "1 d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 Bd3",
+        "interactive_section": {
+          "starting_move": 5,
+          "moves": [
+            {
+              "move_number": 5,
+              "player": "B",
+              "move": "O-O",
+              "commentary": ""
+            },
+            {
+              "move_number": 6,
+              "player": "W",
+              "move": "Nge2",
+              "commentary": ""
+            },
+            {
+              "move_number": 6,
+              "player": "B",
+              "move": "Nc6",
+              "commentary": ""
+            },
+            {
+              "move_number": 7,
+              "player": "W",
+              "move": "O-O",
+              "commentary": ""
+            },
+            {
+              "move_number": 7,
+              "player": "B",
+              "move": "Nh5!?",
+              "commentary": "A most unusual move for the King's Indian. Black hardly ever moves this knight before playing ...e7-e5."
+            },
+            {
+              "move_number": 8,
+              "player": "W",
+              "move": "Be3",
+              "commentary": "This is the obvious way to defend d4 but White has two alternatives: 8 d5 and 8 Bc2."
+            },
+            {
+              "move_number": 8,
+              "player": "B",
+              "move": "e5",
+              "commentary": ""
+            },
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "d5",
+              "commentary": "(Diagram 2)"
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "Ne7!?",
+              "commentary": "9...Nd4 looks more natural."
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "Qd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "f5",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "exf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "gxf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "f4",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Ng6!",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "g3",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Bd7",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Rae1",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "a6",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "b3",
+              "commentary": "The chances are about equal."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "theory_5_bd3_side_1",
+            "name": "Alternative 6...c5",
+            "description": "Black plays 6...c5 instead of 6...Nc6.",
+            "startingMoveIndex": 1,
+            "moves": [
+              {
+                "move_number": 6,
+                "player": "B",
+                "move": "c5",
+                "commentary": "After 6...c5 7 d5 Black has to ready to play a well known line in the Modern Benoni so that is beyond the scope of this book."
+              },
+              {
+                "move_number": 7,
+                "player": "W",
+                "move": "d5",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "theory_5_bd3_side_2",
+            "name": "Alternative 7...e5",
+            "description": "Black plays 7...e5 instead of 7...Nh5!?.",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 7,
+                "player": "B",
+                "move": "e5",
+                "commentary": "Black used to play 7...e5 quite often but a number of games established that after 8 d5 Nd4 9 Nxd4 exd4 10 Nb5 Re8 11 Re1 Ng4 12 h3 a6 13 hxg4 axb5 14 cxb5 Qh4 both 15 Bf4 and 15 g3 give White a clear edge."
+              },
+              {
+                "move_number": 8,
+                "player": "W",
+                "move": "d5",
+                "commentary": ""
+              },
+              {
+                "move_number": 8,
+                "player": "B",
+                "move": "Nd4",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "W",
+                "move": "Nxd4",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "exd4",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "Nb5",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "Re8",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "Re1",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Ng4",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "h3",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "a6",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "hxg4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "axb5",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "cxb5",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Qh4",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Bf4",
+                "commentary": "White has a clear edge."
+              }
+            ]
+          },
+          {
+            "id": "theory_5_bd3_side_3",
+            "name": "Alternative 8 d5",
+            "description": "White plays 8 d5 instead of 8 Be3.",
+            "startingMoveIndex": 4,
+            "moves": [
+              {
+                "move_number": 8,
+                "player": "W",
+                "move": "d5",
+                "commentary": "The obvious-looking 8 d5 has hardly ever been played."
+              },
+              {
+                "move_number": 8,
+                "player": "B",
+                "move": "Ne5",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "W",
+                "move": "f4",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "Nxd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "Qxd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "f5!?",
+                "commentary": "The situation is very double-edged."
+              }
+            ]
+          },
+          {
+            "id": "theory_5_bd3_side_4",
+            "name": "Alternative 8 Bc2",
+            "description": "White plays 8 Bc2 instead of 8 Be3.",
+            "startingMoveIndex": 4,
+            "moves": [
+              {
+                "move_number": 8,
+                "player": "W",
+                "move": "Bc2",
+                "commentary": "Currently White's most popular move, is covered in Game 64."
+              }
+            ]
+          },
+          {
+            "id": "theory_5_bd3_side_5",
+            "name": "Alternative 9...Nd4 with 10 Rc1",
+            "description": "Black plays 9...Nd4 and White plays 10 Rc1.",
+            "startingMoveIndex": 7,
+            "moves": [
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "Nd4",
+                "commentary": "9...Nd4 looks more natural."
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "Rc1",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "c5",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "dxc6",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "bxc6",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "b4",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "c5!",
+                "commentary": "Secures the fine outpost on d4 for his knight. Admittedly, White now has d5 for his knight but you can't have everything in life."
+              }
+            ]
+          },
+          {
+            "id": "theory_5_bd3_side_6",
+            "name": "Alternative 9...Nd4 with 10 Bc2!?",
+            "description": "Black plays 9...Nd4 and White responds 10 Bc2!?.",
+            "startingMoveIndex": 7,
+            "moves": [
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "Nd4",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "Bc2!?",
+                "commentary": "Forces Black to exchange his knight."
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "Nxc2",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "Qxc2",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "f5",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "exf5",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "gxf5",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "f4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Nf6",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "h3",
+                "commentary": "White probably has a slight advantage."
+              }
+            ]
+          },
+          {
+            "id": "theory_5_bd3_side_7",
+            "name": "Alternative 12 Bg5",
+            "description": "White plays 12 Bg5 instead of 12 f4.",
+            "startingMoveIndex": 12,
+            "moves": [
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "Bg5",
+                "commentary": "12 Bg5 led to a most complicated game in Christiansen-Gallagher, Bern 1996."
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "f4!",
+                "commentary": ""
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

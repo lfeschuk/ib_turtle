@@ -1,0 +1,36 @@
+Starting Out: The King's Indian
+the game was level in Summerscale-Sasikiran, British Ch 1999.
+8...dxcbh 9 d5 (Diagram 21)
+EEE EQ EE ue
+all B Ei |B w Ei
+NS EOE | jE BE Wi
+ne ®A7R 7%, 7/8
+Diagram 21 Diagram 22
+Is the whrte centre strong or weak? The endgame 1s good for Black
+9..Nb6 10 a3 Nb8s!
+The knight was no longer doing anything on a6 The plan 1s to play
+..¢7-¢6 and break up White's big centre. 10.. 6!? 1s also good
+11 Be3 c6 12 dxc6 Nxc6 13 Bxcb Bg4 14 Be2 Re8 15 Qxd8 Rfxd8
+16 Rd1 Rxd1+ 17 Kxd1 Bxf3!
+The start of a combination that leads to a better endgame for Black.
+18 Bxf3 Nxe5! 19 Bxb6 Nxf3 20 Bxa7 Bxc3 21 bxc3 Rxc3! 22 gxf3
+Rxa3 (Diagram 22)
+Black now threatens ...Rxa7 and ...Ral+. White can't play 23 Bd4 be-
+cause of ...Rd3+ so the only move to save the piece 1s 23 Bgl. Then the
+simplest 1s to play 23...Rxf3 followed by ...Rxf4 with excellent winning
+chances for Black. Videk: preferred a rook ending a pawn down
+23 Rel Rxa7 24 Rxe7 Kg7 25 h4 Kf6 26 Rc7 Ra4 27 f5 Rf4 28
+fxg6 hxgé 29 Ke2 b5 30 Rc6+ Ke7 31 h5 gxh5 32 Re5 bd 33 Rxh5
+Kdé6 34 Ke3 Rcd 35 Rf b3 36 Rb5 Re3+ 37 Ked Kc6 38 Rb8 Kes
+39 f4 Rc4+ 40 Ke5 Rb4 41 Rc8+ Kb5 White resigns
+Summary
+ee eee
+1) In the main line of the Four Pawns Attack 9...Bg4 1s Black's most
+reliable line 9...Re8 1s also fine but only if you are willing to get in-
+volved in a tactical slugfest. 9...b5 is best left to the historians.
+2) White's alternatives to the main line are not without venom 7
+dxc5, in particular, is a difficult variation where Black will have to
+play well to equalise.
+3) 6...Naé is not a bad choice and these days enjoys almost equal
+status to 6. .c5.
+138

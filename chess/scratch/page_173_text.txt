@@ -1,0 +1,41 @@
+Starting Out: The King's Indian
+Illustrative Games
+Game 67
+O Sharif M Mamedov
+Abu Dhabi 2001
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 Nf3 0-0 5 Bg5 0-0 6 e3 Nbd7
+Black prepares ..e7-e5. 6...c5! is the subject of the next game
+7Qc2!
+White wants to be able to meet. ¢7-e5 with Rd1
+7...c6 8 Be2 a6
+After 8 .e5 9 Rd1 Qc7 10 0-0 h6 11 Bhd another one of the points of
+Qc2 16 revealed.
+Exercise 11: Black would hke to remove White's bishop with 11..g5
+12 Bg3 Nh5 (Diagram 14) but this is not a good idea Why?
+90-0 h6 10 Bhd e5 (Diagram 12)
+
+7 7 7 A-ToY/
+EEE EEE (EUW _EEH
+Tiwamis | [Fim wR
+
+Wit Eon | Etwew ow
+i, i, A ra if A 21R
+wim mW (mimi wm
+i mag | 8 vn
+ARSEARER | meEAEiE
+/ RB EU EN
+Diagram 12 Diagram 13
+Does Black get the bishop pair? A well timed thrust
+After preparing ...b7-b5 it seems strange not to play it. Nevertheless,
+the position after 10 .b5 11 a3 Bb7 12 Nd2 1s quite unpleasant for
+Black as I can testify from personal experience
+11 dxe5
+There was no reason to release the central tension. 11 Rfd 1 looks hike
+a good move.
+11...dxe5 12 Radl Qe7 13 a3 a5 14 Nd2 Ncb 16 Nb3 Nxb3 16
+Qxb3 g5 17 Bg3 Nd7 18 f3 Nc5 19 Qc2 f5 20 Kh1 Be6 21 e4 (Dia-
+gram 13) 21...fxe4
+Note how White only played e4 when the kmght on ¢5 could no longer
+0 to ¢6. It was possible for Black to play 21...f4 but after 22 Bf2 Rad8
+White can play 23 Nd5! cxd5 24 cxd5 when he regains the piece with
+172

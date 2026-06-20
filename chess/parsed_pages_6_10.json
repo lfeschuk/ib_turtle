@@ -1,0 +1,203 @@
+{
+  "book_title": "Starting Out: The King's Indian",
+  "exercises": [
+    {
+      "id": "introduction_theory",
+      "title": "Introduction: The King's Indian Defence",
+      "description": "An introduction to the King's Indian Defence (KID), illustrating the primary move orders, the main setup, and transpositional variations.",
+      "textContext": "Is the King's Indian the opening for me?\nIf your attitude to playing Black in chess is to try and neutralise White's slight advantage by careful defensive play, then the answer is no. In that case you should be looking for a book on something like the Queen's Gambit Declined or the Queen's Indian.\nIf, on the other hand, you are a bit of a risk taker, you want to battle for the initiative right from the start, launch counter-attacks rather than meekly reacting to the opponents threats and lure White into over-extending himself, then the answer is a resounding yes! If you choose to play the King's Indian you will also be in exalted company. The two greatest chess players of all time (arguably), Bobby Fischer and Garry Kasparov, have both been, at one time or another, big fans of the King’s Indian. The King’s Indian is, in fact, one of Black's most popular responses to 1 d4. The majority of variations in this book start after the moves 1 d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6.\nWhite has been allowed to construct a large pawn centre while in return Black has taken the time to develop his dark-squared bishop to its potentially most active diagonal. This bishop is usually referred to as the King's Indian bishop and Black's progress is often closely tied up with the fortunes of this piece.\nWhite's dominance of the centre is only a temporary state of affairs, as once Black has castled he will stake his claim there by playing either ...e7-e5 or ...c7-c5. His choice is usually determined by what White plays over the next couple of moves but, in general, King's Indian players prefer to play ...e7-e5. Flank openings can cause considerable difficulty for certain Black variations, but not for the King's Indian as Black can just adopt the same set-up as if White had played 1 d4. In fact, very often White will play d4 later on and we transpose directly back into the King's Indian.",
+      "preparsedJson": {
+        "game_id": "intro_kid_setup",
+        "white": "",
+        "black": "",
+        "event": "Introduction",
+        "initial_moves": "",
+        "interactive_section": {
+          "starting_move": 1,
+          "moves": [
+            {
+              "move_number": 1,
+              "player": "W",
+              "move": "d4",
+              "commentary": ""
+            },
+            {
+              "move_number": 1,
+              "player": "B",
+              "move": "Nf6",
+              "commentary": "The majority of variations in this book start after the moves 1 d4 Nf6."
+            },
+            {
+              "move_number": 2,
+              "player": "W",
+              "move": "c4",
+              "commentary": ""
+            },
+            {
+              "move_number": 2,
+              "player": "B",
+              "move": "g6",
+              "commentary": "Preparing to fianchetto the dark-squared bishop."
+            },
+            {
+              "move_number": 3,
+              "player": "W",
+              "move": "Nc3",
+              "commentary": ""
+            },
+            {
+              "move_number": 3,
+              "player": "B",
+              "move": "Bg7",
+              "commentary": "Developing the King's Indian bishop to its active diagonal."
+            },
+            {
+              "move_number": 4,
+              "player": "W",
+              "move": "e4",
+              "commentary": "White constructs a large pawn center."
+            },
+            {
+              "move_number": 4,
+              "player": "B",
+              "move": "d6",
+              "commentary": "Diagram 1: The King's Indian Defence. Black stops e4-e5 and prepares to strike the center with ...e7-e5 or ...c7-c5."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "intro_sideline_1",
+            "name": "Transposition 1 (1 c4)",
+            "description": "Transposition back into the main line starting with 1 c4.",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 1,
+                "player": "W",
+                "move": "c4",
+                "commentary": ""
+              },
+              {
+                "move_number": 1,
+                "player": "B",
+                "move": "Nf6",
+                "commentary": ""
+              },
+              {
+                "move_number": 2,
+                "player": "W",
+                "move": "Nc3",
+                "commentary": ""
+              },
+              {
+                "move_number": 2,
+                "player": "B",
+                "move": "g6",
+                "commentary": ""
+              },
+              {
+                "move_number": 3,
+                "player": "W",
+                "move": "e4",
+                "commentary": ""
+              },
+              {
+                "move_number": 3,
+                "player": "B",
+                "move": "d6",
+                "commentary": ""
+              },
+              {
+                "move_number": 4,
+                "player": "W",
+                "move": "d4",
+                "commentary": ""
+              },
+              {
+                "move_number": 4,
+                "player": "B",
+                "move": "Bg7",
+                "commentary": "Back in the main line: 1 c4 Nf6 2 Nc3 g6 3 e4 d6 4 d4 Bg7."
+              }
+            ]
+          },
+          {
+            "id": "intro_sideline_2",
+            "name": "Transposition 2 (1 Nf3)",
+            "description": "Transposition into the Fianchetto Variation starting with 1 Nf3.",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 1,
+                "player": "W",
+                "move": "Nf3",
+                "commentary": ""
+              },
+              {
+                "move_number": 1,
+                "player": "B",
+                "move": "Nf6",
+                "commentary": ""
+              },
+              {
+                "move_number": 2,
+                "player": "W",
+                "move": "g3",
+                "commentary": ""
+              },
+              {
+                "move_number": 2,
+                "player": "B",
+                "move": "g6",
+                "commentary": ""
+              },
+              {
+                "move_number": 3,
+                "player": "W",
+                "move": "Bg2",
+                "commentary": ""
+              },
+              {
+                "move_number": 3,
+                "player": "B",
+                "move": "Bg7",
+                "commentary": ""
+              },
+              {
+                "move_number": 4,
+                "player": "W",
+                "move": "O-O",
+                "commentary": ""
+              },
+              {
+                "move_number": 4,
+                "player": "B",
+                "move": "O-O",
+                "commentary": ""
+              },
+              {
+                "move_number": 5,
+                "player": "W",
+                "move": "c4",
+                "commentary": ""
+              },
+              {
+                "move_number": 5,
+                "player": "B",
+                "move": "d6",
+                "commentary": ""
+              },
+              {
+                "move_number": 6,
+                "player": "W",
+                "move": "d4",
+                "commentary": "Transposed into the Fianchetto Variation: 1 Nf3 Nf6 2 g3 g6 3 Bg2 Bg7 4 0-0 0-0 5 c4 d6 6 d4."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

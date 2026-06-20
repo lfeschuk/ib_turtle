@@ -1,0 +1,955 @@
+{
+  "book_title": "Starting Out: The King's Indian",
+  "exercises": [
+    {
+      "id": "exercise_solution_1",
+      "title": "Solution to Exercise 1 (Page 175)",
+      "description": "9 Nxe5 is refuted by 9...Nxe4! active play.",
+      "textContext": "Solution to Exercise 1, Page 175",
+      "preparsedJson": {
+        "game_id": "exercise_solution_1",
+        "white": "Theory-Trap",
+        "black": "Solver",
+        "event": "Exercise 1 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 dxe5 dxe5 Qxd8 Rxd8",
+        "interactive_section": {
+          "starting_move": 9,
+          "moves": [
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "Nxe5?",
+              "commentary": "9 Nxe5 is just a bad move."
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "Nxe4!",
+              "commentary": "After 9...Nxe4! 10 Nxe4 Bxe5 Black has the better game."
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "Bxe5",
+              "commentary": "Black has the better game after both 11 Bg5 Rd4! and 11 O-O Nc6. His forces are more effectively placed and the d4-square makes a nice home for any number of black pieces."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "ex_1_side_11_bg5",
+            "name": "Alternative 11 Bg5",
+            "description": "White plays 11 Bg5 after 10...Bxe5",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "Bg5",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Rd4!",
+                "commentary": "Black has the better game."
+              }
+            ]
+          },
+          {
+            "id": "ex_1_side_11_oo",
+            "name": "Alternative 11 O-O",
+            "description": "White plays 11 O-O after 10...Bxe5",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "O-O",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Nc6",
+                "commentary": "Black has the better game."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exercise_solution_2",
+      "title": "Solution to Exercise 2 (Page 175)",
+      "description": "Reconstruction of what happens if White played 26 a7 in Korchnoi vs Xie Jun.",
+      "textContext": "Solution to Exercise 2, Page 175",
+      "preparsedJson": {
+        "game_id": "exercise_solution_2",
+        "white": "Korchnoi",
+        "black": "Xie Jun",
+        "event": "Exercise 2 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6 d5 Ne7 Ne1 Nd7 Be3 f5 f3 f4 Bf2 g5 a4 Ng6 a5 Rf7 b4 Bf8 c5 Nf6 c6 h5 Kh1 Rh7 cxb7 Bxb7 a6 Bc8 Nb5 g4 Nxa7 g3 Nc6 Qd7 Bg1 Ng4 fxg4 hxg4",
+        "interactive_section": {
+          "starting_move": 26,
+          "moves": [
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "a7",
+              "commentary": "White tries to push the a-pawn instead of exchanging queens."
+            },
+            {
+              "move_number": 26,
+              "player": "B",
+              "move": "Rxh2+!",
+              "commentary": "Devastating sacrifice."
+            },
+            {
+              "move_number": 27,
+              "player": "W",
+              "move": "Bxh2",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "B",
+              "move": "Qh7",
+              "commentary": "White would have been mated."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "ex_2_side_26_bxg4",
+            "name": "Game Move 26 Bxg4",
+            "description": "White plays 26 Bxg4 as in the game.",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 26,
+                "player": "W",
+                "move": "Bxg4!",
+                "commentary": "The sacrifice doesn't work after 26 Bxg4 as White can interpose a piece on h3 or h5."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exercise_solution_3",
+      "title": "Solution to Exercise 3 (Page 175)",
+      "description": "Refutation of White's play after Black's 18...Qh4!!.",
+      "textContext": "Solution to Exercise 3, Page 175",
+      "preparsedJson": {
+        "game_id": "exercise_solution_3",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 3 Solution",
+        "initial_moves": "d4 Nf6 Nf3 g6 c4 Bg7 Nc3 O-O e4 d6 Be2 e5 O-O Nc6 d5 Ne7 Ne1 Nd7 Be3 f5 f3 f4 Bf2 g5 Rc1 Rf6 b4 Rh6 c5 Qe8 Kh1 Nf6 Nb5 Qh5 Bg1",
+        "interactive_section": {
+          "starting_move": 18,
+          "moves": [
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Qh4!!",
+              "commentary": "A wonderful move which vacates the h5-square for the black knight."
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "g3",
+              "commentary": "The only chance for White after 18...Qh4!! is to play the sad 19 g3 to prevent ...Nh5."
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "fxg3",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "Nxc7",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "Ng6!",
+              "commentary": "Black still has a decisive attack, although the variations are quite complicated."
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "Nxa8?",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Qxh2+!",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "Bxh2",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Rxh2+",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "Kg1",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Nf4",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "Rf2",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Nh3+",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "Kf1",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "Rxf2#",
+              "commentary": "Mate."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "ex_3_side_19_nxc7_bf2",
+            "name": "Alternative 19 Nxc7 with 20 Bf2",
+            "description": "White plays 19 Nxc7 and tries 20 Bf2 to defend.",
+            "startingMoveIndex": 0,
+            "moves": [
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Nxc7",
+                "commentary": "If White now plays 19 Nxc7 then after 19...Nh5 he gets checkmated."
+              },
+              {
+                "move_number": 19,
+                "player": "B",
+                "move": "Nh5",
+                "commentary": "Black threatens ...Ng3 mate."
+              },
+              {
+                "move_number": 20,
+                "player": "W",
+                "move": "Bf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "B",
+                "move": "Qxh2+!!",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "W",
+                "move": "Kxh2",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "B",
+                "move": "Ng3+",
+                "commentary": ""
+              },
+              {
+                "move_number": 22,
+                "player": "W",
+                "move": "Kg1",
+                "commentary": ""
+              },
+              {
+                "move_number": 22,
+                "player": "B",
+                "move": "Rh1#",
+                "commentary": "Mate."
+              }
+            ]
+          },
+          {
+            "id": "ex_3_side_19_nxc7_h3",
+            "name": "Alternative 19 Nxc7 with 20 h3",
+            "description": "White plays 19 Nxc7 and tries 20 h3 to defend.",
+            "startingMoveIndex": 0,
+            "moves": [
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Nxc7",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "B",
+                "move": "Nh5",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "W",
+                "move": "h3",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "B",
+                "move": "Ng3+",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "W",
+                "move": "Kh2",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "B",
+                "move": "Bxh3!",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "ex_3_side_19_nxc7_g3",
+            "name": "Alternative 19 Nxc7 with 20 g3",
+            "description": "White plays 19 Nxc7 and tries 20 g3 to defend.",
+            "startingMoveIndex": 0,
+            "moves": [
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Nxc7",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "B",
+                "move": "Nh5",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "W",
+                "move": "g3",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "B",
+                "move": "Nxg3+",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "W",
+                "move": "Kg2",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "B",
+                "move": "Bh3+",
+                "commentary": ""
+              },
+              {
+                "move_number": 22,
+                "player": "W",
+                "move": "Kf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 22,
+                "player": "B",
+                "move": "Nh1#",
+                "commentary": "Double checkmate."
+              }
+            ]
+          },
+          {
+            "id": "ex_3_side_20_ng2",
+            "name": "Alternative 20 Ng2",
+            "description": "White plays 20 Ng2 in the main line.",
+            "startingMoveIndex": 2,
+            "moves": [
+              {
+                "move_number": 20,
+                "player": "W",
+                "move": "Ng2",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "B",
+                "move": "Qh3!",
+                "commentary": "Black wins."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exercise_solution_4",
+      "title": "Solution to Exercise 4 (Page 175)",
+      "description": "18 Rxd6! wins a pawn due to queen loss threat.",
+      "textContext": "Solution to Exercise 4, Page 175",
+      "preparsedJson": {
+        "game_id": "exercise_solution_4",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 4 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6 d5 Ne7 b4 Nh5 g3 f5 Ng5 Nf6 f3 f4 Kg2 c6 Qb3 h6 Ne6 Bxe6 dxe6 Qc8 Rd1 Qxe6",
+        "interactive_section": {
+          "starting_move": 18,
+          "moves": [
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Rxd6!",
+              "commentary": "wins a crucial pawn as 18...Qxd6?? 19 c5+ costs Black his queen."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "ex_4_side_18_qxd6",
+            "name": "Alternative 18...Qxd6",
+            "description": "Black accepts the rook sacrifice.",
+            "startingMoveIndex": 0,
+            "moves": [
+              {
+                "move_number": 18,
+                "player": "B",
+                "move": "Qxd6??",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "c5+",
+                "commentary": "Costs Black his queen."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exercise_solution_5",
+      "title": "Solution to Exercise 5 (Page 175)",
+      "description": "Tactic refuting 11 Bxh6 with 11...Nxe4!.",
+      "textContext": "Solution to Exercise 5, Page 175",
+      "preparsedJson": {
+        "game_id": "exercise_solution_5",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 5 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Bg5 c5 d5 e6 Qd2 exd5 cxd5 a6 a4 h6",
+        "interactive_section": {
+          "starting_move": 11,
+          "moves": [
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Bxh6",
+              "commentary": "11 Bxh6, which is not that bad a move, is met by 11...Nxe4!."
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Nxe4!",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Qh4+",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "g3",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Qxh6",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Qxh6",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Bxh6",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Nxd6",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Rd8",
+              "commentary": "Black has good compensation for the pawn. This is an important tactic in many lines of the King's Indian."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "exercise_solution_6",
+      "title": "Solution to Exercise 6 (Page 175)",
+      "description": "Refutation of 13 Bxh6? with 13...Nxe4!.",
+      "textContext": "Solution to Exercise 6, Page 175",
+      "preparsedJson": {
+        "game_id": "exercise_solution_6",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 6 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Bg5 c5 d5 e6 Qd2 exd5 Nxd5 Be6 Ne2 Nc6 Nec3 Bxd5 Nxd5 h6",
+        "interactive_section": {
+          "starting_move": 13,
+          "moves": [
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Bxh6?",
+              "commentary": "White blunders with 13 Bxh6?."
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Nxe4!",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "fxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Qh4+",
+              "commentary": "Black regains the piece with advantage."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "exercise_solution_7",
+      "title": "Solution to Exercise 7 (Page 175)",
+      "description": "Tactical sequence starting with 15...Nxe4!.",
+      "textContext": "Solution to Exercise 7, Page 175",
+      "preparsedJson": {
+        "game_id": "exercise_solution_7",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 7 Solution",
+        "initial_moves": "Nf3 Nf6 c4 g6 d4 Bg7 Nc3 O-O g3 d6 Bg2 Nbd7 O-O e5 e4 c6 h3 Qa5 Re1 exd4 Nxd4 Ne5 Bf1 Re8 Be3 Be6 Nxe6 Rxe6 Rb1",
+        "interactive_section": {
+          "starting_move": 15,
+          "moves": [
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Nxe4!",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Nxe4?",
+              "commentary": "White recaptures but it is a mistake."
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Qxe1!",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "Qxe1",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Nf3+",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Kh1",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Nxe1",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Rxe1",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "Rxe4",
+              "commentary": "Black emerges with a decisive material advantage."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "ex_7_side_16_b4",
+            "name": "Alternative 16 b4",
+            "description": "White plays 16 b4 to limit the damage.",
+            "startingMoveIndex": 0,
+            "moves": [
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "b4",
+                "commentary": "Limits the damage."
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Nxc3",
+                "commentary": ""
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exercise_solution_8",
+      "title": "Solution to Exercise 8 (Page 176)",
+      "description": "Refutation of White's options after 10...Nfxe4!.",
+      "textContext": "Solution to Exercise 8, Page 176",
+      "preparsedJson": {
+        "game_id": "exercise_solution_8",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 8 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f4 O-O Nf3 Na6 Be2 e5 dxe5 dxe5 O-O Nc5 Qc2",
+        "interactive_section": {
+          "starting_move": 10,
+          "moves": [
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "Nfxe4!",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Bf5",
+              "commentary": ""
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "ex_8_side_12_nfd2",
+            "name": "Alternative 12 Nfd2",
+            "description": "White plays 12 Nfd2.",
+            "startingMoveIndex": 2,
+            "moves": [
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "Nfd2",
+                "commentary": "Fails to Nxe4."
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "Nxe4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Nxe4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Qh4+",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "ex_8_side_12_bd3",
+            "name": "Alternative 12 Bd3",
+            "description": "White plays 12 Bd3.",
+            "startingMoveIndex": 2,
+            "moves": [
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "Bd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "Bxe4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Bxe4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "f5",
+                "commentary": "Black regains the piece with an active game."
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Bd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "e4",
+                "commentary": ""
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exercise_solution_9",
+      "title": "Solution to Exercise 9 (Page 176)",
+      "description": "Refutation of 11 b4? with a tactical trap.",
+      "textContext": "Solution to Exercise 9, Page 176",
+      "preparsedJson": {
+        "game_id": "exercise_solution_9",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 9 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nbd7 Be3 Re8 d5 Nc5 Qc2 a6",
+        "interactive_section": {
+          "starting_move": 11,
+          "moves": [
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "b4?",
+              "commentary": "White falls into Black's trap."
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Ncxe4!",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Qxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Bf5",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Qd3",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "e4",
+              "commentary": "Black wins the rook on a1."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "exercise_solution_10",
+      "title": "Solution to Exercise 10 (Page 176)",
+      "description": "Positional solution 24...Nb8! to activate the knight.",
+      "textContext": "Solution to Exercise 10, Page 176",
+      "preparsedJson": {
+        "game_id": "exercise_solution_10",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 10 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O h3 e5 d5 Na6 Bg5 Qe8 g4 Nd7 Rg1 Kh8 a3 f5 gxf5 gxf5 b4 Nf6 Bd3 Nxe4 Nxe4 fxe4 Bxe4 Bf5 Nd2 Qg6 Rg4 Bh6 Bxh6 Qxh6 Bxf5 Rxf5 Rg3 Raf8 Ne4 Rf4 Qe2 Qh4 Re3",
+        "interactive_section": {
+          "starting_move": 24,
+          "moves": [
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Nb8!",
+              "commentary": "Black's one passive piece is brought back into play. After ...Nd7-f6 White's position is beginning to look decidedly shaky."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "exercise_solution_11",
+      "title": "Solution to Exercise 11 (Page 176)",
+      "description": "Refutation of 13 Nxg5! due to mate threats.",
+      "textContext": "Solution to Exercise 11, Page 176",
+      "preparsedJson": {
+        "game_id": "exercise_solution_11",
+        "white": "White",
+        "black": "Black",
+        "event": "Exercise 11 Solution",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 Nf3 d6 Bg5 O-O e3 Nbd7 Qc2 c6 Be2 e5 Rd1 Qc7 O-O h6 Bh4 g5 Bg3 Nh5",
+        "interactive_section": {
+          "starting_move": 13,
+          "moves": [
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Nxg5!",
+              "commentary": "White plays 13 Nxg5! winning a pawn."
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "hxg5",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Bxh5",
+              "commentary": "White wins a pawn."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "ex_11_side_13_nxg3",
+            "name": "Alternative 13...Nxg3",
+            "description": "Black tries 13...Nxg3.",
+            "startingMoveIndex": 0,
+            "moves": [
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Nxg3",
+                "commentary": "Normally Black could meet 13 Nxg5 with this, but he can't here as White is also threatening Qh7 mate."
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Qh7#",
+                "commentary": "Checkmate."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

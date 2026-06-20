@@ -1,0 +1,42 @@
+Starting Out: The King’s Indian
+White Plays 6 Bg5, Delaying Nf3
+—————— ee
+1dd Nf6 2 c4 g6 3 Nc3 Bg7 4 ed d6 5 h3 0-0 6 Bg5 (Diagram 2)
+ERLE EQ [EVATEEST
+THY NE XY TAY Pro)
+Tif rift ptr iat
+WE TY p Try
+7K ati a7 Tt atl
+om wD Emam
+Z YW V7
+mimim W | mili mW
+5 5B mi jE N0E mi
+BH ESANH E788 HE
+Diagram 2 Diagram 3
+White keeps the g1-knight at home Another unpin
+In this section White delays the development of his king's knight as
+he usually prefers a set-up with Bd3 and Nge2.
+6..Na6
+Black prepares the traditional King's Indian central strike ...e7-e5.
+You have been warned elsewhere about playing ...e7-e5 with the
+bishop on g5.
+7 Bd3
+7 Nf3 e5 8 d5 transposes to Game 61 while after 8 dxe5 dxe5 9 Qxd8
+Rxd8 10 Nd5 (10 Nxe5 Re8 11 {4 Nc5 regains the pawn with a good
+game) 10...Rd6! the game is level.
+7...e5 8 d5 Qe8!? (Diagram 3)
+This is the modern, dynamic approach to the King's Indian. The idea
+behind 8...Qe8 is to unpin the kmight on f6 so that it can move and
+Black can play ...f7-f5. Black could also have unpinned with 8..h6
+when the bishop normally drops back to e3. Black's idea in playing.
+...Qe8 is that in certain cases the bishop on g5 may actually turn out
+to be misplaced. It could end up just pointing into thin air, or it may
+block the g-file for the white rooks.
+9gd
+The consistent follow-up. The main idea 1s to make Black think twice
+about playing ...f7-f5. If Black goes ahead with the ...{7-f5 plan, the g-
+file, where the black king is currently in residence, will open. How-
+ever, the white king is probably not overjoyed about the g2-g4 ad-
+vance either. His preferred home on g1 1s now out of bounds so he will
+have to stay in the centre or risk the queenside.
+152

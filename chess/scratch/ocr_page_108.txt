@@ -1,0 +1,41 @@
+The Fianchetto Variation
+13...b5! 14 cxb5
+Black would continue in the same way after 14 Qxd6.
+14...axb6 16 Qxd6 Rb6!
+The white e-pawn has sufficient protection for the moment so Black
+brings up the heavy artillery to bombard it. Note that this time he de-
+layed ...b5-b4 for a move as after 15...b4 16 Nad the queen's rook can
+no longer be transported to the centre.
+16 Qd1 b4 17 Nad Rbe6 18 Bb2 Qe?
+White had defended his e-pawn by tactical means: 18 ..Nxed? 19 Bxg7
+Kxg7 20 Bxed Rxed 21 Rxed Rxed 22 Nxcb! is favourable for White.
+19 Ne3 Bb7 20 f3
+You may wonder why Black has been piling up on the e-pawn if all
+White needs to do is to play this simple pawn move to defend it. The
+whole point is, though, that Black has been trying to force this little
+pawn move as it seriously weakens the white kingside. Black will now
+switch his attack to the dark squares in this sector of the board. It
+may have been better for White to return the pawn with 20 e5
+20..Nh5! 21 Bxg7 Kxg7 22 g4 Nf4 23 Qd2 Ne5 (Diagram 5)
+AVE
+i, Wh, It 7. | 7
+Y 3
+pew wi@t
+W EEE
+of ERA
+Pim Nha
+2 wma
+5 7 8 8
+Diagram 5
+What wonderful knights!
+Black now threatens 24...Nxh3+ 25 Bxh3 Nxf3+ so there is no time for
+White to prevent Black taking control of the d-file. Rather than dying
+quietly White initiated complications with 25 Nf5+ but these quickly
+turned sour. Here are the remaining moves.
+24 Rf1 Rd8 25 Nf5+ gxf5 26 Qxf4 Nd3 27 Qe3 f4!? 28 Qd2 c4! 29
+bxcd QA7 30 a3 Qxad 31 axb4 Qd7 32 Qc3+ Qd4+ 33 Qxd4+ Rxd4
+34 Rfd1 Red6 356 Ra7 Rd7 36 Kf1 Rxc4! 37 Rxb7 Rxb7 38 Rxd3
+Rcxb4 39 Rd2 Rb1+ 40 Kf2 R7b2 41 Rxb2 Rxb2+ 42 Kgl Kf6 43
+h4 Keb 44 gb h6 46 hb hxgh 46 Bh3 Kd4 47 Bg4 Ke3 48 Kfl Rh2
+49 Kg1 Rhd 50 Kf1 16 61 Kg2 Ke2 52 Kgl Rxg4+ White resigns
+107

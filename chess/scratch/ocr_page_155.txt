@@ -1,0 +1,44 @@
+Starting Out: The King's Indian
+It is essential for White to keep a picce on e4 to prevent Black from
+advancing his e pawn. Black must take quick action as if White has
+the time to consolidate then his blockade of e4 will give him a posi
+tional advantage.
+15...b5! (Diagram 4)
+7, NR) w WV HY
+AYES ERB
+r x 7 At |X way Mt
+5g 7) y Ta p
+70x Url, WX Ui
+? XY MT) 78 74
+raise WE mir B
+7 2 / 2 7 Y 2]
+EL EUR Dr7%0 1 7
+NG T=
+PN RANE _
+2 aE 728 US IU
+Diagram 4 Diagram 5
+Opening the queenside What now for Black?
+Not deep, but a visually surprising move. Of course 16 Nxb5 is impos.
+sible but Black's main point is that after 16 cxb5 Nxe4 17 Nxed Qxb5
+the position has opened and White's king 1s very exposed. White pre
+fers to give up a pawn to retain his blockade.
+16 Be3 Nxe4 17 Nxe4 bxc4 18 Qe2 Qb5 19 0-0-0
+The white king had a choice of evils
+19..Bd7 20 Rhel
+White plans to use his rooks on the second rank to defend b2
+20...Qa6 21 Nc3 Rac8?! 22 Rd2 Rbs!
+TIP: Always admit your mistakes. Don't be too embarrassed or too
+pligheaded to retrace your steps if that Is what the position requires.
+23 Qed Rb3 24 Rc2 Rfb8 25 Ree2 (Diagram 5)
+White has successfully defended his main weakness on b2. It is hard
+to sce how Black can make further progress on the queenside. How
+can he increase the pressure? Well, ever since White played Qed the
+old adage that a queen is a bad blockader (the queen is too strong a
+piece to be reduced to the role of blockader) would not leave my head.
+If only the queen could be attacked then the white position is sure to
+fall apart.
+25.5!
+I particularly enjoyed the fact that the two key moves in this game
+were sacrifices of the knight's pawn (15...b5!). Black's plan is simple -
+to transfer his bishop to gb. The move ...g6-g5 had to be played at
+154

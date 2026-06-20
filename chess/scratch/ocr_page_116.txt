@@ -1,0 +1,45 @@
+The Flanchetto Variation
+King’s Indian where Black plays ...Na6, as that piece is usually just
+en route to the healthy c5-square. Here the knight on a5 is really
+stuck. So why does Black play like this? Well, it is all part of his
+scheme to develop pressure against the white queenside, and in par-
+ticular the c4-square. This pressure will be increased when he plays
+the move ...b7-b5 and he hopes that the white pieces will end up tied
+down defending c4. The most likely scenarios are that the knight on
+a5 either emerges triumphant on c4 or it just drops off.
+9 Nd2 cb
+Black must prevent b2-b4.
+10 Qc2
+White reinforces his knight on ¢3 against the long range pressure
+from the bishop on g7. The point is that once Black plays ..b7-b5 he is
+going to need to reply b2-b3.
+10...Rb8 11 b3 bb 12 Bb2 Bhé
+A surprising switch after seven consecutive moves on the queenside.
+It is not inconsistent, though, with Black's overall strategy. He now
+threatens to take on d2 and then on c4 so White has to block the
+bishop out with f4, This weakens the kingside and White's central po-
+sition so Black will try and develop threats there while White is still
+tied down defending c4. Basically, Black can’t make any further pro-
+gress on the queenside. He needs to open a second front.
+13 f4
+Why doesn’t White just play the solid 13 e3, you may well ask? Well,
+he would if he could but he can't. After 13...bxcd 14 Nxc4 lets the
+knight on a5 off very lightly and 14 bxc4 Bf5! 15 Nced (15 e4 Bxd2!)
+15...Nxe4 16 Bxe4 Bxe4 17 Nxe4 Nxc4! is very good for Black.
+13..bxc4 14 bxcd e5! (Diagram 16)
+This position has been reached literally hundreds of times in top class
+chess. The tactical justification for Black's last move is that 15 fxe5
+fails to 15...Bxd2!. After 14...e5 play usually continues 15 dxe6 Bxe6
+16 Nd5 and this is the subject of Game 44. If you have gained the im-
+pression that Black has the initiative and White has been merely re-
+acting to his threats then you are not mistaken. White has been will-
+ing to suffer because that horrible knight still remains on a5.
+Theoretical?
+The main lines of the Panno are very theoretical. You should certainly
+know it well up to move 15. There are many traps, especially for
+White, to avoid. Even grandmasters playing White have been known
+to emerge from the opening with their position in tatters.
+Statistics
+The diagram position above after 14...e5 has been reached nearly 300
+
+15

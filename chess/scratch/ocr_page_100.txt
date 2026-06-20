@@ -1,0 +1,43 @@
+The Samisch Variation
+Game 37
+0 Hauchard 8 Krakops
+Cappelie la Grande 1997
+1d4Nf62c4 g63Nc3Bg74e4d65f30-06Bg5csTd5e68
+Qd2 exdb 9 Nxd5!?
+White takes advantage of the pin to try and establish a stronghold on
+the weak d5-square.
+9...Be6 10 Ne2 Nc6!?
+The text seemingly allows White to gain complete control over d5 but
+Black has spotted a tactical solution to his positional problems.
+11 Nec3 Bxd5 12 Nxdb h6! (Diagram 25)
+Exercise 6: What does Black have in mind after 13 Bxh6?
+13 Nxfé+ Bxf6 14 Bxh6 Bxb2! 156 Rb1
+Black's idea was to meet 15 Qxb2 with 15...Qh4+. White tries to avoid
+this exchange but after the next move he has no choice.
+TIP: If you couldn't solve the exercise above, try again now!
+16...Bc3! 16 Qxc3 Qh4+ 17 g3 Qxh6 18 Qd2 Qh5 19 Bg2 Nd4 20
+0-0 b6 (Diagram 26)
+At first glance it looks like Black is doing well because he has a mas:
+sive knight on d4 and White a passive bishop on g2. However, White
+has more play with his pawns so he is not worse. Black, in particular,
+must stop White from playing e4-e5 under favourable circumstances.
+21 f4 Rac8 22 Rbel Kg7 23 h3 6 24 ad Re7 25 a5 bxa5!? 26 Qxa5
+Nc2 27 g4 Qh8 28 Re2 Nd4 29 Ref2 Qhd
+I'm slightly puzzled as to why Black didn't go here straightaway.
+30 Qa6 Rd7 31 eb fxeb 32 fxeb Rxf2 33 Rxf2 dxe5 34 Qc8 Qe7 35
+Bd5 Rd8 36 Qa6 Rf8 37 Rxf8 QxfB 38 Qxa7+ Khé 39 Kg2 Ne2 40
+hd Nfd+ 41 Kg3 Ne2+ 42 Kg2 Nf4+ 43 Kg3 Ne2+ Draw agreed
+7 Cw 7 7 eam
+EW Eom [EF FEE
+A | 7
+tim mie | |§ @W wil |
+Far ats [x ow im
+Boom © | ow ow Ee
+2 BY ji
+milize wl wWiaiE wl
+mB Erm | mE Wim
+im WEI Bw Ean
+= a8 [EZ 41S
+Diagram 25 Diagram 26
+Do you recognise the theme? The position is level
+99

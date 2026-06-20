@@ -1,0 +1,6 @@
+{
+  "name": "Chess Book Parser & Interactive Board",
+  "description": "Digitize chess book text or page images into an interactive chessboard with move-by-move commentary and variations using Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

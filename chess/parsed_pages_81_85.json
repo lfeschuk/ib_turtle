@@ -1,0 +1,1161 @@
+{
+  "book_title": "Starting Out: The King's Indian",
+  "exercises": [
+    {
+      "id": "game_29_kramnik_shirov",
+      "title": "Game 29: Kramnik vs Shirov (Bundesliga 1992)",
+      "description": "Illustrative Game for The Sämisch Variation. Black sacrifices a pawn with 6...c5, leading to active piece play and an eventual draw.",
+      "textContext": "Page 82-83 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "game_29",
+        "white": "Kramnik",
+        "black": "Shirov",
+        "event": "Bundesliga 1992",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 c5 dxc5 dxc5 Qxd8 Rxd8 Bxc5 Nc6",
+        "interactive_section": {
+          "starting_move": 10,
+          "moves": [
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "Ba3",
+              "commentary": "With the black queen gone, White has less to fear from ...Nb4, so he can afford to develop this bishop. Note that the alternative 10 Nd5 is the subject of Game 30."
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "a5!",
+              "commentary": "This is a key move, preparing to establish a knight on b4. Black must react quickly before White has time to consolidate. For example, if Black instead plays 10...b6? 11 Nd5 Nxd5 12 cxd5 Nb4 13 Rc1 Nxa2 14 Rc7 and White maintains his extra pawn with an active position."
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Rd1",
+              "commentary": "White tries to challenge the d-file. On 11 Nd5 Nxd5 12 cxd5 Nb4 13 O-O-O e6! is fine for Black."
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Be6",
+              "commentary": "This is better than exchanging on d1 as that would only help the white king to a better home on the queenside."
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Nd5",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Nb4!",
+              "commentary": "(Diagram 4) The logic behind ...Nb4 is not difficult to understand. Black has a massive lead in development so he seeks to complicate the game before White can consolidate. There is also the little matter of ...Nc2+ on the cards, which will deprive White of his dark-squared bishop and ruin his pawn structure."
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Nxe7+",
+              "commentary": "13 Bd3 Bxd5 14 cxd5 Nxd3+ 15 Rxd3 e6 is not dangerous for Black, while lines that White should definitely avoid are 13 Nxb4 Rxd1+ 14 Kxd1 axb4 15 Bxb4 Rxa2 and 13 Bxb4?! axb4 14 Nxb4 Nd7! 15 Rd2 Nc5, as in both cases his position is on the verge of collapsing."
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Kh8",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Rxd8+",
+              "commentary": "White can also keep rooks on the board with 14 Nd5. Play will develop along similar lines, e.g. 14...Nc2+ 15 Kf2 Nxa3 16 bxa3 b5!."
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Rxd8",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Nd5",
+              "commentary": "White is two pawns up but miles behind in development. He will now try and complete his development under the cover of his one good piece, the knight on d5. If Black takes the knight then White will recapture cxd5 and obtain a strong passed pawn."
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Nc2+",
+              "commentary": "Black starts with the obvious move."
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Kd2",
+              "commentary": "This walks into a pin but neither can White claim an advantage with 16 Kf2. After 16...Nxa3 17 bxa3 b5! Shirov gave 18 Nh3 Rc8 Shirov gave 19 Nhf4 with equality."
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Nxa3",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "bxa3",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "b5!",
+              "commentary": "This is the star undermining move. White's control of d5 is soon to be history."
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Nh3",
+              "commentary": "Draw agreed. A draw was agreed in view of the variation 18...bxc4 19 Bxc4 Nxd5 20 exd5 Bxd5 21 Bxd5 Rxd5+ (Diagram 5). The strong bishop certainly compensates for the useless extra a-pawn."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_29_side_1",
+            "name": "11 Nd5",
+            "description": "White plays 11 Nd5 instead of 11 Rd1.",
+            "startingMoveIndex": 1,
+            "moves": [
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "Nd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Nxd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "cxd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "Nb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "O-O-O",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "e6!",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_29_side_2",
+            "name": "13 Bd3",
+            "description": "White plays 13 Bd3 instead of 13 Nxe7+.",
+            "startingMoveIndex": 5,
+            "moves": [
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Bd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Bxd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "cxd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Nxd3+",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Rxd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "e6",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_29_side_3",
+            "name": "13 Nxb4",
+            "description": "White plays 13 Nxb4 instead of 13 Nxe7+.",
+            "startingMoveIndex": 5,
+            "moves": [
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Nxb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Rxd1+",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Kxd1",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "axb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Bxb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Rxa2",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_29_side_4",
+            "name": "13 Bxb4",
+            "description": "White plays 13 Bxb4 instead of 13 Nxe7+.",
+            "startingMoveIndex": 5,
+            "moves": [
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Bxb4?!",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "axb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Nxb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Nd7!",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Rd2",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Nc5",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_29_side_5",
+            "name": "14 Nd5",
+            "description": "White plays 14 Nd5 instead of 14 Rxd8+.",
+            "startingMoveIndex": 7,
+            "moves": [
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Nd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Nc2+",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Kf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Nxa3",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "bxa3",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "b5!",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_29_side_6",
+            "name": "16 Kf2",
+            "description": "White plays 16 Kf2 instead of 16 Kd2.",
+            "startingMoveIndex": 11,
+            "moves": [
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "Kf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Nxa3",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "bxa3",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "b5!",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "W",
+                "move": "Nh3",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "B",
+                "move": "Rc8",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Nhf4",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_29_side_7",
+            "name": "Draw line",
+            "description": "Continuation if draw was not agreed.",
+            "startingMoveIndex": 16,
+            "moves": [
+              {
+                "move_number": 18,
+                "player": "B",
+                "move": "bxc4",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Bxc4",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "B",
+                "move": "Nxd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "W",
+                "move": "exd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "B",
+                "move": "Bxd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "W",
+                "move": "Bxd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "B",
+                "move": "Rxd5+",
+                "commentary": ""
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "game_30_dreyer_watanabe",
+      "title": "Game 30: Dreyer vs Watanabe (Yerevan Olympiad 1996)",
+      "description": "Illustrative Game for The Sämisch Variation. White plays 11 Nxe7+?! which is inaccurate, allowing Black to obtain strong compensation and win.",
+      "textContext": "Page 83-85 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "game_30",
+        "white": "Dreyer",
+        "black": "Watanabe",
+        "event": "Yerevan Olympiad 1996",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 c5 dxc5 dxc5 Qxd8 Rxd8 Bxc5 Nc6 Nd5",
+        "interactive_section": {
+          "starting_move": 10,
+          "moves": [
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "Nd7!",
+              "commentary": "This is the move. Black attacks the bishop on c5 and prepares ...Bxb2."
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Nxe7+",
+              "commentary": "After this capture it is doubtful whether White can even maintain the balance."
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Nxe7",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Bxe7",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Bxb2!",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Rb1",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Bc3+",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Kd1",
+              "commentary": "It is not an improvement for the king to head the other way. After 14 Kf2 Bd4+ 15 Kg3 (15 Ke1 Re8) 15...Re8 16 Bg5 Nf6! it will come under heavy fire."
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Re8",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Kc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Bg7",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Bd6",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Ne5!",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "g3?",
+              "commentary": "This move mystifies me. What is it for? Perhaps White should have settled for 17 Bxe5 Rxe5 18 Ne2 Ra5 19 Nc3 when Black can just play 19...b6 and develop his queenside. This is more promising than regaining the pawn with ...Bxc3 and ...Rxa2."
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Bd7!",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Rxb7",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Bc6",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Rb4",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "a5!",
+              "commentary": "Black begins to push the white rook back."
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "Rb6",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "Red8",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "c5",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Ba4+",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "Kb1",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Nd7!",
+              "commentary": "(Diagram 7) Black has a very strong position."
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "Rb5",
+              "commentary": "This move has more than a whiff of desperation about it..."
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Nxc5?!",
+              "commentary": "A bit flash. Why not 23...Bxb5 24 Bxb5 Nxc5! 25 Bxc5 Rac8 when White can't move his bishop from c5 on pain of checkmate?"
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "e5",
+              "commentary": "24 Bxc5 Rd1 is mate and 24 Rxc5 Rxd6 won't last for long."
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Bxb5",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "Bxb5",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "Rab8!",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "Bxb8",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "B",
+              "move": "Rxb8",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "W",
+              "move": "Kc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "B",
+              "move": "Rxb5",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "W",
+              "move": "f4",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "B",
+              "move": "Na4",
+              "commentary": ""
+            },
+            {
+              "move_number": 29,
+              "player": "W",
+              "move": "Nf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 29,
+              "player": "B",
+              "move": "Rb2+",
+              "commentary": ""
+            },
+            {
+              "move_number": 30,
+              "player": "W",
+              "move": "Kd3",
+              "commentary": ""
+            },
+            {
+              "move_number": 30,
+              "player": "B",
+              "move": "Rxa2",
+              "commentary": ""
+            },
+            {
+              "move_number": 31,
+              "player": "W",
+              "move": "Kc4",
+              "commentary": ""
+            },
+            {
+              "move_number": 31,
+              "player": "B",
+              "move": "Rb2",
+              "commentary": ""
+            },
+            {
+              "move_number": 32,
+              "player": "W",
+              "move": "Ra1",
+              "commentary": ""
+            },
+            {
+              "move_number": 32,
+              "player": "B",
+              "move": "Rb4+",
+              "commentary": ""
+            },
+            {
+              "move_number": 33,
+              "player": "W",
+              "move": "Kd5",
+              "commentary": ""
+            },
+            {
+              "move_number": 33,
+              "player": "B",
+              "move": "Nc3+",
+              "commentary": ""
+            },
+            {
+              "move_number": 34,
+              "player": "W",
+              "move": "Kc5",
+              "commentary": ""
+            },
+            {
+              "move_number": 34,
+              "player": "B",
+              "move": "Bf8+",
+              "commentary": ""
+            },
+            {
+              "move_number": 35,
+              "player": "W",
+              "move": "Kc6",
+              "commentary": ""
+            },
+            {
+              "move_number": 35,
+              "player": "B",
+              "move": "a4",
+              "commentary": ""
+            },
+            {
+              "move_number": 36,
+              "player": "W",
+              "move": "Nd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 36,
+              "player": "B",
+              "move": "Rd4",
+              "commentary": ""
+            },
+            {
+              "move_number": 37,
+              "player": "W",
+              "move": "Nf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 37,
+              "player": "B",
+              "move": "Rc4+",
+              "commentary": ""
+            },
+            {
+              "move_number": 38,
+              "player": "W",
+              "move": "Kd7",
+              "commentary": ""
+            },
+            {
+              "move_number": 38,
+              "player": "B",
+              "move": "a3",
+              "commentary": "White resigns."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_30_side_1",
+            "name": "11 Bxe7",
+            "description": "White plays 11 Bxe7 instead of 11 Nxe7+?!.",
+            "startingMoveIndex": 0,
+            "moves": [
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "Bxe7",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Nxe7",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "W",
+                "move": "Nxe7+",
+                "commentary": ""
+              },
+              {
+                "move_number": 12,
+                "player": "B",
+                "move": "Kf8",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "Nd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Bxb2",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Rb1",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Bg7",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Nh3",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Nc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "Nf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Be6",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "Be2",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "Rac8",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "W",
+                "move": "O-O",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "B",
+                "move": "Rd6",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Rfd1",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "B",
+                "move": "Ra6",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "W",
+                "move": "Rd2",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "B",
+                "move": "Ra3",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_30_side_2",
+            "name": "14 Kf2",
+            "description": "White plays 14 Kf2 instead of 14 Kd1.",
+            "startingMoveIndex": 6,
+            "moves": [
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Kf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Bd4+",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Kg3",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Re8",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "Bg5",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Nf6!",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_30_side_2a",
+            "name": "15 Ke1",
+            "description": "White plays 15 Ke1 in the 14 Kf2 sideline.",
+            "startingMoveIndex": 6,
+            "moves": [
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Kf2",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "Bd4+",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Ke1",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Re8",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_30_side_3",
+            "name": "17 Bxe5",
+            "description": "White plays 17 Bxe5 instead of 17 g3?.",
+            "startingMoveIndex": 12,
+            "moves": [
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "Bxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "Rxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "W",
+                "move": "Ne2",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "B",
+                "move": "Ra5",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Nc3",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "B",
+                "move": "b6",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_30_side_4",
+            "name": "23 Rb7",
+            "description": "White plays 23 Rb7 instead of 23 Rb5.",
+            "startingMoveIndex": 24,
+            "moves": [
+              {
+                "move_number": 23,
+                "player": "W",
+                "move": "Rb7",
+                "commentary": ""
+              },
+              {
+                "move_number": 23,
+                "player": "B",
+                "move": "Nxc5!",
+                "commentary": ""
+              },
+              {
+                "move_number": 24,
+                "player": "W",
+                "move": "Rb6",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_30_side_5",
+            "name": "23...Bxb5",
+            "description": "Black plays 23...Bxb5 instead of 23...Nxc5?!.",
+            "startingMoveIndex": 25,
+            "moves": [
+              {
+                "move_number": 23,
+                "player": "B",
+                "move": "Bxb5",
+                "commentary": ""
+              },
+              {
+                "move_number": 24,
+                "player": "W",
+                "move": "Bxb5",
+                "commentary": ""
+              },
+              {
+                "move_number": 24,
+                "player": "B",
+                "move": "Nxc5!",
+                "commentary": ""
+              },
+              {
+                "move_number": 25,
+                "player": "W",
+                "move": "Bxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 25,
+                "player": "B",
+                "move": "Rac8",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_30_side_6",
+            "name": "24 Bxc5",
+            "description": "White plays 24 Bxc5 instead of 24 e5.",
+            "startingMoveIndex": 26,
+            "moves": [
+              {
+                "move_number": 24,
+                "player": "W",
+                "move": "Bxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 24,
+                "player": "B",
+                "move": "Rd1#",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_30_side_7",
+            "name": "24 Rxc5",
+            "description": "White plays 24 Rxc5 instead of 24 e5.",
+            "startingMoveIndex": 26,
+            "moves": [
+              {
+                "move_number": 24,
+                "player": "W",
+                "move": "Rxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 24,
+                "player": "B",
+                "move": "Rxd6",
+                "commentary": ""
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

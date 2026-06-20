@@ -1,0 +1,637 @@
+{
+  "book_title": "Starting Out: The King's Indian",
+  "exercises": [
+    {
+      "id": "game_28_ljubojevic_kasparov",
+      "title": "Ljubojevic vs Kasparov (Linares 1993)",
+      "description": "Digitized from PDF chunk parsed_pages_76_80.json",
+      "textContext": "Extracted from Starting Out: The King's Indian.",
+      "preparsedJson": {
+        "game_id": "game_28_ljubojevic_kasparov",
+        "white": "Ljubojevic",
+        "black": "Kasparov",
+        "event": "Linares 1993",
+        "initial_moves": "1 d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 Be2 O-O 6 Nf3 e5 7 O-O Nc6 8 d5 Ne7 9 Nd2 a5 10 Rb1 Nd7 11 a3 f5 12 b4 Kh8 13 f3 f4",
+        "interactive_section": {
+          "starting_move": 14,
+          "moves": [
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Nb3?!",
+              "commentary": "This is a rather feeble way of preparing c4-c5 as the knight will be passively placed once c4-c5 has been achieved. Remember this knight was supposed to go to the aggressive c4-square."
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "axb4",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "axb4",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "g5",
+              "commentary": ""
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Bd2?",
+              "commentary": "White opts for the leisurely plan of invading down the a-file. It is too slow."
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Ng6",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "Ra1",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Rxa1",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Qxa1",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Nf6",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Qa7",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "g4",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "fxg4",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "Nxg4",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "h3",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Nh6",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "Be1",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Rg8",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "Nd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Bf6!",
+              "commentary": "Clearing the g-file and preparing to play ...Bh4."
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "Kh1",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Bh4",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "Nf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "Bxe1",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "Nxe1",
+              "commentary": ""
+            },
+            {
+              "move_number": 26,
+              "player": "B",
+              "move": "Nh4",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "W",
+              "move": "Rf2",
+              "commentary": ""
+            },
+            {
+              "move_number": 27,
+              "player": "B",
+              "move": "Qg5",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "W",
+              "move": "Nf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 28,
+              "player": "B",
+              "move": "Nxf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 29,
+              "player": "W",
+              "move": "Bxf3",
+              "commentary": ""
+            },
+            {
+              "move_number": 29,
+              "player": "B",
+              "move": "Bxh3",
+              "commentary": "White resigns. A possible finish is 30 Qxb7 Bxg2+ 31 Rxg2 Qh4+ 32 Kg1 Qe1+ 33 Kh2 Rxg2+ 34 Bxg2 Qg3+ 35 Kh1 f3 36 Qc8+ Ng8 and wins."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_28_sideline_14_c5",
+            "name": "Alternative 14 c5",
+            "description": "White plays 14 c5 instead of 14 Nb3?!",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "c5",
+                "commentary": "In the late 1980's and early 1990's there were quite a few games that went 14 c5. Black can reply 14...axb4 or 14...dxc5."
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "axb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "axb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "dxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "bxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Nxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "Nc4",
+                "commentary": "The open lines on the queenside gave White good compensation for the pawn."
+              }
+            ]
+          },
+          {
+            "id": "game_28_sideline_14_dxc5",
+            "name": "Alternative 14...dxc5 inside 14 c5",
+            "description": "Black refrains from the exchange on b4 with 14...dxc5",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "c5",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "dxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "bxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "Nxc5",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "Nc4",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "a4",
+                "commentary": "It is not easy for White to generate threats."
+              }
+            ]
+          },
+          {
+            "id": "game_28_sideline_14_na4",
+            "name": "Alternative 14 Na4",
+            "description": "White plays 14 Na4 to support c4-c5",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Na4",
+                "commentary": "14 Na4 is a crude way to support c4-c5."
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "axb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "axb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "c6",
+                "commentary": "Dr. Nunn believes that this decentralising move is best met by this response."
+              }
+            ]
+          },
+          {
+            "id": "game_28_sideline_14_qc2",
+            "name": "Alternative 14 Qc2",
+            "description": "White plays 14 Qc2",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Qc2",
+                "commentary": "14 Qc2 also prepares the advance c4-c5 by making the pawn sacrifice too dangerous to accept."
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "g5",
+                "commentary": "Black can try and hold it up with 14...b6 but he can also get on with his kingside attack."
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "c5",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "axb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "axb4",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Nf6",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "Nc4",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "h5",
+                "commentary": "With a double-edged game."
+              }
+            ]
+          },
+          {
+            "id": "game_28_sideline_16_g4",
+            "name": "Alternative 16 g4",
+            "description": "White plays 16 g4 instead of 16 Bd2?",
+            "startingMoveIndex": 3,
+            "moves": [
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "g4",
+                "commentary": "Kasparov believes the only chance was to block it up with 16 g4."
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Ng6",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "Bd2",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "Nf6",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "W",
+                "move": "Ra1",
+                "commentary": ""
+              },
+              {
+                "move_number": 18,
+                "player": "B",
+                "move": "Rxa1",
+                "commentary": ""
+              },
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "Qxa1",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_28_sideline_19_g4",
+            "name": "Alternative 19 g4",
+            "description": "White plays 19 g4 instead of 19 Qa7",
+            "startingMoveIndex": 9,
+            "moves": [
+              {
+                "move_number": 19,
+                "player": "W",
+                "move": "g4",
+                "commentary": "Now it's too late to block the kingside."
+              },
+              {
+                "move_number": 19,
+                "player": "B",
+                "move": "fxg3",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "W",
+                "move": "hxg3",
+                "commentary": ""
+              },
+              {
+                "move_number": 20,
+                "player": "B",
+                "move": "Nh5",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "W",
+                "move": "Kg2",
+                "commentary": ""
+              },
+              {
+                "move_number": 21,
+                "player": "B",
+                "move": "Ngf4+",
+                "commentary": ""
+              },
+              {
+                "move_number": 22,
+                "player": "W",
+                "move": "gxf4",
+                "commentary": ""
+              },
+              {
+                "move_number": 22,
+                "player": "B",
+                "move": "gxf4",
+                "commentary": "Black has a crushing attack."
+              }
+            ]
+          },
+          {
+            "id": "game_28_sideline_21_bxg4",
+            "name": "Alternative 21 Bxg4",
+            "description": "White plays 21 Bxg4 instead of 21 h3",
+            "startingMoveIndex": 13,
+            "moves": [
+              {
+                "move_number": 21,
+                "player": "W",
+                "move": "Bxg4",
+                "commentary": "White could have tried 21 Bxg4."
+              },
+              {
+                "move_number": 21,
+                "player": "B",
+                "move": "Bxg4",
+                "commentary": ""
+              },
+              {
+                "move_number": 22,
+                "player": "W",
+                "move": "Qxb7",
+                "commentary": ""
+              },
+              {
+                "move_number": 22,
+                "player": "B",
+                "move": "Nh4",
+                "commentary": ""
+              }
+            ]
+          },
+          {
+            "id": "game_28_sideline_26_rxe1",
+            "name": "Alternative 26 Rxe1",
+            "description": "White plays 26 Rxe1 instead of 26 Nxe1",
+            "startingMoveIndex": 23,
+            "moves": [
+              {
+                "move_number": 26,
+                "player": "W",
+                "move": "Rxe1",
+                "commentary": "White recaptures with the rook."
+              },
+              {
+                "move_number": 26,
+                "player": "B",
+                "move": "Nh4",
+                "commentary": "After 26 Rxe1 Nh4 27 Rg1 Nxf3 28 Bxf3 Qh4 the game will also be decided by Black sacrificing his bishop on h3."
+              },
+              {
+                "move_number": 27,
+                "player": "W",
+                "move": "Rg1",
+                "commentary": ""
+              },
+              {
+                "move_number": 27,
+                "player": "B",
+                "move": "Nxf3",
+                "commentary": ""
+              },
+              {
+                "move_number": 28,
+                "player": "W",
+                "move": "Bxf3",
+                "commentary": ""
+              },
+              {
+                "move_number": 28,
+                "player": "B",
+                "move": "Qh4",
+                "commentary": ""
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "samisch_variation_theory",
+      "title": "Theory vs Theory (Chapter 5: The Sämisch Variation Intro)",
+      "description": "Digitized from PDF chunk parsed_pages_76_80.json",
+      "textContext": "Extracted from Starting Out: The King's Indian.",
+      "preparsedJson": {
+        "game_id": "samisch_variation_theory",
+        "white": "Theory",
+        "black": "Theory",
+        "event": "Chapter 5: The Sämisch Variation Intro",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6",
+        "interactive_section": {
+          "starting_move": 5,
+          "moves": [
+            {
+              "move_number": 5,
+              "player": "W",
+              "move": "f3",
+              "commentary": "Look at the following list of names: Botvinnik, Tal, Petrosian, Spassky, Karpov, Kasparov, Kramnik. What do they have in common? Yes, they are all post war World Champions and yes, they are amongst the greatest players ever to hail from the USSR (Russia). The other thing they have in common is that they have all played the Sämisch! Many more names can be added to the list (Korchnoi, Shirov etc), so it is clear that the Sämisch is a high class variation which needs to be treated with respect. Having said that, its popularity is no longer what it used to be. I see it as the Grand Hotel of the King's Indian - an imperial variation that is slightly over the hill. That is not meant to be cruel to the Sämisch, as I play it myself quite often, but it has clearly slipped a long way behind the Classical in the King's Indian popularity stakes. It is currently vying for second place along with the Fianchetto variation.\n\nThe Sämisch owes its name to the German Grandmaster Fritz Sämisch. He is also famous for a line in the Nimzo-Indian - 1 d4 Nf6 2 c4 e6 3 Nc3 Bb4 4 a3 - where White also constructs a big centre supported by f3.\n\nWhat are the ideas behind the move 5 f3?\n\n1) It defends e4 so creates a secure and stable centre.\n2) With his centre so stable White can start an attack on the kingside. Be3, Qd2, Bh6, g2-g4 and h2-h4 are typical moves when White wishes to carry out this plan. On other occasions White may attack on the queenside. The Sämisch is a flexible variation which does not commit White to any particular course of action.\n3) The move f2-f3 secures the square e3 for White's bishop. It can now take up residence there without having to worry about ...Ng4. The move f2-f3 also has certain drawbacks. 'Ask the knight on g1 what he thinks of the move f3' was a famous comment from the Ukrainian Grandmaster and raconteur Eduard Gufeld. In return for having such a strong centre White accepts that his kingside development is going to be rather clumsy."
+            }
+          ]
+        },
+        "sidelines": []
+      }
+    },
+    {
+      "id": "samisch_variation_6_c5",
+      "title": "Theory: Black Sacrifices a Pawn with 6...c5",
+      "description": "Digitized from PDF chunk parsed_pages_76_80.json",
+      "textContext": "Extracted from Starting Out: The King's Indian.",
+      "preparsedJson": {
+        "game_id": "samisch_variation_6_c5",
+        "white": "Theory",
+        "black": "Theory",
+        "event": "Chapter 5: Black Sacrifices a Pawn with 6...c5",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O",
+        "interactive_section": {
+          "starting_move": 6,
+          "moves": [
+            {
+              "move_number": 6,
+              "player": "W",
+              "move": "Be3",
+              "commentary": "The above variations all assume that White plays 6 Be3. In our fourth section we shall take a look at the alternative 6th moves for White, principally 6 Bg5.\n\nWhat are the main ways to combat the Sämisch?\n\nBlack has three distinct strategies.\n\n1) Black can strike in the centre in Benoni fashion with ...c7-c5. Over the last decade or so this has supplanted all other variations and become the main line of the Sämisch. This is the subject of Section 1.\nNOTE: The Benoni is a sister variation of the King's Indian which normally starts 1 d4 Nf6 2 c4 c5 3 d5 e6 4 Nc3 exd5 5 cxd5 d6 6 e4 g6 followed by ...Bg7. Variations in the King's Indian where Black plays ...c7-c5 and White replies d4-d5 lead to a similar structure.\n2) He can delay his central strike in favour of queenside play. The most common way to do this is to play ...Nc6, ...a6 and 8...Rb8 so that Black can play ...b7-b5 at a moment's notice. This is called the Panno Variation and is the subject of the second section.\n3) He can strike in the centre with the traditional King's Indian move ...e7-e5. This is the subject of the third sub-section."
+            },
+            {
+              "move_number": 6,
+              "player": "B",
+              "move": "c5",
+              "commentary": "It has long been understood that playing ...c7-c5 is one of the most desirable ways for Black to meet the Sämisch. It keeps the long diagonal"
+            }
+          ]
+        },
+        "sidelines": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,368 @@
+import json
+
+data = {
+    "book_title": "Starting Out: The King's Indian",
+    "exercises": []
+}
+
+# Game 39
+game_39 = {
+    "id": "game_39",
+    "title": "Game 39: Hohler vs. Gallagher",
+    "description": "The Fianchetto Variation. Black active play with ...c6 and ...b5.",
+    "textContext": "Pages 105-106",
+    "preparsedJson": {
+        "game_id": "hohler_gallagher_1994",
+        "white": "Hohler",
+        "black": "Gallagher",
+        "event": "Bern",
+        "initial_moves": "d4 Nf6 c4 g6 Nf3 Bg7 g3 O-O Bg2 d6 O-O Nbd7 Nc3 e5 e4 exd4 Nxd4 Re8 h3 a6 Re1 Rb8 Be3",
+        "interactive_section": {
+            "starting_move": 12,
+            "moves": [
+                {"move_number": 12, "player": "B", "move": "c6", "commentary": "Black prepares ...b5 to challenge White's queenside."},
+                {"move_number": 13, "player": "W", "move": "Nde2", "commentary": "White retreats the knight to e2, preparing to defend or redeploy."},
+                {"move_number": 13, "player": "B", "move": "Ne5", "commentary": "Black active knight jump, attacking c4."},
+                {"move_number": 14, "player": "W", "move": "b3", "commentary": "White defends c4 but weakens the long dark diagonal."},
+                {"move_number": 14, "player": "B", "move": "b5", "commentary": "Black strikes on the queenside."},
+                {"move_number": 15, "player": "W", "move": "f4", "commentary": "White kicks the knight, but this weakens e3 bishop's protection."},
+                {"move_number": 15, "player": "B", "move": "Ned7", "commentary": "Black retreats the knight, having induced weaknesses in White's camp."},
+                {"move_number": 16, "player": "W", "move": "Qxd6", "commentary": "White captures the d6 pawn."},
+                {"move_number": 16, "player": "B", "move": "b4", "commentary": "Black attacks the c3 knight, initiating tactical complications."},
+                {"move_number": 17, "player": "W", "move": "e5", "commentary": "White pushes e5, attacking the f6 knight."},
+                {"move_number": 17, "player": "B", "move": "bxc3", "commentary": "Black captures the knight."},
+                {"move_number": 18, "player": "W", "move": "exf6", "commentary": "White captures the knight, which proves to be a serious mistake. 18 Nxc3! was better."},
+                {"move_number": 18, "player": "B", "move": "Rxe3", "commentary": "Black captures the bishop on e3, activating the rook."},
+                {"move_number": 19, "player": "W", "move": "fxg7", "commentary": "White captures the g7 pawn."},
+                {"move_number": 19, "player": "B", "move": "Rb6", "commentary": "A fine rook maneuver, preparing to swing to the kingside."},
+                {"move_number": 20, "player": "W", "move": "Qd1", "commentary": "White queen retreats."},
+                {"move_number": 20, "player": "B", "move": "Rbe6", "commentary": "Black doubles rooks on the e-file, pinning the e2 knight."},
+                {"move_number": 21, "player": "W", "move": "Rae1", "commentary": "White tries to defend the pinned knight."},
+                {"move_number": 21, "player": "B", "move": "Qf6", "commentary": "Black coordinates major pieces, putting more pressure on e2."},
+                {"move_number": 22, "player": "W", "move": "Qc2", "commentary": "White defends c3 and prepares to break the pin."},
+                {"move_number": 22, "player": "B", "move": "Qe7", "commentary": "Black increases pressure on e2."},
+                {"move_number": 23, "player": "W", "move": "Kf2", "commentary": "White king defends e2."},
+                {"move_number": 23, "player": "B", "move": "Nf6", "commentary": "Black brings the knight to f6, preparing to jump to e4 or d5."},
+                {"move_number": 24, "player": "W", "move": "Rad1", "commentary": "White develops the rook."},
+                {"move_number": 24, "player": "B", "move": "Bb7", "commentary": "Black develops the bishop to the long diagonal."},
+                {"move_number": 25, "player": "W", "move": "Bd3", "commentary": "White develops the bishop."},
+                {"move_number": 25, "player": "B", "move": "Bxd5", "commentary": "Black exchanges bishop for knight."},
+                {"move_number": 26, "player": "W", "move": "cxd5", "commentary": "White recaptures."},
+                {"move_number": 26, "player": "B", "move": "Re4", "commentary": "Black rook activates on e4."},
+                {"move_number": 27, "player": "W", "move": "Rd3", "commentary": "White defends."},
+                {"move_number": 27, "player": "B", "move": "c4", "commentary": "Opening the a7-g1 diagonal for the queen."},
+                {"move_number": 28, "player": "W", "move": "Rxe3", "commentary": "White exchanges rooks."},
+                {"move_number": 28, "player": "B", "move": "Rxe3", "commentary": "Black recaptures."},
+                {"move_number": 29, "player": "W", "move": "d6", "commentary": "White pushes the d-pawn, trying to distract Black."},
+                {"move_number": 29, "player": "B", "move": "Qa7", "commentary": "Black queen enters the attack via a7."},
+                {"move_number": 30, "player": "W", "move": "Qc1", "commentary": "White queen tries to defend. 30 Bxe4 was necessary."},
+                {"move_number": 30, "player": "B", "move": "Ne4+", "commentary": "Black knight jumps to e4 with check."},
+                {"move_number": 31, "player": "W", "move": "Kg2", "commentary": "White king moves."},
+                {"move_number": 31, "player": "B", "move": "Rxg3+", "commentary": "A decisive rook sacrifice. White resigns in view of 32 Nxg3 Qf2+ 33 Kh1 Nxg3 mate."}
+            ]
+        },
+        "sidelines": [
+            {
+                "id": "g39_sl1",
+                "name": "Alternative 15...Nc6",
+                "description": "Black active knight development, but met by strong c5.",
+                "startingMoveIndex": 5,
+                "moves": [
+                    {"move_number": 15, "player": "B", "move": "Nc6", "commentary": "Active but strongly met by c5."},
+                    {"move_number": 16, "player": "W", "move": "c5", "commentary": "White strikes in the center, gaining advantage."}
+                ]
+            },
+            {
+                "id": "g39_sl2",
+                "name": "Better 18 Nxc3",
+                "description": "White should have captured on c3 to maintain central control.",
+                "startingMoveIndex": 10,
+                "moves": [
+                    {"move_number": 18, "player": "W", "move": "Nxc3", "commentary": "Better option for White."},
+                    {"move_number": 18, "player": "B", "move": "Nh5", "commentary": "Black attacks g3."},
+                    {"move_number": 19, "player": "W", "move": "g4", "commentary": "White pushes g4."},
+                    {"move_number": 19, "player": "B", "move": "Bf6", "commentary": "Black active bishop."},
+                    {"move_number": 20, "player": "W", "move": "Qd2", "commentary": "White defends."},
+                    {"move_number": 20, "player": "B", "move": "Ng7", "commentary": "Position is unclear."}
+                ]
+            },
+            {
+                "id": "g39_sl3",
+                "name": "Alternative 30 Bxe4",
+                "description": "White should have tried to capture on e4.",
+                "startingMoveIndex": 34,
+                "moves": [
+                    {"move_number": 30, "player": "W", "move": "Bxe4", "commentary": "White had to try this."},
+                    {"move_number": 30, "player": "B", "move": "Ne4+", "commentary": "Check."},
+                    {"move_number": 31, "player": "W", "move": "Kg2", "commentary": "King moves."},
+                    {"move_number": 31, "player": "B", "move": "Nxd6", "commentary": "Black wins comfortably."}
+                ]
+            }
+        ]
+    }
+}
+
+# Game 40
+game_40 = {
+    "id": "game_40",
+    "title": "Game 40: Whiteley vs. Gallagher",
+    "description": "Prophylactic b3 from White. Black active play with ...c5 and ...b5.",
+    "textContext": "Pages 106-107",
+    "preparsedJson": {
+        "game_id": "whiteley_gallagher_1989",
+        "white": "Whiteley",
+        "black": "Gallagher",
+        "event": "Royan",
+        "initial_moves": "d4 Nf6 c4 g6 Nf3 Bg7 g3 O-O Bg2 d6 O-O Nbd7 Nc3 e5 e4 exd4 Nxd4 Re8 h3 a6 Re1 Rb8",
+        "interactive_section": {
+            "starting_move": 12,
+            "moves": [
+                {"move_number": 12, "player": "W", "move": "b3", "commentary": "White defends c4 before Black can attack it."},
+                {"move_number": 12, "player": "B", "move": "c5", "commentary": "Black immediately strikes in the center."},
+                {"move_number": 13, "player": "W", "move": "Nde2", "commentary": "White retreats the knight, defending the rook on a1 dynamically."},
+                {"move_number": 13, "player": "B", "move": "b5", "commentary": "Black sacrifice for active play."},
+                {"move_number": 14, "player": "W", "move": "cxb5", "commentary": "White accepts the pawn."},
+                {"move_number": 14, "player": "B", "move": "axb5", "commentary": "Black recaptures."},
+                {"move_number": 15, "player": "W", "move": "Qxd6", "commentary": "White captures the d6 pawn."},
+                {"move_number": 15, "player": "B", "move": "Rb6", "commentary": "Black attacks the queen, lifting the rook."},
+                {"move_number": 16, "player": "W", "move": "Qd1", "commentary": "White queen retreats."},
+                {"move_number": 16, "player": "B", "move": "b4", "commentary": "Black kicks the knight."},
+                {"move_number": 17, "player": "W", "move": "Na4", "commentary": "White knight goes to the rim."},
+                {"move_number": 17, "player": "B", "move": "Rbe6", "commentary": "Black doubles rooks to pressure e4."},
+                {"move_number": 18, "player": "W", "move": "Bb2", "commentary": "White develops the bishop, defending e4 tactically."},
+                {"move_number": 18, "player": "B", "move": "Qe7", "commentary": "Black coordinates queen and rooks."},
+                {"move_number": 19, "player": "W", "move": "Ne3", "commentary": "White knight maneuvers."},
+                {"move_number": 19, "player": "B", "move": "Bb7", "commentary": "Black develops bishop."},
+                {"move_number": 20, "player": "W", "move": "f3", "commentary": "White solidifies e4, but weakens the kingside dark squares."},
+                {"move_number": 20, "player": "B", "move": "Nh5", "commentary": "Black immediately exploits the weakened dark squares."},
+                {"move_number": 21, "player": "W", "move": "Bxg7", "commentary": "White exchanges bishops."},
+                {"move_number": 21, "player": "B", "move": "Kxg7", "commentary": "Black recaptures."},
+                {"move_number": 22, "player": "W", "move": "g4", "commentary": "White pushes g4, trying to kick the knight but further weakening."},
+                {"move_number": 22, "player": "B", "move": "Nf4", "commentary": "Black knight occupies a great outpost."},
+                {"move_number": 23, "player": "W", "move": "Qd2", "commentary": "White queen centralizes."},
+                {"move_number": 23, "player": "B", "move": "Ne5", "commentary": "Black knights are dominant."},
+                {"move_number": 24, "player": "W", "move": "Rf1", "commentary": "White defends."},
+                {"move_number": 24, "player": "B", "move": "Rd8", "commentary": "Black takes the open d-file."},
+                {"move_number": 25, "player": "W", "move": "Nf5+", "commentary": "White initiates complications."},
+                {"move_number": 25, "player": "B", "move": "gxf5", "commentary": "Black captures."},
+                {"move_number": 26, "player": "W", "move": "Qxf4", "commentary": "White recaptures."},
+                {"move_number": 26, "player": "B", "move": "Nd3", "commentary": "Black knight enters d3."},
+                {"move_number": 27, "player": "W", "move": "Qe3", "commentary": "White queen moves."},
+                {"move_number": 27, "player": "B", "move": "f4", "commentary": "Black pushes f-pawn."},
+                {"move_number": 28, "player": "W", "move": "Qd2", "commentary": "White queen back."},
+                {"move_number": 28, "player": "B", "move": "c4", "commentary": "Black pawn storm."},
+                {"move_number": 29, "player": "W", "move": "bxc4", "commentary": "White captures."},
+                {"move_number": 29, "player": "B", "move": "Qa7", "commentary": "Black queen joins the attack."},
+                {"move_number": 30, "player": "W", "move": "a3", "commentary": "White tries to create counterplay."},
+                {"move_number": 30, "player": "B", "move": "Qxa4", "commentary": "Black captures."},
+                {"move_number": 31, "player": "W", "move": "axb4", "commentary": "White captures."},
+                {"move_number": 31, "player": "B", "move": "Qd7", "commentary": "Black queen back to d7."},
+                {"move_number": 32, "player": "W", "move": "Qc3+", "commentary": "Check."},
+                {"move_number": 32, "player": "B", "move": "Qd4+", "commentary": "Black forces queen exchange."},
+                {"move_number": 33, "player": "W", "move": "Qxd4+", "commentary": "White exchanges."},
+                {"move_number": 33, "player": "B", "move": "Rxd4", "commentary": "Black recaptures, entering a winning endgame."},
+                {"move_number": 34, "player": "W", "move": "Rfd1", "commentary": "White offers rook exchange."},
+                {"move_number": 34, "player": "B", "move": "Red6", "commentary": "Black doubles on d-file."},
+                {"move_number": 35, "player": "W", "move": "Ra7", "commentary": "White rook enters 7th rank."},
+                {"move_number": 35, "player": "B", "move": "Rd7", "commentary": "Black defends."},
+                {"move_number": 36, "player": "W", "move": "Kf1", "commentary": "White king moves."},
+                {"move_number": 36, "player": "B", "move": "Rxc4", "commentary": "Black captures on c4. White resigns after a few more moves."}
+            ]
+        },
+        "sidelines": [
+            {
+                "id": "g40_sl1",
+                "name": "Alternative 14 Qxd6",
+                "description": "White could capture on d6 immediately.",
+                "startingMoveIndex": 4,
+                "moves": [
+                    {"move_number": 14, "player": "W", "move": "Qxd6", "commentary": "Alternative capture."},
+                    {"move_number": 14, "player": "B", "move": "Rb6", "commentary": "Black would continue in the same way."},
+                    {"move_number": 15, "player": "W", "move": "Qd1", "commentary": "Queen retreats."},
+                    {"move_number": 15, "player": "B", "move": "b4", "commentary": "Black kicks the knight."}
+                ]
+            },
+            {
+                "id": "g40_sl2",
+                "name": "Bad 18...Nxe4?",
+                "description": "Capturing the e-pawn is a mistake due to tactical refutation.",
+                "startingMoveIndex": 13,
+                "moves": [
+                    {"move_number": 18, "player": "B", "move": "Nxe4?", "commentary": "Mistake."},
+                    {"move_number": 19, "player": "W", "move": "Bxg7", "commentary": "White exchanges."},
+                    {"move_number": 19, "player": "B", "move": "Kxg7", "commentary": "Recapture."},
+                    {"move_number": 20, "player": "W", "move": "Bxe4", "commentary": "White captures knight."},
+                    {"move_number": 20, "player": "B", "move": "Rxe4", "commentary": "Recapture."},
+                    {"move_number": 21, "player": "W", "move": "Rxe4", "commentary": "Rook exchange."},
+                    {"move_number": 21, "player": "B", "move": "Rxe4", "commentary": "Recapture."},
+                    {"move_number": 22, "player": "W", "move": "Nxc5!", "commentary": "White wins material."}
+                ]
+            },
+            {
+                "id": "g40_sl3",
+                "name": "Alternative 20 e5",
+                "description": "White could return the pawn to avoid weakening the kingside.",
+                "startingMoveIndex": 16,
+                "moves": [
+                    {"move_number": 20, "player": "W", "move": "e5", "commentary": "Returning the pawn might be better."}
+                ]
+            }
+        ]
+    }
+}
+
+# Game 41
+game_41 = {
+    "id": "game_41",
+    "title": "Game 41: Schwartzman vs. Nisipeanu",
+    "description": "Prophylactic Rb1 from White. Black plays ...Ne5 instead of ...c5/b5 early.",
+    "textContext": "Pages 108-109",
+    "preparsedJson": {
+        "game_id": "schwartzman_nisipeanu_1994",
+        "white": "Schwartzman",
+        "black": "Nisipeanu",
+        "event": "Bucharest",
+        "initial_moves": "d4 Nf6 c4 g6 Nf3 Bg7 g3 O-O Bg2 d6 O-O Nbd7 Nc3 e5 e4 exd4 Nxd4 Re8 h3 a6 Re1 Rb8",
+        "interactive_section": {
+            "starting_move": 12,
+            "moves": [
+                {"move_number": 12, "player": "W", "move": "Rb1", "commentary": "White prepares for Black's queenside action, avoiding weaknesses."},
+                {"move_number": 12, "player": "B", "move": "Ne5", "commentary": "Black active knight jump."},
+                {"move_number": 13, "player": "W", "move": "b3", "commentary": "White defends c4."},
+                {"move_number": 13, "player": "B", "move": "c5", "commentary": "Black strikes in the center."},
+                {"move_number": 14, "player": "W", "move": "Nc2", "commentary": "White knight retreats."},
+                {"move_number": 14, "player": "B", "move": "b5?", "commentary": "A mistake. The queenside advance doesn't work here. 14...Be6 or 14...Nc6 was better."},
+                {"move_number": 15, "player": "W", "move": "cxb5", "commentary": "White captures."},
+                {"move_number": 15, "player": "B", "move": "axb5", "commentary": "Black recaptures."},
+                {"move_number": 16, "player": "W", "move": "f4", "commentary": "White kicks the knight."},
+                {"move_number": 16, "player": "B", "move": "Ned7", "commentary": "Black knight retreats."},
+                {"move_number": 17, "player": "W", "move": "Qxd6", "commentary": "White captures the d6 pawn."},
+                {"move_number": 17, "player": "B", "move": "b4", "commentary": "Black pushes b-pawn."},
+                {"move_number": 18, "player": "W", "move": "Na4", "commentary": "White knight to a4."},
+                {"move_number": 18, "player": "B", "move": "Bb7", "commentary": "Black develops bishop."},
+                {"move_number": 19, "player": "W", "move": "e5", "commentary": "White pushes e-pawn, attacking the knight."},
+                {"move_number": 19, "player": "B", "move": "Nh5", "commentary": "Black knight to h5, attacking g3."},
+                {"move_number": 20, "player": "W", "move": "Rd1", "commentary": "White attacks d7 knight."},
+                {"move_number": 20, "player": "B", "move": "Bxg2", "commentary": "Black exchanges bishop."},
+                {"move_number": 21, "player": "W", "move": "Kxg2", "commentary": "White recaptures."},
+                {"move_number": 21, "player": "B", "move": "Rb7", "commentary": "Black defends d7 knight."},
+                {"move_number": 22, "player": "W", "move": "Be3", "commentary": "White develops bishop, Black is a pawn down with a terrible position."},
+                {"move_number": 22, "player": "B", "move": "g5", "commentary": "Black tries to complicate with g5."},
+                {"move_number": 23, "player": "W", "move": "Qd5", "commentary": "White queen centralizes."},
+                {"move_number": 23, "player": "B", "move": "gxf4", "commentary": "Black captures f4."},
+                {"move_number": 24, "player": "W", "move": "gxf4", "commentary": "White recaptures."},
+                {"move_number": 24, "player": "B", "move": "Qc8", "commentary": "Black queen moves to c8."},
+                {"move_number": 25, "player": "W", "move": "Qf3", "commentary": "White queen attacks h5 knight."},
+                {"move_number": 25, "player": "B", "move": "Nxe5", "commentary": "Black active sacrifice."},
+                {"move_number": 26, "player": "W", "move": "Qxh5", "commentary": "White captures knight."},
+                {"move_number": 26, "player": "B", "move": "Qc6+", "commentary": "Check."},
+                {"move_number": 27, "player": "W", "move": "Kf2", "commentary": "White king moves."},
+                {"move_number": 27, "player": "B", "move": "Qe4", "commentary": "Black queen active."},
+                {"move_number": 28, "player": "W", "move": "Qe2", "commentary": "White defends."},
+                {"move_number": 28, "player": "B", "move": "Rbe7", "commentary": "Black doubles rooks."},
+                {"move_number": 29, "player": "W", "move": "Nxc5", "commentary": "White captures c5 pawn."},
+                {"move_number": 29, "player": "B", "move": "Qf5", "commentary": "Black queen moves."},
+                {"move_number": 30, "player": "W", "move": "Rg1", "commentary": "White rook to g-file."},
+                {"move_number": 30, "player": "B", "move": "Ng6", "commentary": "Black knight blockades."},
+                {"move_number": 31, "player": "W", "move": "Qd3", "commentary": "White queen offers exchange."},
+                {"move_number": 31, "player": "B", "move": "Qxh3", "commentary": "Black captures h3 pawn."},
+                {"move_number": 32, "player": "W", "move": "Rh1", "commentary": "White attacks queen."},
+                {"move_number": 32, "player": "B", "move": "Qc8", "commentary": "Queen retreats."},
+                {"move_number": 33, "player": "W", "move": "Rh5", "commentary": "White rook active."},
+                {"move_number": 33, "player": "B", "move": "Qg4", "commentary": "Black queen active."},
+                {"move_number": 34, "player": "W", "move": "Qf5", "commentary": "White forces queen exchange. Black resigns as he can't keep queens on."}
+            ]
+        },
+        "sidelines": [
+            {
+                "id": "g41_sl1",
+                "name": "Theory 11 Nb3",
+                "description": "White withdraws knight to b3. Active black pieces compensate.",
+                "startingMoveIndex": -1,
+                "moves": [
+                    {"move_number": 11, "player": "W", "move": "Nb3", "commentary": "Prophylactic retreat."},
+                    {"move_number": 11, "player": "B", "move": "Nc6", "commentary": "Black develops knight."},
+                    {"move_number": 12, "player": "W", "move": "c5", "commentary": "White strikes in center."},
+                    {"move_number": 12, "player": "B", "move": "dxc5", "commentary": "Black captures."},
+                    {"move_number": 13, "player": "W", "move": "Nxc5", "commentary": "White recaptures."},
+                    {"move_number": 13, "player": "B", "move": "Qe7", "commentary": "Black queen active."},
+                    {"move_number": 14, "player": "W", "move": "Nb3", "commentary": "White knight back."},
+                    {"move_number": 14, "player": "B", "move": "Be6", "commentary": "Black develops bishop."},
+                    {"move_number": 15, "player": "W", "move": "Qc2", "commentary": "White queen active."},
+                    {"move_number": 15, "player": "B", "move": "Rad8", "commentary": "Black active rooks."}
+                ]
+            },
+            {
+                "id": "g41_sl2",
+                "name": "Theory 11 Nde2",
+                "description": "White withdraws knight to e2. Tactical skirmish leads to draw.",
+                "startingMoveIndex": -1,
+                "moves": [
+                    {"move_number": 11, "player": "W", "move": "Nde2", "commentary": "Another prophylactic retreat."},
+                    {"move_number": 11, "player": "B", "move": "Nb6", "commentary": "Black attacks c4."},
+                    {"move_number": 12, "player": "W", "move": "b3", "commentary": "White defends c4."},
+                    {"move_number": 12, "player": "B", "move": "Nxe4!", "commentary": "A thematic tactical blow!"},
+                    {"move_number": 13, "player": "W", "move": "Nxe4", "commentary": "White recaptures knight."},
+                    {"move_number": 13, "player": "B", "move": "Rxe4!", "commentary": "Black exchange sacrifice."},
+                    {"move_number": 14, "player": "W", "move": "Bxe4", "commentary": "White captures rook."},
+                    {"move_number": 14, "player": "B", "move": "Bxa1", "commentary": "Black captures rook on a1."},
+                    {"move_number": 15, "player": "W", "move": "Bg2", "commentary": "White bishop back."},
+                    {"move_number": 15, "player": "B", "move": "Bf6", "commentary": "Black bishop back."},
+                    {"move_number": 16, "player": "W", "move": "Nf4", "commentary": "White knight active."},
+                    {"move_number": 16, "player": "B", "move": "Rb8", "commentary": "Black rook moves."},
+                    {"move_number": 17, "player": "W", "move": "Be3", "commentary": "White develops bishop."},
+                    {"move_number": 17, "player": "B", "move": "Bd7", "commentary": "Black develops bishop."},
+                    {"move_number": 18, "player": "W", "move": "Bxb6", "commentary": "White exchanges bishop for knight."},
+                    {"move_number": 18, "player": "B", "move": "cxb6", "commentary": "Black recaptures."},
+                    {"move_number": 19, "player": "W", "move": "Qxd6", "commentary": "White captures pawn."},
+                    {"move_number": 19, "player": "B", "move": "Bc6", "commentary": "Black offers bishop exchange."},
+                    {"move_number": 20, "player": "W", "move": "Qxd8", "commentary": "Queen exchange."},
+                    {"move_number": 20, "player": "B", "move": "Rexd8", "commentary": "Black recaptures."},
+                    {"move_number": 21, "player": "W", "move": "Nd5", "commentary": "Draw agreed."}
+                ]
+            },
+            {
+                "id": "g41_sl3",
+                "name": "Alternative 14...Nc6",
+                "description": "Black can play 14...Nc6 instead of 14...b5. Unclear game.",
+                "startingMoveIndex": 4,
+                "moves": [
+                    {"move_number": 14, "player": "B", "move": "Nc6", "commentary": "Better alternative for Black."},
+                    {"move_number": 15, "player": "W", "move": "a4", "commentary": "White pushes a-pawn."},
+                    {"move_number": 15, "player": "B", "move": "Be6", "commentary": "Black develops bishop."},
+                    {"move_number": 16, "player": "W", "move": "Bb2", "commentary": "White develops bishop."},
+                    {"move_number": 16, "player": "B", "move": "h5", "commentary": "Black pushes h-pawn."},
+                    {"move_number": 17, "player": "W", "move": "Qd2", "commentary": "White queen active."},
+                    {"move_number": 17, "player": "B", "move": "Nh7!", "commentary": "Black knight maneuver."},
+                    {"move_number": 18, "player": "W", "move": "Red1", "commentary": "White rook active."},
+                    {"move_number": 18, "player": "B", "move": "Be5!", "commentary": "Black bishop active."},
+                    {"move_number": 19, "player": "W", "move": "f4", "commentary": "White attacks bishop."},
+                    {"move_number": 19, "player": "B", "move": "Bg7", "commentary": "Bishop retreats."},
+                    {"move_number": 20, "player": "W", "move": "Kh1", "commentary": "White king moves."},
+                    {"move_number": 20, "player": "B", "move": "Qa5", "commentary": "Game is unclear."}
+                ]
+            },
+            {
+                "id": "g41_sl4",
+                "name": "Alternative 17...Nh5",
+                "description": "Black can play 17...Nh5 to attack g3 immediately.",
+                "startingMoveIndex": 10,
+                "moves": [
+                    {"move_number": 17, "player": "B", "move": "Nh5", "commentary": "Black attacks g3 immediately."},
+                    {"move_number": 18, "player": "W", "move": "Qd3!", "commentary": "White defends."},
+                    {"move_number": 18, "player": "B", "move": "c4", "commentary": "Black pushes c-pawn."},
+                    {"move_number": 19, "player": "W", "move": "Qe3", "commentary": "White is better."}
+                ]
+            }
+        ]
+    }
+}
+
+data["exercises"].append(game_39)
+data["exercises"].append(game_40)
+data["exercises"].append(game_41)
+
+with open("/Users/lfesch/work_files/chess/parsed_pages_106_110.json", "w") as f:
+    json.dump(data, f, indent=2)
+
+print("JSON file created successfully.")

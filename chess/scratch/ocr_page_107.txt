@@ -1,0 +1,45 @@
+Starting Out: The King's Indian
+Black must retreat here as 15...Nc6 1s strongly met by 16 ¢5!
+Black now has the same position as if he had played 13..b5 at once
+but White has been given two extra moves for free! The claim is that
+these moves actually harm the white position. The move b3 weakens
+White on the long dark diagonal while the move f4 means that the
+bishop on €3 is no longer protected
+16 Qxd6 ba
+The reason that Black can get away with such opening play is that he
+is not really attacking on the queenside at all - White's central play
+would crush an attack there - but is attacking in the centre himself.
+The queenside demonstration is just the means employed to destabi-
+lise White's e4-point. It can no longer be held.
+17 e5!
+After 17 Nad Nxe4 18 Bxed Rxed both the rook on al and the bishop
+on e3 are hanging. Now you should have a clearer understanding of
+why Black encouraged the moves b3 and f4.
+17...bxc3 18 exf6?
+A serious mistake. White should have played 18 Nxc3! Nh5 19 g4 Bfg
+20 Qd2 Ng7 when he has a couple of pawns and a strong grip in the
+centre for the piece. The position can be considered unclear.
+18..Rxe3 19 fxg7 Rb6! 20 Qd1 Rbe6 (Diagram 4)
+The fine rook manoeuvre has left White stuck in an awkward pin.
+21 Rel Qf 22 Qc2 Qe7 23 Kf2 Nf6 24 Red Bb7 25 Bds Bxd5 26
+cxd5 Réed 27 Rd3 cd!
+Opening the a7-gl diagonal so that the queen can get at the king.
+28 Rxe3 Rxe3 29 d6 Qa7 30 Qc1?
+White had to try 30 bxed though after 30... Ne4+ 31 Kg2 both
+31...Nxd6 and 31..Qa8 win comfortably for Black
+30..Ned+ 31 Kg2 Rxg3+! White resigns
+In view of 32 Nxg3 Qf2+ 33 Kh1 Nxg3 mate
+Game 40
+0) Whiteley B Gallagher
+Royan 1989
+1d4 Nf6 2 c4 g6 3 Nf3 Bg7 4 g3 0-0 5 Bg2 d6 6 0-0 Nbd7 7 Nc3 e5
+8 ed exd4 9 Nxd4 Re8 10 h3 a6 11 Rel Rb8 12 b3
+A typical prophylactic move from White in this variation. He defends
+c4 before Black can attack it. There is no longer much point to... Ne5
+so Black gets on with the attack at once.
+12...¢5 13 Ne2
+The knight retreats here, rather than e2, to defend the rook on al
+(important in certain variations), and so as not to interfere with the
+rook on els protection of ed.
+
+106

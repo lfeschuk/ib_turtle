@@ -1,0 +1,15 @@
+Starting Out: The King's Indian
+Exercise 8: 10...Nfxe4! 11 Nxe4 Bf5 and now 12 Nfd2 fails to
+12...Nxe4 13 Nxed Qh4+ and after 12 Bd3 Bxed 13 Bxed4 f5 Black re-
+gains the piece with an active game (14 Bd3 e4).
+Exercise 9: 11 b4? falls into Black's trap. After 11...Ncxe4! 12 Nxed
+Nxed 13 Qxe4 Bf5 14 Qf3 e4 Black wins the rook on al.
+Exercise 10: Were you looking for a brilliant combination? Then you
+were wasting your time. The answer is 24...Nb8! and Black's one pas-
+sive piece is brought back into play. After ..Nd7-f6 White's position 1s
+beginning to look decidedly shaky.
+Exercise 11: It loses a pawn to 13 Nxg5! hxg5 14 Bxh5. Normally
+Black could meet 13 Nxg5 with 13...Nxg3 but he can't here as White
+is also threatening Qh7 mate.
+
+176

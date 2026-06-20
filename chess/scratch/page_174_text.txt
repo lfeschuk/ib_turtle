@@ -1,0 +1,45 @@
+Other Systems.
+a sizeable advantage.
+22 Nxed Bf5 23 Bd! Nxd3 24 Qxd3 Rad8 25 Qe2 Rfe8 26 Bf2
+Bxe4 27 fxed Qc7 28 h3 Rxd1 29 Rxd1 Rd8 30 Kgl Rxd1+ 81
+Qxd1 Bf8 32 Qad b6 33 bs axb4 34 axbs c5? 35 bb h5?! 36 Qd1 he
+37 Qdb+ Kg7 38 Be3 Black resigns
+Game 68
+0 Pachman M Smyslov
+Amsterdam 1934
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 Nf3 0-0 5 Bgb d6 6 3 c5 7 Be2
+After 7 dxc5 dxc5 8 Qxd8 Rxd8 White would have to play well to draw
+the endgame. Sometimes White blocks the centre with 7 d5 when
+7...h6 8 Bh4 e5 would be standard play, but Black could also try
+8...Qb6, hoping to reach sxmlar positions to the main Line.
+7...h6 8 Bhd Bf5!? (Diagram 14)
+There are a couple of good reasons for putting the bishop on f5. Firstly
+it enables Black to play ...Ned. After the knights on {6 and ¢3 have
+disappeared the bishop on g7 becomes very powerful. The second rea-
+son is that it covers bl and in a surprising number of variations this
+allows Black to mount a decisive assault against the b2-pawn.
+9 0-0 Nbd7??
+pq Tea TT cn
+Ea Ww E®7 [ET 7, Ee 7
+rE rl | Hil Ate
+va Art 2.x att
+7 4 2 7 74
+va, Xx TAT ii, KATA
+A ay va 7 ay
+mim Wool | wil Wo
+BP Bam town NB
+I HARRAH RR NQARAR
+= WY Cw fa
+0 72%e 7H BZ EE
+Diagram 14 Diagram 15
+Exploiting White's reticent e2-3 White's bishop on hd is loose
+Preparing ...Qb6, which 1s not playable at once in view of 10 Bxf6 fol-
+lowed by Nd5. The immediate 9...Ne4 is an interesting alternative.
+10 A562!
+A strange decision. 10 Rel 1s more logical so that White can meet
+10...Qb6 with 11 b3. Stl, in Law-Gallagher, British Championship
+1997 Black had an attractive position after 11...Rfe8 12 h3?! g5! 13
+Bg3 Ne4 14 Nxed Bxed 15 dxc5 Nxc5 16 Nd4 Rad8
+10..Qbs! 11 Nad
+Not a good square for the knight but both 11 Qd2 g5 12 Bg3 Ned 13
+173

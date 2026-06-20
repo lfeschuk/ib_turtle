@@ -1,0 +1,39 @@
+The Four Pawns Attack
+BE) ¥ ES BED
+a w 7a 7 dn WY
+trEAmtot [rim & 1
+al x T17 wx XL
+mimimew | milim wm
+| DAoE | Eid Eom
+AE 8 Gan (aE B® Lam
+BH ERS 7 BEES
+Diagram 19 Diagram 20
+Black undermines the dark squares Nerther side can make progress
+15 Bf4 Nc7 16 Qg3 Rad8 17 Kh1 Bd4! 18 Rael f6 19 Ne2 Be5 20
+Ngl Bxf4
+This position was once thought to be better for White as Black
+adopted the incorrect plan of pushing the queenside pawns. What he
+has to do is manoeuvre the knight from c7 to e5.
+21 Qxf4 Na6! 22 Qd2 Rde8
+I decided to wait for Nf3 before moving my knight again. That is be-
+cause White still has the option of playing Nh3-f4. In that case | want
+the knight back on ¢7 to cover e6 and can occupy e5 with the queen
+23 Nf3 Nb8! 24 Qc3 Nd7 25 b3 Ne5 (Diagram 20) 26 Nd2 Draw
+agreed
+It is very difficult for either side to improve their position.
+Game 54
+0 Videki M Gallagher
+Kecskemet 1990
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 f4 0-0 6 Nf3 Na6 7 e5!?
+The most aggressive move at White's disposal.
+7..Nd7 8 ¢5?!
+But this is taking things too far. White gives up a pawn to secure a
+far advanced centre but Black can easily break it up. Others:
+1) 8 h4, with the idea of mating Black down the h-file. Black must re-
+act in the centre before it's too late. He can either play 8...c5 or
+8...dxeb 9 fxe5 cb. If White recaptures 9 dxe5 then 9...Nc5 10 Be3 Bg4
+11 Be2 {6 gives Black good play according to Vaisser.
+2) 8 Be2 c5 9 exd6 exd6 10 0-0 Nb6 11 d5 and, by roundabout means,
+we have reached the same pawn structure as in Game 50. After
+11...Bg4 12 h3 Bxf3 13 Rxf3 {5 14 Bd2 Nc7 15 Bd3 Qf6 16 Kh1 Rae8
+137

@@ -1,0 +1,43 @@
+Starting Out: The King's Indian
+Game 41
+[J Schwartzman # Nisipeanu
+Bucharest 1994
+1d4 Nf6 2 cd g6 3 Nf3 Bg7 4 g3 0-0 5 Bg2 d6 6 0-0 Nbd7 7 Ne e5
+8 e4 exdd 9 Nxd4 Re8 10 h3 a6 11 Rel
+For a while it became fashionable for White to withdraw his knight
+from d4 before it was hit with ...c7-c5. The moves 11 Nb3 and 11 Nde2
+are usually described as prophylactic but 1 prefer to call them cow-
+ardly. White 1s just trying to avoid complications at all costs. The
+knight was, after all, perfectly well placed in the middle and could
+only be dislodged by Black taking positional risks. Not surprisingly,
+Black is able to find adequate counterplay by ‘normal’ means.
+1) 11 Nb3 Neb 12 c5 (12 Qe2 Be6!) 12...dxc5 13 Nxc5 Qe7 14 Nb3 Be
+15 Qc2 Rad8, Spassov-Van Wely, Munich 1992. Black's active pieces
+more than compensate for White's central pawn majority.
+2) 11 Nde2 Nb6 (11...Rb8!?) 12 b3 Nxed! 13 Nxed Rxed! 14 Bxed Bxal
+15 Bg2 Bf6 16 Nf4 Rb8 17 Be3 Bd7 18 Bxb6 cxb6 19 Qxd6 Bc6 20
+Qxd8 Rfxd8 21 Nd5 Draw agreed Nikolic-Gelfand, Wijk aan Zee 1992,
+11..Rb8 12 Rb1! (Diagram 6)
+EAWEDEH |[@ WELSH
+7 TY nw ery nw;
+iraiib: mEBARiE:
+17, * A117 7% 717
+Ew om nan
+i 4, xR
+rari BSTC
+7 3 9 ¥ yy o/
+AW mil lim on ms
+AW URAL 759 i
+Diagram 6 Diagram 7
+Preparing for Black's queenside action White's position is overwhelming
+This innocuous-looking move has caused Black quite a few problems.
+I think White players found this move by a process of elimination. It
+doesn’t do a lot but on the other hand it doesn’t do any harm either. It
+doesn't interfere with the defence of the e-pawn (12 Be3), 1t doesn't
+expose White on the long diagonal (12 b3) and it doesn't deny White
+the chance for Qxd6 (in certain games White played an early Qc2).
+Not only did White players try and make the ...c7-c5 and ...b7-b5 ad-
+vance less appetising (12 Rb1) but some of them decided to prevent it
+altogether. The most obvious way to do this is 12 ad. At first White
+players were reluctant to play such an anti-positional move. The point
+108

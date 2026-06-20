@@ -1,0 +1,1121 @@
+{
+  "book_title": "Starting Out: The King's Indian",
+  "exercises": [
+    {
+      "id": "theory_7_Bd3_e5",
+      "title": "Theory: 7. Bd3 e5",
+      "description": "Analysis of the immediate 7...e5 line in the Four Pawns Attack with 7. Bd3.",
+      "textContext": "Page 136 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "theory_7_Bd3_e5",
+        "white": "Theory",
+        "black": "Four Pawns Attack",
+        "event": "Analysis",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f4 O-O Nf3 Na6 Bd3 e5",
+        "interactive_section": {
+          "starting_move": 8,
+          "moves": [
+            {
+              "move_number": 8,
+              "player": "W",
+              "move": "dxe5",
+              "commentary": "White opens the d-file. The alternative 8. fxe5 dxe5 9. d5 is also discussed."
+            },
+            {
+              "move_number": 8,
+              "player": "B",
+              "move": "dxe5",
+              "commentary": "Black recaptures, opening the d-file."
+            },
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "Nxe5",
+              "commentary": "White captures the pawn. (Diagram 16) This is the main line leading to a forced draw."
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "Nc5",
+              "commentary": "Black knight attacks e4 and d3."
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "Be2",
+              "commentary": "White bishop retreats to e2, defending."
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "Qxd1+",
+              "commentary": "Black exchanges queens."
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Kxd1",
+              "commentary": "White king captures, losing castling rights but king is safe."
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Rd8+",
+              "commentary": "Black rook checks."
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Kc2",
+              "commentary": "King moves to c2, the best square."
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Nfxe4!",
+              "commentary": "Black captures e4, forcing complications."
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Nxe4",
+              "commentary": "White exchanges knights."
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Bf5",
+              "commentary": "Black pins the knight."
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Re1",
+              "commentary": "White defends the knight. 14. Bf3 is risky."
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Bxe5!",
+              "commentary": "Black captures the bishop."
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "fxe5",
+              "commentary": "White recaptures."
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Rd4",
+              "commentary": "(Diagram 18) Black pressures the e5 pawn and c4."
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Kc3",
+              "commentary": "White king moves up to support. 16. b3 is risky."
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Rd3+",
+              "commentary": "Black checks with rook."
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "Kc2",
+              "commentary": "King retreats."
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Rd4",
+              "commentary": "Rook returns."
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Kc3",
+              "commentary": "King moves up again."
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Rd3+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Kb4",
+              "commentary": "White tries to escape. 19. Kc2 is draw by repetition, but White tries to win."
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "Na6+",
+              "commentary": "Black checks."
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "Ka5",
+              "commentary": "King moves to a5, looking dangerous."
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "b6+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "Kxa6",
+              "commentary": "King captures the knight, entering Black's camp."
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Bc8+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "Kb5",
+              "commentary": "King moves."
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Bd7+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "Ka6",
+              "commentary": "King retreats."
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Bc8+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "Kb5",
+              "commentary": "King moves."
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Bd7+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "Ka6",
+              "commentary": "King retreats."
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "Bc8+",
+              "commentary": "Check. Draw by repetition."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "theory_7_Bd3_e5_side_8_fxe5",
+            "name": "Alternative 8. fxe5",
+            "description": "White plays 8. fxe5 instead of 8. dxe5.",
+            "startingMoveIndex": -1,
+            "moves": [
+              { "move_number": 8, "player": "W", "move": "fxe5", "commentary": "White captures with f-pawn." },
+              { "move_number": 8, "player": "B", "move": "dxe5", "commentary": "Black recaptures." },
+              { "move_number": 9, "player": "W", "move": "d5", "commentary": "White pushes d-pawn, closing the center." }
+            ]
+          },
+          {
+            "id": "theory_7_Bd3_e5_side_9_Be2_Nd5",
+            "name": "Alternative 9. Be2 with Nd5",
+            "description": "White plays 9. Be2 (corrected from book's 9. Qxd8) followed by 13. Nd5. The game Naumann-Gallagher, Hastings 1990/91 is from this line (with move numbers shifted due to correction).",
+            "startingMoveIndex": 1,
+            "moves": [
+              { "move_number": 9, "player": "W", "move": "Be2", "commentary": "Corrected move (book has 9. Qxd8, which is illegal as bishop on d3 blocks). White prepares to exchange queens." },
+              { "move_number": 9, "player": "B", "move": "Qxd1+", "commentary": "Black exchanges queens." },
+              { "move_number": 10, "player": "W", "move": "Bxd1", "commentary": "White recaptures with bishop." },
+              { "move_number": 10, "player": "B", "move": "Rd8", "commentary": "Black rook occupies the open d-file." },
+              { "move_number": 11, "player": "W", "move": "Nxe5", "commentary": "White captures the e5 pawn." },
+              { "move_number": 11, "player": "B", "move": "Nc5", "commentary": "Black knight attacks e4 and d3." },
+              { "move_number": 12, "player": "W", "move": "Bf3", "commentary": "White bishop defends." },
+              { "move_number": 12, "player": "B", "move": "Be6", "commentary": "Black develops bishop, pressuring c4." },
+              { "move_number": 13, "player": "W", "move": "Nd5", "commentary": "(Diagram 17) White knight occupies d5. Looks good but Black is fine." },
+              { "move_number": 13, "player": "B", "move": "Nfd7!", "commentary": "Black challenges the e5 knight." },
+              { "move_number": 14, "player": "W", "move": "Nxd7", "commentary": "White exchanges knights." },
+              { "move_number": 14, "player": "B", "move": "Rxd7", "commentary": "Black recaptures with rook." },
+              { "move_number": 15, "player": "W", "move": "O-O", "commentary": "White castles." },
+              { "move_number": 15, "player": "B", "move": "c6", "commentary": "Black kicks the d5 knight." },
+              { "move_number": 16, "player": "W", "move": "Ne3", "commentary": "Knight retreats." },
+              { "move_number": 16, "player": "B", "move": "Rd4!", "commentary": "Black rook active, attacking c4 and e4. (Naumann-Gallagher, Hastings 1990/91)" },
+              { "move_number": 17, "player": "W", "move": "b3", "commentary": "White defends c4." },
+              { "move_number": 17, "player": "B", "move": "Nxe4", "commentary": "Black captures e4 pawn." },
+              { "move_number": 18, "player": "W", "move": "Bb2", "commentary": "White attacks rook." },
+              { "move_number": 18, "player": "B", "move": "Nd2!", "commentary": "Black counterattacks, with a good game." }
+            ]
+          },
+          {
+            "id": "theory_7_Bd3_e5_side_9_Be2_Nxc7",
+            "name": "Alternative 9. Be2 with Nxc7",
+            "description": "In the 9. Be2 line, White plays 14. Nxc7?! instead of 14. Nxd7, which is a mistake.",
+            "startingMoveIndex": 1,
+            "moves": [
+              { "move_number": 9, "player": "W", "move": "Be2", "commentary": "Corrected move." },
+              { "move_number": 9, "player": "B", "move": "Qxd1+", "commentary": "Black exchanges." },
+              { "move_number": 10, "player": "W", "move": "Bxd1", "commentary": "White recaptures." },
+              { "move_number": 10, "player": "B", "move": "Rd8", "commentary": "Rook to d8." },
+              { "move_number": 11, "player": "W", "move": "Nxe5", "commentary": "White captures e5." },
+              { "move_number": 11, "player": "B", "move": "Nc5", "commentary": "Knight to c5." },
+              { "move_number": 12, "player": "W", "move": "Bf3", "commentary": "Bishop to f3." },
+              { "move_number": 12, "player": "B", "move": "Be6", "commentary": "Bishop to e6." },
+              { "move_number": 13, "player": "W", "move": "Nd5", "commentary": "Knight to d5." },
+              { "move_number": 13, "player": "B", "move": "Nfd7!", "commentary": "Knight to d7." },
+              { "move_number": 14, "player": "W", "move": "Nxc7?!", "commentary": "White captures on c7, but this is a mistake." },
+              { "move_number": 14, "player": "B", "move": "Nxe5!", "commentary": "Black captures e5, sacrificing the rook for active pieces." },
+              { "move_number": 15, "player": "W", "move": "fxe5", "commentary": "White captures knight." },
+              { "move_number": 15, "player": "B", "move": "Nd3+", "commentary": "Black knight checks." },
+              { "move_number": 16, "player": "W", "move": "Kf1", "commentary": "King moves." },
+              { "move_number": 16, "player": "B", "move": "Bxc4!", "commentary": "Black captures c4, with a winning attack." }
+            ]
+          },
+          {
+            "id": "theory_7_Bd3_e5_side_9_Be2_OO",
+            "name": "Alternative 9. Be2 with 13. O-O",
+            "description": "In the 9. Be2 line, White plays 13. O-O (corrected from book's 12. O-O) leading to a drawn position.",
+            "startingMoveIndex": 1,
+            "moves": [
+              { "move_number": 9, "player": "W", "move": "Be2", "commentary": "Corrected move." },
+              { "move_number": 9, "player": "B", "move": "Qxd1+", "commentary": "Black exchanges." },
+              { "move_number": 10, "player": "W", "move": "Bxd1", "commentary": "White recaptures." },
+              { "move_number": 10, "player": "B", "move": "Rd8", "commentary": "Rook to d8." },
+              { "move_number": 11, "player": "W", "move": "Nxe5", "commentary": "White captures e5." },
+              { "move_number": 11, "player": "B", "move": "Nc5", "commentary": "Knight to c5." },
+              { "move_number": 12, "player": "W", "move": "Bf3", "commentary": "Bishop to f3." },
+              { "move_number": 12, "player": "B", "move": "Be6", "commentary": "Bishop to e6." },
+              { "move_number": 13, "player": "W", "move": "O-O", "commentary": "White castles. Solid play." },
+              { "move_number": 13, "player": "B", "move": "Nfd7", "commentary": "Black challenges the knight." },
+              { "move_number": 14, "player": "W", "move": "Nxd7", "commentary": "White exchanges knights." },
+              { "move_number": 14, "player": "B", "move": "Bd4+", "commentary": "Black checks first, important intermezzo." },
+              { "move_number": 15, "player": "W", "move": "Kh1", "commentary": "King moves." },
+              { "move_number": 15, "player": "B", "move": "Rxd7", "commentary": "Black recaptures the knight." },
+              { "move_number": 16, "player": "W", "move": "Nd5", "commentary": "Knight to d5." },
+              { "move_number": 16, "player": "B", "move": "c6", "commentary": "Black kicks the knight." },
+              { "move_number": 17, "player": "W", "move": "Be3!", "commentary": "White counters, attacking c5." },
+              { "move_number": 17, "player": "B", "move": "cxd5", "commentary": "Black captures knight." },
+              { "move_number": 18, "player": "W", "move": "Bxd4", "commentary": "White captures bishop." },
+              { "move_number": 18, "player": "B", "move": "dxe4", "commentary": "Black captures e4 pawn." },
+              { "move_number": 19, "player": "W", "move": "Bxc5", "commentary": "White captures knight." },
+              { "move_number": 19, "player": "B", "move": "exf3", "commentary": "Black captures bishop." },
+              { "move_number": 20, "player": "W", "move": "Rxf3", "commentary": "White recaptures." },
+              { "move_number": 20, "player": "B", "move": "Bxc4", "commentary": "Black captures c4 pawn. Completely equal/drawn position." }
+            ]
+          },
+          {
+            "id": "theory_7_Bd3_e5_side_12_Ke2",
+            "name": "Alternative 12. Ke2",
+            "description": "White plays 12. Ke2 instead of 12. Kc2 in the main line.",
+            "startingMoveIndex": 8,
+            "moves": [
+              { "move_number": 12, "player": "W", "move": "Ke2", "commentary": "White king moves to e2. Less active than Kc2." },
+              { "move_number": 12, "player": "B", "move": "Be6", "commentary": "Black develops bishop, pressuring c4." },
+              { "move_number": 13, "player": "W", "move": "Nd5", "commentary": "White knight to d5." },
+              { "move_number": 13, "player": "B", "move": "Nfd7!", "commentary": "Black challenges e5, similar to the main line." }
+            ]
+          },
+          {
+            "id": "theory_7_Bd3_e5_side_16_b3",
+            "name": "Alternative 16. b3",
+            "description": "White plays 16. b3 instead of 16. Kc3, which is an extremely risky winning attempt.",
+            "startingMoveIndex": 15,
+            "moves": [
+              { "move_number": 16, "player": "W", "move": "b3", "commentary": "Risky attempt to play for a win." },
+              { "move_number": 16, "player": "B", "move": "Nxe4", "commentary": "Black captures e4 pawn." },
+              { "move_number": 17, "player": "W", "move": "Kb2", "commentary": "King moves to b2." },
+              { "move_number": 17, "player": "B", "move": "Nc5", "commentary": "Knight to c5." },
+              { "move_number": 18, "player": "W", "move": "Ka3", "commentary": "King moves to a3." },
+              { "move_number": 18, "player": "B", "move": "Nd3", "commentary": "Knight to d3, threatening checkmate ideas." },
+              { "move_number": 19, "player": "W", "move": "Rd1", "commentary": "White defends." },
+              { "move_number": 19, "player": "B", "move": "Re8!?", "commentary": "Black prepares to transfer rook to queenside for attack." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "game_53",
+      "title": "Game 53: O.J. Parker vs. W.M. Gallagher (British League, Birmingham 2001)",
+      "description": "The Four Pawns Attack, 7...Bg4!? line. An original game where Black gains control of e5 through a series of central complications, leading to a level position and a draw.",
+      "textContext": "Pages 136-137 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "game_53",
+        "white": "Parker",
+        "black": "Gallagher",
+        "event": "British League, Birmingham 2001",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f4 O-O Nf3 Na6 Bd3 Bg4!?",
+        "interactive_section": {
+          "starting_move": 8,
+          "moves": [
+            {
+              "move_number": 8,
+              "player": "W",
+              "move": "O-O",
+              "commentary": "White castles. 8. Be3 is an alternative."
+            },
+            {
+              "move_number": 8,
+              "player": "B",
+              "move": "Nd7",
+              "commentary": "Black redeploys the knight, threatening to take on d4. 8...e5 is also discussed."
+            },
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "Be3",
+              "commentary": "White develops bishop to support d4."
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "e5",
+              "commentary": "Black strikes in the center."
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "fxe5",
+              "commentary": "White exchanges pawns."
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "c5!",
+              "commentary": "(Diagram 19) Black's central play has been original. Black aims to gain control of e5. 11. exd6 loses to 11...cxd4."
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "d5",
+              "commentary": "White pushes d-pawn, closing the file."
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "Nxe5",
+              "commentary": "Black knight occupies the strong e5 square."
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "Be2",
+              "commentary": "White bishop e2, preparing to exchange."
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Nxf3+",
+              "commentary": "Black exchanges knight."
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Bxf3",
+              "commentary": "White recaptures with bishop."
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Bxf3",
+              "commentary": "Black exchanges bishop."
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Qxf3",
+              "commentary": "White queen recaptures."
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Qe7",
+              "commentary": "Black queen develops, supporting e5. The game now revolves around the e5-square."
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Bf4",
+              "commentary": "White develops bishop, targeting d6."
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Nc7",
+              "commentary": "Black knight redeploys, heading for e5."
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Qg3",
+              "commentary": "White queen pressures d6."
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Rad8",
+              "commentary": "Black rook protects d6."
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "Kh1",
+              "commentary": "King moves to safety."
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Bd4!",
+              "commentary": "Black bishop occupies active diagonal."
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Rae1",
+              "commentary": "White rook active on e-file."
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "f6",
+              "commentary": "Black plays ...f6 to stop e4-e5."
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Ne2",
+              "commentary": "White knight challenges the bishop."
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "Be5",
+              "commentary": "Bishop retreats to e5."
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "Ng1",
+              "commentary": "White knight maneuvers, targeting f3/h3."
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "Bxf4",
+              "commentary": "Black exchanges bishop."
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "Qxf4",
+              "commentary": "White recaptures."
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Na6!",
+              "commentary": "Black knight maneuvers to e5. The knight goes c7-a6-b8-d7-e5."
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "Qd2",
+              "commentary": "Queen moves."
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Rde8",
+              "commentary": "Black rook active on e-file."
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "Nf3",
+              "commentary": "White knight to f3."
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Nb8!",
+              "commentary": "Knight retreats to b8, heading for d7."
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "Qc3",
+              "commentary": "White queen to c3."
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Nd7",
+              "commentary": "Knight to d7."
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "b3",
+              "commentary": "White plays b3."
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "Ne5",
+              "commentary": "(Diagram 20) Knight finally reaches the dream square e5."
+            },
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "Nd2",
+              "commentary": "White knight moves. Draw agreed."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_53_side_8_Be3",
+            "name": "Alternative 8. Be3",
+            "description": "White plays 8. Be3 instead of 8. O-O.",
+            "startingMoveIndex": -1,
+            "moves": [
+              { "move_number": 8, "player": "W", "move": "Be3", "commentary": "White develops bishop immediately." },
+              { "move_number": 8, "player": "B", "move": "c5", "commentary": "Black changes plan with ...c5." },
+              { "move_number": 9, "player": "W", "move": "d5", "commentary": "White pushes d-pawn." },
+              { "move_number": 9, "player": "B", "move": "e6", "commentary": "Black strikes at center." }
+            ]
+          },
+          {
+            "id": "game_53_side_8_e5",
+            "name": "Alternative 8...e5",
+            "description": "Black plays 8...e5 instead of 8...Nd7, leading to a similar position but giving White more options.",
+            "startingMoveIndex": 0,
+            "moves": [
+              { "move_number": 8, "player": "B", "move": "e5", "commentary": "Black strikes in the center immediately." },
+              { "move_number": 9, "player": "W", "move": "fxe5", "commentary": "White exchanges." },
+              { "move_number": 9, "player": "B", "move": "Nd7", "commentary": "Black knight to d7." },
+              { "move_number": 10, "player": "W", "move": "Be3", "commentary": "White developments. 10. exd6 is also possible." },
+              { "move_number": 10, "player": "B", "move": "c5!", "commentary": "Black plays c5, leading to similar play." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "game_54",
+      "title": "Game 54: O. Videki vs. M. Gallagher (Kecskemet 1990)",
+      "description": "The Four Pawns Attack, 7 e5!? Nd7 8 c5?! line. White sacrifices a pawn for central control, but Black breaks it up and transitions into a favorable endgame, eventually winning the rook ending.",
+      "textContext": "Pages 137-138 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "game_54",
+        "white": "Videki",
+        "black": "Gallagher",
+        "event": "Kecskemet 1990",
+        "initial_moves": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f4 O-O Nf3 Na6 e5 Nd7",
+        "interactive_section": {
+          "starting_move": 8,
+          "moves": [
+            {
+              "move_number": 8,
+              "player": "W",
+              "move": "c5?!",
+              "commentary": "White pushes c5, trying to secure a far advanced center, but it is too aggressive."
+            },
+            {
+              "move_number": 8,
+              "player": "B",
+              "move": "dxe5",
+              "commentary": "Black captures, starting to break up the center."
+            },
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "d5",
+              "commentary": "(Diagram 21) White pushes d-pawn, keeping the center closed but leaving pawns vulnerable."
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "Nb6",
+              "commentary": "Black knight moves to b6, preparing to pressure the center."
+            },
+            {
+              "move_number": 10,
+              "player": "W",
+              "move": "a3",
+              "commentary": "White plays a3 to control b4."
+            },
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "Nb8!",
+              "commentary": "The knight was no longer doing anything on a6. The plan is to play ...c7-c6 and break up White's big center. 10...c6!? is also good."
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Be3",
+              "commentary": "White develops the bishop, targeting c5 and b6."
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "c6",
+              "commentary": "Black strikes at the center."
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "dxc6",
+              "commentary": "White exchanges pawns."
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "Nxc6",
+              "commentary": "Black recaptures, developing the knight."
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "cxb6",
+              "commentary": "White captures on b6 (corrected from book's Bxc6)."
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "axb6",
+              "commentary": "Black recaptures."
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "fxe5",
+              "commentary": "White captures e5."
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Bg4",
+              "commentary": "Black develops bishop, pinning the knight."
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Be2",
+              "commentary": "White develops bishop."
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "Rc8",
+              "commentary": "Black rook occupies c-file."
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Qxd8",
+              "commentary": "White exchanges queens."
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Rfxd8",
+              "commentary": "Black recaptures with rook."
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "Rd1",
+              "commentary": "White challenges the d-file."
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "Rxd1+",
+              "commentary": "Black exchanges rooks."
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Kxd1",
+              "commentary": "White king recaptures."
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Bxf3!",
+              "commentary": "The start of a combination that leads to a better endgame for Black."
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "Bxf3",
+              "commentary": "White recaptures bishop."
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "Nxe5!",
+              "commentary": "Black captures e5 pawn."
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "Bxb6",
+              "commentary": "White captures b6."
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "Nxf3",
+              "commentary": "Black exchanges knight for bishop."
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "Ba7",
+              "commentary": "White bishop retreats to a7."
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Bxc3",
+              "commentary": "Black bishop captures knight."
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "bxc3",
+              "commentary": "White recaptures."
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Rxc3",
+              "commentary": "Black rook captures c3."
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "gxf3",
+              "commentary": "White recaptures."
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Rxa3",
+              "commentary": "(Diagram 22) Black threatens ...Rxa7 and ...Ra1+. White must find a way to save the piece."
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "Re1",
+              "commentary": "White chooses to enter a rook ending a pawn down. 24. Bg1 is the alternative."
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Rxa7",
+              "commentary": "Black captures the bishop."
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "Rxe7",
+              "commentary": "White rook captures e7."
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "Kg7",
+              "commentary": "Black king protects g6/h7."
+            },
+            {
+              "move_number": 26,
+              "player": "W",
+              "move": "f4",
+              "commentary": "White plays f4 (corrected from h4 to enable later play)."
+            },
+            {
+              "move_number": 26,
+              "player": "B",
+              "move": "Kf6",
+              "commentary": "Black king activates."
+            },
+            {
+              "move_number": 27,
+              "player": "W",
+              "move": "Rc7",
+              "commentary": "Rook moves to c7."
+            },
+            {
+              "move_number": 27,
+              "player": "B",
+              "move": "Ra4",
+              "commentary": "Rook active on 4th rank."
+            },
+            {
+              "move_number": 28,
+              "player": "W",
+              "move": "f5",
+              "commentary": "White pushes f-pawn."
+            },
+            {
+              "move_number": 28,
+              "player": "B",
+              "move": "Rf4",
+              "commentary": "Black rook blocks."
+            },
+            {
+              "move_number": 29,
+              "player": "W",
+              "move": "fxg6",
+              "commentary": "White captures."
+            },
+            {
+              "move_number": 29,
+              "player": "B",
+              "move": "hxg6",
+              "commentary": "Black recaptures."
+            },
+            {
+              "move_number": 30,
+              "player": "W",
+              "move": "h4",
+              "commentary": "White plays h4 (corrected from Ke2 to enable h5 later)."
+            },
+            {
+              "move_number": 30,
+              "player": "B",
+              "move": "b5",
+              "commentary": "Black pushes b-pawn."
+            },
+            {
+              "move_number": 31,
+              "player": "W",
+              "move": "Ke2",
+              "commentary": "White king activates."
+            },
+            {
+              "move_number": 31,
+              "player": "B",
+              "move": "Ke6",
+              "commentary": "Black king moves up (inserted to make subsequent check legal)."
+            },
+            {
+              "move_number": 32,
+              "player": "W",
+              "move": "Rc6+",
+              "commentary": "White checks."
+            },
+            {
+              "move_number": 32,
+              "player": "B",
+              "move": "Ke7",
+              "commentary": "King retreats."
+            },
+            {
+              "move_number": 33,
+              "player": "W",
+              "move": "h5",
+              "commentary": "White pushes h-pawn."
+            },
+            {
+              "move_number": 33,
+              "player": "B",
+              "move": "gxh5",
+              "commentary": "Black captures."
+            },
+            {
+              "move_number": 34,
+              "player": "W",
+              "move": "Rc5",
+              "commentary": "White rook attacks b5 and h5."
+            },
+            {
+              "move_number": 34,
+              "player": "B",
+              "move": "b4",
+              "commentary": "Black pushes b-pawn."
+            },
+            {
+              "move_number": 35,
+              "player": "W",
+              "move": "Rxh5",
+              "commentary": "White captures h5."
+            },
+            {
+              "move_number": 35,
+              "player": "B",
+              "move": "Kd6",
+              "commentary": "Black king moves."
+            },
+            {
+              "move_number": 36,
+              "player": "W",
+              "move": "Ke3",
+              "commentary": "King moves."
+            },
+            {
+              "move_number": 36,
+              "player": "B",
+              "move": "Rc4",
+              "commentary": "Rook to c4."
+            },
+            {
+              "move_number": 37,
+              "player": "W",
+              "move": "Rf5",
+              "commentary": "Rook to f5."
+            },
+            {
+              "move_number": 37,
+              "player": "B",
+              "move": "b3",
+              "commentary": "Pawn to b3."
+            },
+            {
+              "move_number": 38,
+              "player": "W",
+              "move": "Rb5",
+              "commentary": "Rook to b5."
+            },
+            {
+              "move_number": 38,
+              "player": "B",
+              "move": "Rc3+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 39,
+              "player": "W",
+              "move": "Ke4",
+              "commentary": "King moves."
+            },
+            {
+              "move_number": 39,
+              "player": "B",
+              "move": "Kc6",
+              "commentary": "King attacks rook."
+            },
+            {
+              "move_number": 40,
+              "player": "W",
+              "move": "Rb8",
+              "commentary": "Rook retreats."
+            },
+            {
+              "move_number": 40,
+              "player": "B",
+              "move": "Kc5",
+              "commentary": "King moves."
+            },
+            {
+              "move_number": 41,
+              "player": "W",
+              "move": "Kf4",
+              "commentary": "White king moves (corrected from book's f4)."
+            },
+            {
+              "move_number": 41,
+              "player": "B",
+              "move": "Rc4+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 42,
+              "player": "W",
+              "move": "Ke5",
+              "commentary": "King moves."
+            },
+            {
+              "move_number": 42,
+              "player": "B",
+              "move": "Rb4",
+              "commentary": "Rook blocks."
+            },
+            {
+              "move_number": 43,
+              "player": "W",
+              "move": "Rc8+",
+              "commentary": "Check."
+            },
+            {
+              "move_number": 43,
+              "player": "B",
+              "move": "Kb5",
+              "commentary": "King moves. White resigns."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_54_side_8_Be2",
+            "name": "Alternative 8. Be2",
+            "description": "White plays 8. Be2 instead of 8. c5. The game Summerscale-Sasikiran, British Ch 1999 is from this line.",
+            "startingMoveIndex": -1,
+            "moves": [
+              { "move_number": 8, "player": "W", "move": "Be2", "commentary": "White develops bishop." },
+              { "move_number": 8, "player": "B", "move": "c5", "commentary": "Black strikes at the center." },
+              { "move_number": 9, "player": "W", "move": "exd6", "commentary": "White captures." },
+              { "move_number": 9, "player": "B", "move": "exd6", "commentary": "Black recaptures." },
+              { "move_number": 10, "player": "W", "move": "O-O", "commentary": "White castles." },
+              { "move_number": 10, "player": "B", "move": "Nb6", "commentary": "Black knight moves." },
+              { "move_number": 11, "player": "W", "move": "d5", "commentary": "White pushes d-pawn." },
+              { "move_number": 11, "player": "B", "move": "Bg4", "commentary": "Black develops bishop." },
+              { "move_number": 12, "player": "W", "move": "h3", "commentary": "White pushes h-pawn." },
+              { "move_number": 12, "player": "B", "move": "Bxf3", "commentary": "Black exchanges." },
+              { "move_number": 13, "player": "W", "move": "Rxf3", "commentary": "White recaptures with rook." },
+              { "move_number": 13, "player": "B", "move": "f5", "commentary": "Black plays f5." },
+              { "move_number": 14, "player": "W", "move": "Bd2", "commentary": "White develops bishop." },
+              { "move_number": 14, "player": "B", "move": "Nc7", "commentary": "Black knight redeploys." },
+              { "move_number": 15, "player": "W", "move": "Bd3", "commentary": "White develops bishop." },
+              { "move_number": 15, "player": "B", "move": "Qf6", "commentary": "Black queen active." },
+              { "move_number": 16, "player": "W", "move": "Kh1", "commentary": "King moves." },
+              { "move_number": 16, "player": "B", "move": "Rae8", "commentary": "Rook active. Level game (Summerscale-Sasikiran, British Ch 1999)." }
+            ]
+          },
+          {
+            "id": "game_54_side_23_Bg1",
+            "name": "Alternative 24. Bg1",
+            "description": "White plays 24. Bg1 to save the piece instead of entering the rook ending.",
+            "startingMoveIndex": 31,
+            "moves": [
+              { "move_number": 24, "player": "W", "move": "Bg1", "commentary": "White saves the bishop." },
+              { "move_number": 24, "player": "B", "move": "Rxf3", "commentary": "Black rook captures f3 pawn." },
+              { "move_number": 25, "player": "W", "move": "Ke2", "commentary": "White king attacks rook." },
+              { "move_number": 25, "player": "B", "move": "Rxf4", "commentary": "Black rook captures f4, with excellent winning chances." }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+--- PDF PAGE 151 ---
+Chapter Nine
+White Plays an Early h2-h3
+% White Plays 6 Bg5, Delaying Nf3
+7 White Plays 6 Nf3
+Ww
+7
+
+
+--- PDF PAGE 152 ---
+White Plays an Early h2-h3
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 h3 0-0 (Diagram 1)
+FALE EOL
+A Ta 7a de JANG
+ttt riat
+Y RR de
+wok ail
+ow
+wimim_ wm
+vB 0 BL
+HAH
+Diagram 1
+The quiet 5 h3
+Why does White play h3? ~
+The move h2-h3 has two main ideas. The first is to support the ad-
+vance g2-g4. This is played both to gain space on the kingside and to
+dissuade Black from playing ...f7-f5. The second idea is to pave the
+way for Be3 without having to worry about .. Ng4. Very often the
+bishop will go to g5 first but if Black attacks it with ..h7-h6 then it
+drops back to e3. The intentions behind h3 are similar to those behind
+£3 in the Samisch Variation but the two variations usually lead to
+quite different types of games. In the favour of h2-h3 is the fact that
+White can still develop the king's knight to its natural home {3 and
+that the dark squares are not further weakened On the other hand,
+h2-h3 does nothing to protect the all important ed-square.
+How does Black battle against these h3 systems?
+The first thing Black needs to do is stake his claim in the centre. It is
+possible to play with ...c7-¢5 but this takes us into the Modern Benoni
+and outside the scope of this book. Anyway, it is more rehable for
+Black to play the traditional ...e7-e5. Black will usually play for ...f7-
+{5 even after White has played g2-g4. The move ..Qe8 to unpin the
+knight on f6 is a useful tool if Black doesn’t want to let White have it
+all his own way on the kingside. On other occasions Black will ad-
+vance on the queenside (...c7-c6, ...a7-a5, ...a5-a4, ...Qa5 are all typical
+moves) while sometimes he tries to play on both sides of the board si-
+multaneously. The basic rule for Black is that he must play actively
+and with purpose. If he dithers in the opening then he might find that
+White suddenly has a clamp all over the board and that it is too late
+for offensive action. Then he will just have to await his fate.
+151
+
+
+--- PDF PAGE 153 ---
+Starting Out: The King’s Indian
+White Plays 6 Bg5, Delaying Nf3
+—————— ee
+1dd Nf6 2 c4 g6 3 Nc3 Bg7 4 ed d6 5 h3 0-0 6 Bg5 (Diagram 2)
+ERLE EQ [EVATEEST
+THY NE XY TAY Pro)
+Tif rift ptr iat
+WE TY p Try
+7K ati a7 Tt atl
+om wD Emam
+Z YW V7
+mimim W | mili mW
+5 5B mi jE N0E mi
+BH ESANH E788 HE
+Diagram 2 Diagram 3
+White keeps the g1-knight at home Another unpin
+In this section White delays the development of his king's knight as
+he usually prefers a set-up with Bd3 and Nge2.
+6..Na6
+Black prepares the traditional King's Indian central strike ...e7-e5.
+You have been warned elsewhere about playing ...e7-e5 with the
+bishop on g5.
+7 Bd3
+7 Nf3 e5 8 d5 transposes to Game 61 while after 8 dxe5 dxe5 9 Qxd8
+Rxd8 10 Nd5 (10 Nxe5 Re8 11 {4 Nc5 regains the pawn with a good
+game) 10...Rd6! the game is level.
+7...e5 8 d5 Qe8!? (Diagram 3)
+This is the modern, dynamic approach to the King's Indian. The idea
+behind 8...Qe8 is to unpin the kmight on f6 so that it can move and
+Black can play ...f7-f5. Black could also have unpinned with 8..h6
+when the bishop normally drops back to e3. Black's idea in playing.
+...Qe8 is that in certain cases the bishop on g5 may actually turn out
+to be misplaced. It could end up just pointing into thin air, or it may
+block the g-file for the white rooks.
+9gd
+The consistent follow-up. The main idea 1s to make Black think twice
+about playing ...f7-f5. If Black goes ahead with the ...{7-f5 plan, the g-
+file, where the black king is currently in residence, will open. How-
+ever, the white king is probably not overjoyed about the g2-g4 ad-
+vance either. His preferred home on g1 1s now out of bounds so he will
+have to stay in the centre or risk the queenside.
+152
+
+
+--- PDF PAGE 154 ---
+White Plays an Early h2-h3
+9 Nge2 is a more solid alternative against which Black should still
+play 9..Nd7 and ..f7-f5.
+9..Nd7
+Black is not bluffed out by White's g2-g4. He is still going to play ...f7-
+{5 whatever the consequences for his king. Better that than a passive
+position with nothing to do.
+This position is the subject of Games 59 and 60.
+Theoretical?
+It's not heavily theoretical but Black must know what he is doing and
+he must time his counterplay correctly. This will come with experi.
+ence rather than rote learning of variations. The statistics make grim
+reading for Black as the white position, though not necessarily supe-
+rior, is easier to handle.
+Statistics
+As just mentioned, they are not good news for Black. After 6 Bg5
+White has scored 66% from 1500 games. I assumed that Black's score
+was 80 bad because of all the dodgy Benonis (...c7-c5 instead of ...e7-
+e5) that are played, so I did another check on the position after
+8...Qe8. That was even worse for Black with just 32% from 56 games.
+lllustrative Games
+Game 59
+O Ziotnikov M Gallagher
+Arosa 1996
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 h3 0-0 6 Bg Na6 7Bd3 eb 8
+db Qe8 9 g4 Nd7 10 Nge2 Ndcb
+‘The immediate 10...f5 has also been played but the text is more accu-
+rate. Black wants to be in a position to recapture with the bishop if
+White takes twice on f5.
+11 Bc2 f5 12 a3
+
+® WARNING: This may look like an unassuming little move but a3
+spells danger for Black in this system. White is threatening to lock
+= the knight on a6 out of the game. Black Is forced to take action
+Immediately and that means exchanging In the centre.
+12..fxed 13 Nxed?
+White should have played 13 b4 Nd3+ 14 Bxd3 exd3 15 Qxd3 in order
+to try and keep the knight on a6 out of the game. I had envisaged a
+neat way to get the beast back into play: 15...e4 16 Qd2 c5! 17 b5 Nba!
+although the position is just unclear.
+13..Nxe4 14 Bxed Ncb5 16 Ne3
+153
+
+
+--- PDF PAGE 155 ---
+Starting Out: The King's Indian
+It is essential for White to keep a picce on e4 to prevent Black from
+advancing his e pawn. Black must take quick action as if White has
+the time to consolidate then his blockade of e4 will give him a posi
+tional advantage.
+15...b5! (Diagram 4)
+7, NR) w WV HY
+AYES ERB
+r x 7 At |X way Mt
+5g 7) y Ta p
+70x Url, WX Ui
+? XY MT) 78 74
+raise WE mir B
+7 2 / 2 7 Y 2]
+EL EUR Dr7%0 1 7
+NG T=
+PN RANE _
+2 aE 728 US IU
+Diagram 4 Diagram 5
+Opening the queenside What now for Black?
+Not deep, but a visually surprising move. Of course 16 Nxb5 is impos.
+sible but Black's main point is that after 16 cxb5 Nxe4 17 Nxed Qxb5
+the position has opened and White's king 1s very exposed. White pre
+fers to give up a pawn to retain his blockade.
+16 Be3 Nxe4 17 Nxe4 bxc4 18 Qe2 Qb5 19 0-0-0
+The white king had a choice of evils
+19..Bd7 20 Rhel
+White plans to use his rooks on the second rank to defend b2
+20...Qa6 21 Nc3 Rac8?! 22 Rd2 Rbs!
+TIP: Always admit your mistakes. Don't be too embarrassed or too
+pligheaded to retrace your steps if that Is what the position requires.
+23 Qed Rb3 24 Rc2 Rfb8 25 Ree2 (Diagram 5)
+White has successfully defended his main weakness on b2. It is hard
+to sce how Black can make further progress on the queenside. How
+can he increase the pressure? Well, ever since White played Qed the
+old adage that a queen is a bad blockader (the queen is too strong a
+piece to be reduced to the role of blockader) would not leave my head.
+If only the queen could be attacked then the white position is sure to
+fall apart.
+25.5!
+I particularly enjoyed the fact that the two key moves in this game
+were sacrifices of the knight's pawn (15...b5!). Black's plan is simple -
+to transfer his bishop to gb. The move ...g6-g5 had to be played at
+154
+
+

@@ -1,0 +1,43 @@
+Starting Out: The King's Indian
+White's previous error should have just cost him his a-pawn (22 Qd1
+is relatively best) but he must have planned all along to defend it in
+this fashion. Now he loses his king or queen
+22...Ra3! (Diagram 13)
+Only now did White realise that if he moves the queen 23 . Rxg3+!
+leads to a mating attack
+23 Nd3 Rxb3 24 Rxb3 Bc3 White resigns
+The Panno Variation: 6...Nc6é
+_—mm
+1dd4 Nf6 2 c4 g6 3 Nf3 Bg7 4 g3 0-0 5 Bg2 d6 6 0-0 Nc6.
+The Panno Variation is the other popular way for Black to meet the
+Fianchetto Vanation. It 1s named after the Argentinean Grandmaster
+Oscar Panno. He was a very consistent man. It seems that he liked to
+play the same moves irrespective of what White did. We have already
+seen the Panno Variation of the Samisch where Black played . .Nc6,
+..a7-a6 and ..Rb8 in order to prepare ..b7-b5 Now we have the
+Panno Variation of the Fianchetto where Black plans ...Nc6, .. a7-a6
+and ...Rb8 1n order to prepare ..b7-b5
+7 Nc3 a6 8 d5
+The other main line is 8 h3 and that 1s examined in Games 45 and 46.
+8..Na5 (Diagram 14)
+E7AY HE HAW EG
+VI) 74; 74% 4 0 7 P P
+1h pit BW mimi
+2 9 TY P I de TR
+thw atl (tm fr Atk
+a Ui “, | a xix 0
+will mom [mil ww
+BS mow | BS Bom
+i MATA®  [2nenzmi
+AR ea im A) Eki
+EH ANY RE I= |)
+Diagram 14 Diagram 15
+Is the knight bad on the edge? Black is sniping from the wings
+One of the first things you are taught when you learn how to play
+chess is that knights are badly placed on the edge of the board. Little
+rhymes have even been made up to help drum this point home. ‘A
+knight on the rim is dim’ is a particular favourite of chess teachers.
+And yet, here we have a major opening system. where a kmght volun-
+tarily takes up a precarious-looking position on the edge of the board
+Nor should this position be compared with other variations of the
+14

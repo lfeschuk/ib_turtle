@@ -1,0 +1,462 @@
+[
+  {
+    "num": 3,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 d5 a5 Bg5 h6 Bh4 Na6 Nd2 Qe8 Bg3 Nh5",
+    "moves": [
+      {
+        "m": "h4",
+        "c": "A sharp, aggressive thrust! White commits to locking Black's options on the kingside."
+      },
+      {
+        "m": "Nxg3",
+        "c": "Black immediately jumps on the opportunity, trading the knight for the active bishop."
+      },
+      {
+        "m": "fxg3",
+        "c": "Recaptured. The open f-pawn gives White a solid center but opens up counter-opportunities for Black."
+      },
+      {
+        "m": "g5",
+        "c": "Aggressive pawn charge! Black stakes direct claims, seeking space on the kingside to launch a counter-attack."
+      },
+      {
+        "m": "Nh2",
+        "c": "White retreats the knight defensively, preparing to absorb the upcoming pawn storm."
+      }
+    ]
+  },
+  {
+    "num": 4,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 d5 Na6 Bg5 h6 Bh4",
+    "moves": [
+      {
+        "m": "Qe8",
+        "c": "The queen steps out of the pin of the dark-squared bishop, preparing a future f5 pawn thrust."
+      },
+      {
+        "m": "Nd2",
+        "c": "White maneuvers the knight towards a standard queenside blockading square."
+      },
+      {
+        "m": "Nh7",
+        "c": "Preparing the thematic f7-f5 push to challenge White's central space advantage."
+      },
+      {
+        "m": "O-O",
+        "c": "White castles safely. Black now has the green light to initiate King's Indian kingside action."
+      }
+    ]
+  },
+  {
+    "num": 6,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 d5 Na6 O-O Nc5 Qc2 a5 Bg5 h6 Be3 b6 Nd2",
+    "moves": [
+      {
+        "m": "Ng4",
+        "c": "An active challenge! Shirov immediately jumps to swap White's active dark-squared bishop."
+      },
+      {
+        "m": "Bxg4",
+        "c": "White accepts the swap. Trading bishop for knight to maintain spatial control."
+      },
+      {
+        "m": "Bxg4",
+        "c": "Recaptured. Black gains the bishop pair and an extremely healthy dynamic game."
+      },
+      {
+        "m": "b3",
+        "c": "A solid defensive structure, supporting the c4 pawn and preparing for black's dynamic expansion."
+      }
+    ]
+  },
+  {
+    "num": 11,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Na6 Bg5 h6 Be3 Ng4 Bc1 c6 d5 f5 h3 Nf6",
+    "moves": [
+      {
+        "m": "exf5",
+        "c": "White voluntarily releases center tension to expose Black's castled king shelter."
+      },
+      {
+        "m": "gxf5",
+        "c": "Black recaptures toward the center, accepting an isolated f-pawn for open attacking files."
+      },
+      {
+        "m": "Nh4",
+        "c": "White eyeing the weak f5-pawn and key light squares."
+      },
+      {
+        "m": "e6",
+        "c": "Black strikes back in the center to challenge White's d5-pawn."
+      },
+      {
+        "m": "dxe6",
+        "c": "Trading central control. Piket attacks the d-file."
+      },
+      {
+        "m": "Bxe6",
+        "c": "Black recaptures with the bishop, activating all minor units beautifully."
+      }
+    ]
+  },
+  {
+    "num": 20,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6 d5 Ne7 Nd2 a5 a3 Nd7 Rb1 f5 b4 Kh8 f3 Ng8",
+    "moves": [
+      {
+        "m": "c5",
+        "c": "White strikes at the queenside, aiming to open the b-file and c-file for major piece assets."
+      },
+      {
+        "m": "dxc5",
+        "c": "Black exchanges pawns in the center to maintain structural integrity."
+      },
+      {
+        "m": "Nc4",
+        "c": "White's knight recaptures, gaining an exceptionally active post."
+      },
+      {
+        "m": "Ngf6",
+        "c": "Black's defensive knight shifts back, protecting the vulnerable e4 / d5 grid."
+      }
+    ]
+  },
+  {
+    "num": 21,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6 d5 Ne7 Nd2 c5 a3 Ne8 b4 b6 Rb1 f5 f3 f4 a4 g5 a5",
+    "moves": [
+      {
+        "m": "Rf6",
+        "c": "The legendary Kasparov rook lift! Preparing ...Rh6 to attack White's king."
+      },
+      {
+        "m": "axb6",
+        "c": "Kamsky exchanges pawns to open up the a-file for rook intrusion."
+      },
+      {
+        "m": "axb6",
+        "c": "Kasparov recaptures, keeping the solid queenside structure intact."
+      },
+      {
+        "m": "Rb3",
+        "c": "White lifts the rook to b3, preparing to double heavy pieces on the b-file."
+      }
+    ]
+  },
+  {
+    "num": 28,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6 d5 Ne7 Ne1 Nd7 Nd3 f5 Bd2 Nf6 f3 f4 c5 g5 Rc1 Ng6 cxd6 cxd6 Nb5 Rf7 Qc2 Ne8 a4 h5 Nf2 Bf8 a5 Bd7 Qb3 Rg7 h3 Nh4 Rc3 a6 Na3",
+    "moves": [
+      {
+        "m": "g4",
+        "c": "Kasparov unleashes the g4 pawn thrust, initiating a fierce kingside storm."
+      },
+      {
+        "m": "fxg4",
+        "c": "White recaptures on g4, but this only serves to open up the lines of attack."
+      },
+      {
+        "m": "hxg4",
+        "c": "Kasparov immediately trades, opening up the h-file for the attacking rooks."
+      },
+      {
+        "m": "hxg4",
+        "c": "White recaptures on g4 to restore material balance, though the kingside remains vulnerable."
+      },
+      {
+        "m": "b5",
+        "c": "A beautiful queenside response! Challenging White's structural alignment and creating dynamic counter-thrusts."
+      }
+    ]
+  },
+  {
+    "num": 29,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 e5 Nge2 c6 Qd2 Nbd7 d5 cxd5 cxd5 a6 g4 h5 h3 Nh7",
+    "moves": [
+      {
+        "m": "O-O-O",
+        "c": "Kramnik castles queenside, committing to an opposite-side castling attack."
+      },
+      {
+        "m": "hxg4",
+        "c": "Shirov strikes immediately! Blowing open the h-file before White's attack gets rolling."
+      },
+      {
+        "m": "hxg4",
+        "c": "Trade. White accepts the open file but gains isolated pawn weaknesses."
+      },
+      {
+        "m": "Qh4",
+        "c": "The black queen lands with immense power on the kingside."
+      }
+    ]
+  },
+  {
+    "num": 34,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 e5 d5 c5 Qd2 Ne8 g4",
+    "moves": [
+      {
+        "m": "f5",
+        "c": "Black immediately strikes back in the center, refusing to be passive."
+      },
+      {
+        "m": "exf5",
+        "c": "Trade. White aims to open key paths on the e-file."
+      },
+      {
+        "m": "Bxf5",
+        "c": "Recaptured. Black activates the light-squared bishop, seizing key diagonals."
+      },
+      {
+        "m": "O-O-O",
+        "c": "White castles queenside, setting the stage for opposite-side tactical attacks."
+      }
+    ]
+  },
+  {
+    "num": 36,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 c6 Bd3 a6 Nge2 b5 O-O Nbd7 Rc1 e5 d5 cxd5 cxd5 Nc5",
+    "moves": [
+      {
+        "m": "Bb1",
+        "c": "White retreats the bishop to b1, maintaining control over the active diagonal."
+      },
+      {
+        "m": "b4",
+        "c": "Black kicks the c3 knight, securing space and queenside advantage."
+      },
+      {
+        "m": "Na4",
+        "c": "The knight jumps to a4, targeting the weak b2/c3 coordinate."
+      },
+      {
+        "m": "Nfd7",
+        "c": "White defends by routing the knight back to protect the queenside."
+      }
+    ]
+  },
+  {
+    "num": 37,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 e5 Nge2 c6 Qd2 Nbd7 d5 cxd5 cxd5 a6 a4 Nh7",
+    "moves": [
+      {
+        "m": "g4",
+        "c": "An aggressive thrust! White pushes g4 to restrict Black's minor pieces."
+      },
+      {
+        "m": "h5",
+        "c": "Black immediately challenges the pawn hook, attempting to open lines."
+      },
+      {
+        "m": "h3",
+        "c": "Solidifying the g4 pawn, maintaining the kingside wall."
+      },
+      {
+        "m": "hxg4",
+        "c": "Black opens the h-file to prepare active plans for the heavy pieces."
+      }
+    ]
+  },
+  {
+    "num": 38,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 c5 d5 e6 Qd2 exd5 cxd5 a6 a4 h6 Nge2 Nbd7 Ng3 Ne5 Be2",
+    "moves": [
+      {
+        "m": "Bxh6",
+        "c": "White tries 14. Bxh6, but is met by a devastating counter-thrust!"
+      },
+      {
+        "m": "Nxe4",
+        "c": "A brilliant central blow! Exposing White's center and starting a double-attack."
+      },
+      {
+        "m": "Nxe4",
+        "c": "Trade. Now the black queen joins with check."
+      },
+      {
+        "m": "Qh4+",
+        "c": "Check! This wins the newly-placed h6 bishop on the next move, leaving Black with a winning edge."
+      }
+    ]
+  },
+  {
+    "num": 42,
+    "initial": "d4 Nf6 c4 g6 Nf3 Bg7 g3 O-O Bg2 d6 Nc3 Nbd7 O-O e5 e4 c6 h3 Qb6 Re1 exd4 Nxd4 Re8 Re2 Nc5 Bf4 a5",
+    "moves": [
+      {
+        "m": "Bxd6",
+        "c": "White captures a free central pawn, but this exposes the queenside light squares."
+      },
+      {
+        "m": "Nfd7",
+        "c": "Black re-routes the knight to challenge White's active e4 pawn."
+      },
+      {
+        "m": "Bf4",
+        "c": "White's bishop retreats to f4, solidifying the central defensive camp."
+      },
+      {
+        "m": "a4",
+        "c": "Black seeks counterplay, aiming to lock White's queenside options."
+      }
+    ]
+  },
+  {
+    "num": 53,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f4 O-O Nf3 c5 d5 e6 Be2 exd5 cxd5 Re8 e5 dxe5 fxe5 Ng4 Bf4 Nxe5 O-O",
+    "moves": [
+      {
+        "m": "Nxf3+",
+        "c": "Black trades knights on f3 to resolve space tensions."
+      },
+      {
+        "m": "Bxf3",
+        "c": "White's bishop recaptures on f3, becoming an extremely strong and active piece."
+      },
+      {
+        "m": "Nd7",
+        "c": "Black brings the knight out to support the solid center."
+      },
+      {
+        "m": "Qd2",
+        "c": "White centralizes the queen, preparing to coordinate their minor forces."
+      }
+    ]
+  },
+  {
+    "num": 54,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f4 O-O Nf3 c5 d5 e6 Be2 exd5 cxd5 Re8 e5 dxe5 fxe5 Ng4 Bg5 Qb6 h3",
+    "moves": [
+      {
+        "m": "Nf6",
+        "c": "The knight retreats, keeping an eye on the defensive squares on the kingside."
+      },
+      {
+        "m": "Bc4",
+        "c": "White develops the bishop to a strong active outpost on c4, targeting f7."
+      },
+      {
+        "m": "exd5",
+        "c": "Black trades pawns in the center, trying to clear files."
+      },
+      {
+        "m": "Nxd5",
+        "c": "White's knight recaptures, maintaining spatial pressure."
+      }
+    ]
+  },
+  {
+    "num": 56,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Be2 O-O Bg5 h6 Be3 e5 d5 Na6 Qd2 Nc5 f3 a5 Bd1 Nh5 Nge2 Qh4+ g3 Qe7",
+    "moves": [
+      {
+        "m": "Bc2",
+        "c": "Developing the bishop to Bc2, aiming to support the queenside b4-c4 push."
+      },
+      {
+        "m": "f5",
+        "c": "Akopian challenges the center beautifully with f5, launching a kingside storm."
+      },
+      {
+        "m": "exf5",
+        "c": "White exchanges pawns to open up files for their active rooks."
+      },
+      {
+        "m": "gxf5",
+        "c": "Black recaptures toward the center, accepting open attacking files."
+      }
+    ]
+  },
+  {
+    "num": 61,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 h3 O-O Be3 Ne8 g4 e5 d5 f5 gxf5 gxf5 exf5 Bxf5 Nge2 Nd7",
+    "moves": [
+      {
+        "m": "Ng3",
+        "c": "White jumps the knight to g3, putting immediate blockading pressure on the f5 bishop."
+      },
+      {
+        "m": "Bg6",
+        "c": "The bishop retreats safely to g6, maintaining its active diagonal control."
+      },
+      {
+        "m": "h4",
+        "c": "An aggressive thrust! White pushes h4, aiming to lock Black's kingside pawn hook."
+      },
+      {
+        "m": "Nef6",
+        "c": "Black brings the knight out to support the solid center."
+      }
+    ]
+  },
+  {
+    "num": 65,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Be3 O-O Be2 e5 d5 a5 Nf3 Na6 Nd2 Nd7 g4 Ndc5 h4",
+    "moves": [
+      {
+        "m": "f5",
+        "c": "Peng Xiaomin responds aggressively, pushing f5 to roll over the defensive line."
+      },
+      {
+        "m": "gxf5",
+        "c": "White trades to open lines, hoping for tactical counterplay."
+      },
+      {
+        "m": "Bxf5",
+        "c": "Black recaptures with the bishop, activating their minor forces."
+      },
+      {
+        "m": "h5",
+        "c": "White pushes h5, trying to lock Black's kingside pawn hook."
+      }
+    ]
+  },
+  {
+    "num": 66,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Be3 O-O Be2 e5 d5 a5 Nf3 Na6 Nd2 Nd7 g4 Ndc5 h4 Bd7",
+    "moves": [
+      {
+        "m": "h5",
+        "c": "White pushes h5, trying to lock Black's kingside pawn hook."
+      },
+      {
+        "m": "f5",
+        "c": "Gallagher strikes back immediately in the center, refusing to be passive."
+      },
+      {
+        "m": "exf5",
+        "c": "Trade. White aims to open key paths on the e-file."
+      },
+      {
+        "m": "Bxf5",
+        "c": "Black recaptures with the bishop, activating all minor units beautifully."
+      }
+    ]
+  },
+  {
+    "num": 68,
+    "initial": "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Be2 O-O Be3 e5 d5 a5 Nf3 Na6 Nd2 Nd7 O-O f5 exf5 gxf5 f4 Ndc5",
+    "moves": [
+      {
+        "m": "fxe5",
+        "c": "White trades on e5, hoping to resolve space tensions."
+      },
+      {
+        "m": "dxe5",
+        "c": "Smyslov recaptures safely, maintaining a strong footprint in the center."
+      },
+      {
+        "m": "Qxd8",
+        "c": "The queens are traded off, transitioning smoothly into an instructive endgame."
+      },
+      {
+        "m": "Rxd8",
+        "c": "Smyslov recaptures the queen, completing the trade."
+      },
+      {
+        "m": "Nf3",
+        "c": "White develops their knight, seeking active counterplay."
+      }
+    ]
+  }
+]

@@ -1,0 +1,44 @@
+The Fianchetto Variation
+This exchange can be considered a slight concession as White gives up
+a central pawn for a wing one and at the same time opens the a-file
+for the black rook. More often we see the exchange in the centre with
+10 dxe5 dxe5.
+10...axbb 11 bq
+An attempt to blockade the position on the queenside. It 1s perfectly
+feasible for Black to just play 11...c6 and aim, in the long run, to oc-
+cupy the square on ¢4 with a knight. Instead, Black decided to chal-
+lenge White at once.
+11...c6!? (Diagram 12) 12 bxcb
+A safer continuation was 12 dxeb dxe5 13 bxc5 bd 14 Nd5 Nxcb with
+an equal game.
+12..b4 13 Ne2 Bb7!
+This 1s the main point behind Black's play. Now there will be no tacti-
+cal problems on the long diagonal as there would have been after the
+immediate 13...Nxe4. All the central pawns are about to vanish which
+means that the advantage will be with the more active side.
+EPEY EU [0 DENSE
+7 7 Y V % VEY
+7) SAmin 1 mom Sit
+5 4 7
+mot ath mom Ei
+2 3 3 7 >
+gre x 0) WB ET
+Cart EE
+© LER EW 7 WR
+iE om EAE (RD Ww mo
+wD, oo JR LB ATT
+2 YH Ey 787
+Diagram 12 Diagram 13
+Black assaults the white centre White 1s embarrassed on the third rank
+14 cxd6 Nxe4 15 dxeb Nxeb 16 Nxeb Bxe5 17 Bh6 Re8 18 Rb1
+On 18 d7 Black just plays 18...Re7 and takes the pawn next move.
+18...Qxd6 19 Qb3
+Exchanging queens was certainly an option though Black has a slight
+advantage in the ending as White's pawn on a2 is weaker than
+Black's on b4.
+19...Nd2 20 Bxd2 Bxg2 21 Kxg2?
+21 Bxb4 Qc6 probably looked to risky for White as Black gets to keep
+the powerful light-squared bishop, but the game just looks like a draw
+after 22 Rfcl Qb7 23 Be3 Qxb3 24 axb3 Bxh3
+21...Qxd2 22 Nel?
+13

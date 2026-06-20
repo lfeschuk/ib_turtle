@@ -1,0 +1,39 @@
+The Fianchetto Variation
+Statistics
+If we take the position after 10...a6 White has scored 54% in just over
+200 games. Exactly what he is expected to score. This means the
+variation is no worse or no better than any other. There are relatively
+few games as the line has no history.
+lllustrative Games
+Game 39
+O Hohler M Gallagher
+Bem 1994
+1d4 Nf6 2 c4 g6 3 Nf3 Bg7 4 g3 0-0 5 Bg2 d6 6 0-0 Nbd7 7 Nc3 eb
+8 e4 exd4 9 Nxd4 Re8 10 h3 a6 11 Rel Rb8 12 Be3
+White has various ways to deploy his pieces on moves 11 and 12. Ba-
+sically, Black follows the same plan against them all but must be
+more careful against 12 Rb1 (see Game 41)
+12...c6 (Diagram 3)
+EEEENSN [FEY 7E7
+oY NY 7 VAY FS
+miata jm TAmidt
+77 AR A 2
+or ath (tm SE6:
+vw x 7a, UE LU,
+Wasim BW | mim wm
+i, 8, nw FI 5 CI -i
+pw mW mal (AE momo
+= yip=) BER 9
+Diagram 3 Diagram 4
+A radical thrust for the initiative Now Black has the central pressure
+This is the move that shocks the positional men. Not only does Black
+give himself a backward d-pawn on an open file but he also ccdes con
+trol of d5.
+NOTE: Modern chess players are not so worried about such static
+detalls. They are more interested in the dynamics of the position.
+Black wants to grab the initiative and If that means sacrificing
+material or making positional concessions ~ so be it.
+13 Nde2 Neb
+This is more promising than the immediate 13...b5.
+14 b3 bb 15 f4 Ned?
+105

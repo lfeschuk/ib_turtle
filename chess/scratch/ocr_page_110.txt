@@ -1,0 +1,52 @@
+The Fianchetto Variation
+is that if Black meets 12 a4 with 12...a5 (12...Nc5 and 12...Neb are
+also possibilities with ...a5 sometimes coming later) he obtains out-
+posts for his pieces on ¢5 and bd. However, just as Black can get away
+with his anti-positional advance ...c7-c5, White, too, can get away
+with a2-a4 because of the time Black has spent on the now useless
+moves 10...a6 and 11...Rb8.
+12..Neb 13 b3 ¢5 14 Nc2 bb?
+
+A mistake. The queenside advance simply doesn't work in this posi-
+tion. Black's attempts to rehabilitate the variation have centred
+around 14...Be6 or 14..Nc6. Originally I had assumed that if Black
+couldn't play ...b7-b5 his position would be bad, but this doesn’t seem
+to be the case. For example, Yin Hao-Ye Jiangchuan, Shanghai 2000
+went 14...Nc6 15 a4 Be6 16 Bb2 h5 17 Qd2 Nh7! 18 Red1 Be5! 19 f4
+Bg7 20 Kh1 Qa5 with an unclear game.
+15 cxbb axbb 16 f4 Ned7 17 Qxd6 b4
+There is no good way for Black to continue. 17...Nh5 18 Qd3! c4 19
+Qe3 is also good for White.
+18 Na4 Bb7 19 e5 Nh5 20 Rd1 Bxg2 21 Kxg2 Rb7 22 Be3 (Dia-
+gram 7)
+Black is a pawn down with a terrible position. His attempts to confuse
+the issue are, not surprisingly, easily dealt with.
+22.6 23 Qd5 gxf4 24 gxf4 Qc8 26 Qf3 Nxeb 26 Qxh5 Qc6+ 27
+Kf2 Qed 28 Qe2 Rbe7 29 Nxcb Qf 30 Rgl Ng6 31 Qd3 Qxh3 32
+Rh1 Qc8 33 Rh5 Qg4 34 Qf5 Black resigns
+Black resigned as he can’t keep the queens on.
+The Classical 6...Nbd7: Other Systems
+
+1.d4 Nf6 2 c4 g6 3 Nf3 Bg7 4 g3 0-0 5 Bg2 d6 6 0-0 Nbd7 7 Nc3 e5
+8 e4 (Diagram 8)
+
+EEEW HoH
+
+xttalith
+
+7) 7
+
+mow ow
+
+EimLE
+ye 0
+
+JAW
+
+Ll 0 RA
+
+BH NY HS
+
+Diagram 8
+A balanced position
+109

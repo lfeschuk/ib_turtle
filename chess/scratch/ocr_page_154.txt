@@ -1,0 +1,42 @@
+White Plays an Early h2-h3
+9 Nge2 is a more solid alternative against which Black should still
+play 9..Nd7 and ..f7-f5.
+9..Nd7
+Black is not bluffed out by White's g2-g4. He is still going to play ...f7-
+{5 whatever the consequences for his king. Better that than a passive
+position with nothing to do.
+This position is the subject of Games 59 and 60.
+Theoretical?
+It's not heavily theoretical but Black must know what he is doing and
+he must time his counterplay correctly. This will come with experi.
+ence rather than rote learning of variations. The statistics make grim
+reading for Black as the white position, though not necessarily supe-
+rior, is easier to handle.
+Statistics
+As just mentioned, they are not good news for Black. After 6 Bg5
+White has scored 66% from 1500 games. I assumed that Black's score
+was 80 bad because of all the dodgy Benonis (...c7-c5 instead of ...e7-
+e5) that are played, so I did another check on the position after
+8...Qe8. That was even worse for Black with just 32% from 56 games.
+lllustrative Games
+Game 59
+O Ziotnikov M Gallagher
+Arosa 1996
+1d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 h3 0-0 6 Bg Na6 7Bd3 eb 8
+db Qe8 9 g4 Nd7 10 Nge2 Ndcb
+‘The immediate 10...f5 has also been played but the text is more accu-
+rate. Black wants to be in a position to recapture with the bishop if
+White takes twice on f5.
+11 Bc2 f5 12 a3
+
+® WARNING: This may look like an unassuming little move but a3
+spells danger for Black in this system. White is threatening to lock
+= the knight on a6 out of the game. Black Is forced to take action
+Immediately and that means exchanging In the centre.
+12..fxed 13 Nxed?
+White should have played 13 b4 Nd3+ 14 Bxd3 exd3 15 Qxd3 in order
+to try and keep the knight on a6 out of the game. I had envisaged a
+neat way to get the beast back into play: 15...e4 16 Qd2 c5! 17 b5 Nba!
+although the position is just unclear.
+13..Nxe4 14 Bxed Ncb5 16 Ne3
+153

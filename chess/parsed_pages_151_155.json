@@ -1,0 +1,563 @@
+{
+  "book_title": "Starting Out: The King's Indian",
+  "exercises": [
+    {
+      "id": "h3_bg5_theory",
+      "title": "Theory: White Plays 6 Bg5, Delaying Nf3",
+      "description": "Introduction to the 6 Bg5 line in the early h2-h3 system. Black prepares ...e7-e5 with ...Na6 and ...Qe8.",
+      "textContext": "Pages 151-153 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "h3_bg5_theory",
+        "white": "Theory",
+        "black": "Theory",
+        "event": "Chapter 9: White Plays an Early h2-h3",
+        "initial_moves": "1 d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 h3 O-O",
+        "interactive_section": {
+          "starting_move": 6,
+          "moves": [
+            {
+              "move_number": 6,
+              "player": "W",
+              "move": "Bg5",
+              "commentary": "In this section White delays the development of his king's knight as he usually prefers a set-up with Bd3 and Nge2."
+            },
+            {
+              "move_number": 6,
+              "player": "B",
+              "move": "Na6",
+              "commentary": "Black prepares the traditional King's Indian central strike ...e7-e5."
+            },
+            {
+              "move_number": 7,
+              "player": "W",
+              "move": "Bd3",
+              "commentary": ""
+            },
+            {
+              "move_number": 7,
+              "player": "B",
+              "move": "e5",
+              "commentary": ""
+            },
+            {
+              "move_number": 8,
+              "player": "W",
+              "move": "d5",
+              "commentary": ""
+            },
+            {
+              "move_number": 8,
+              "player": "B",
+              "move": "Qe8!?",
+              "commentary": "This is the modern, dynamic approach to the King's Indian. The idea behind 8...Qe8 is to unpin the knight on f6 so that it can move and Black can play ...f7-f5. Black could also have unpinned with 8...h6 when the bishop normally drops back to e3. Black's idea in playing ...Qe8 is that in certain cases the bishop on g5 may actually turn out to be misplaced. It could end up just pointing into thin air, or it may block the g-file for the white rooks."
+            },
+            {
+              "move_number": 9,
+              "player": "W",
+              "move": "g4",
+              "commentary": "The consistent follow-up. The main idea is to make Black think twice about playing ...f7-f5. If Black goes ahead with the ...f7-f5 plan, the g-file, where the black king is currently in residence, will open. However, the white king is probably not overjoyed about the g2-g4 advance either. His preferred home on g1 is now out of bounds so he will have to stay in the centre or risk the queenside."
+            },
+            {
+              "move_number": 9,
+              "player": "B",
+              "move": "Nd7",
+              "commentary": "Black is not bluffed out by White's g2-g4. He is still going to play ...f7-f5 whatever the consequences for his king. Better that than a passive position with nothing to do."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "h3_bg5_theory_7_nf3_d5",
+            "name": "Alternative 7 Nf3 with 8 d5",
+            "description": "White plays 7 Nf3 and then 8 d5.",
+            "startingMoveIndex": 1,
+            "moves": [
+              {
+                "move_number": 7,
+                "player": "W",
+                "move": "Nf3",
+                "commentary": ""
+              },
+              {
+                "move_number": 7,
+                "player": "B",
+                "move": "e5",
+                "commentary": ""
+              },
+              {
+                "move_number": 8,
+                "player": "W",
+                "move": "d5",
+                "commentary": "Transposes to Game 61."
+              }
+            ]
+          },
+          {
+            "id": "h3_bg5_theory_7_nf3_dxe5",
+            "name": "Alternative 7 Nf3 with 8 dxe5",
+            "description": "White plays 7 Nf3 and then 8 dxe5.",
+            "startingMoveIndex": 1,
+            "moves": [
+              {
+                "move_number": 7,
+                "player": "W",
+                "move": "Nf3",
+                "commentary": ""
+              },
+              {
+                "move_number": 7,
+                "player": "B",
+                "move": "e5",
+                "commentary": ""
+              },
+              {
+                "move_number": 8,
+                "player": "W",
+                "move": "dxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 8,
+                "player": "B",
+                "move": "dxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "W",
+                "move": "Qxd8",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "Rxd8",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "Nd5",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "Rd6!",
+                "commentary": "The game is level."
+              }
+            ]
+          },
+          {
+            "id": "h3_bg5_theory_7_nf3_nxe5",
+            "name": "Alternative 7 Nf3 with 10 Nxe5",
+            "description": "White plays 10 Nxe5 instead of 10 Nd5 in the 7 Nf3 line.",
+            "startingMoveIndex": 1,
+            "moves": [
+              {
+                "move_number": 7,
+                "player": "W",
+                "move": "Nf3",
+                "commentary": ""
+              },
+              {
+                "move_number": 7,
+                "player": "B",
+                "move": "e5",
+                "commentary": ""
+              },
+              {
+                "move_number": 8,
+                "player": "W",
+                "move": "dxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 8,
+                "player": "B",
+                "move": "dxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "W",
+                "move": "Qxd8",
+                "commentary": ""
+              },
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "Rxd8",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "W",
+                "move": "Nxe5",
+                "commentary": ""
+              },
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "Re8",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "W",
+                "move": "f4",
+                "commentary": ""
+              },
+              {
+                "move_number": 11,
+                "player": "B",
+                "move": "Nc5",
+                "commentary": "Black regains the pawn with a good game."
+              }
+            ]
+          },
+          {
+            "id": "h3_bg5_theory_9_nge2",
+            "name": "Alternative 9 Nge2",
+            "description": "White plays 9 Nge2 instead of 9 g4.",
+            "startingMoveIndex": 5,
+            "moves": [
+              {
+                "move_number": 9,
+                "player": "W",
+                "move": "Nge2",
+                "commentary": "A more solid alternative."
+              },
+              {
+                "move_number": 9,
+                "player": "B",
+                "move": "Nd7",
+                "commentary": "Black should still play ...Nd7 and ...f7-f5."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "game_59_zlotnikov_gallagher_1996",
+      "title": "Game 59: Zlotnikov vs. Gallagher (Arosa 1996)",
+      "description": "Illustrative Game for 6 Bg5. White plays 12 a3 threatening to trap the knight, forcing Black to open the centre. Black launches a kingside attack starting with a thematic knight pawn sacrifice.",
+      "textContext": "Pages 153-155 of Starting Out: The King's Indian",
+      "preparsedJson": {
+        "game_id": "game_59",
+        "white": "Zlotnikov",
+        "black": "Gallagher",
+        "event": "Arosa 1996",
+        "initial_moves": "1 d4 Nf6 2 c4 g6 3 Nc3 Bg7 4 e4 d6 5 h3 O-O 6 Bg5 Na6 7 Bd3 e5 8 d5 Qe8 9 g4 Nd7 10 Nge2",
+        "interactive_section": {
+          "starting_move": 10,
+          "moves": [
+            {
+              "move_number": 10,
+              "player": "B",
+              "move": "Ndc5",
+              "commentary": "The immediate 10...f5 has also been played but the text is more accurate. Black wants to be in a position to recapture with the bishop if White takes twice on f5."
+            },
+            {
+              "move_number": 11,
+              "player": "W",
+              "move": "Bc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 11,
+              "player": "B",
+              "move": "f5",
+              "commentary": ""
+            },
+            {
+              "move_number": 12,
+              "player": "W",
+              "move": "a3",
+              "commentary": "WARNING: This may look like an unassuming little move but a3 spells danger for Black in this system. White is threatening to lock the knight on a6 out of the game. Black is forced to take action immediately and that means exchanging in the centre."
+            },
+            {
+              "move_number": 12,
+              "player": "B",
+              "move": "fxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "W",
+              "move": "Nxe4?",
+              "commentary": ""
+            },
+            {
+              "move_number": 13,
+              "player": "B",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "W",
+              "move": "Bxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 14,
+              "player": "B",
+              "move": "Nc5",
+              "commentary": ""
+            },
+            {
+              "move_number": 15,
+              "player": "W",
+              "move": "Nc3",
+              "commentary": "It is essential for White to keep a piece on e4 to prevent Black from advancing his e-pawn. Black must take quick action as if White has the time to consolidate then his blockade of e4 will give him a positional advantage."
+            },
+            {
+              "move_number": 15,
+              "player": "B",
+              "move": "b5!",
+              "commentary": "(Diagram 4) Not deep, but a visually surprising move."
+            },
+            {
+              "move_number": 16,
+              "player": "W",
+              "move": "Be3",
+              "commentary": "White prefers to give up a pawn to retain his blockade."
+            },
+            {
+              "move_number": 16,
+              "player": "B",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "W",
+              "move": "Nxe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 17,
+              "player": "B",
+              "move": "bxc4",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "W",
+              "move": "Qc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 18,
+              "player": "B",
+              "move": "Qb5",
+              "commentary": ""
+            },
+            {
+              "move_number": 19,
+              "player": "W",
+              "move": "O-O-O",
+              "commentary": "The white king had a choice of evils."
+            },
+            {
+              "move_number": 19,
+              "player": "B",
+              "move": "Bd7",
+              "commentary": ""
+            },
+            {
+              "move_number": 20,
+              "player": "W",
+              "move": "Rhe1",
+              "commentary": "White plans to use his rooks on the second rank to defend b2."
+            },
+            {
+              "move_number": 20,
+              "player": "B",
+              "move": "Qa6",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "W",
+              "move": "Nc3",
+              "commentary": ""
+            },
+            {
+              "move_number": 21,
+              "player": "B",
+              "move": "Rac8?!",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "W",
+              "move": "Rd2",
+              "commentary": ""
+            },
+            {
+              "move_number": 22,
+              "player": "B",
+              "move": "Rb8!",
+              "commentary": "TIP: Always admit your mistakes. Don't be too embarrassed or too pigheaded to retrace your steps if that is what the position requires."
+            },
+            {
+              "move_number": 23,
+              "player": "W",
+              "move": "Qe4",
+              "commentary": ""
+            },
+            {
+              "move_number": 23,
+              "player": "B",
+              "move": "Rb3",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "W",
+              "move": "Rc2",
+              "commentary": ""
+            },
+            {
+              "move_number": 24,
+              "player": "B",
+              "move": "Rfb8",
+              "commentary": ""
+            },
+            {
+              "move_number": 25,
+              "player": "W",
+              "move": "Ree2",
+              "commentary": "White has successfully defended his main weakness on b2. It is hard to see how Black can make further progress on the queenside. How can he increase the pressure? Well, ever since White played Qe4 the old adage that a queen is a bad blockader (the queen is too strong a piece to be reduced to the role of blockader) would not leave my head. If only the queen could be attacked then the white position is sure to fall apart."
+            },
+            {
+              "move_number": 25,
+              "player": "B",
+              "move": "g5!",
+              "commentary": "I particularly enjoyed the fact that the two key moves in this game were sacrifices of the knight's pawn (15...b5!). Black's plan is simple - to transfer his bishop to g6. The move ...g6-g5 had to be played..."
+            }
+          ]
+        },
+        "sidelines": [
+          {
+            "id": "game_59_side_1",
+            "name": "Alternative 10...f5",
+            "description": "Black plays 10...f5 immediately.",
+            "startingMoveIndex": -1,
+            "moves": [
+              {
+                "move_number": 10,
+                "player": "B",
+                "move": "f5",
+                "commentary": "The immediate 10...f5 has also been played but the text (10...Ndc5) is more accurate."
+              }
+            ]
+          },
+          {
+            "id": "game_59_side_2",
+            "name": "Alternative 13 b4",
+            "description": "White plays 13 b4 to try and keep the knight on a6 out of the game.",
+            "startingMoveIndex": 4,
+            "moves": [
+              {
+                "move_number": 13,
+                "player": "W",
+                "move": "b4",
+                "commentary": "White should have played 13 b4 in order to try and keep the knight on a6 out of the game."
+              },
+              {
+                "move_number": 13,
+                "player": "B",
+                "move": "Nd3+",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "W",
+                "move": "Bxd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 14,
+                "player": "B",
+                "move": "exd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "W",
+                "move": "Qxd3",
+                "commentary": ""
+              },
+              {
+                "move_number": 15,
+                "player": "B",
+                "move": "e4",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "Qd2",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "c5!",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "b5",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "Nb4!",
+                "commentary": "Although the position is just unclear."
+              }
+            ]
+          },
+          {
+            "id": "game_59_side_3",
+            "name": "Alternative 16 cxb5",
+            "description": "White accepts the pawn sacrifice.",
+            "startingMoveIndex": 10,
+            "moves": [
+              {
+                "move_number": 16,
+                "player": "W",
+                "move": "cxb5",
+                "commentary": ""
+              },
+              {
+                "move_number": 16,
+                "player": "B",
+                "move": "Nxe4",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "W",
+                "move": "Nxe4",
+                "commentary": ""
+              },
+              {
+                "move_number": 17,
+                "player": "B",
+                "move": "Qxb5",
+                "commentary": "The position has opened and White's king is very exposed."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

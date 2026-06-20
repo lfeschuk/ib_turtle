@@ -1,0 +1,37 @@
+Starting Out: The King's Indian
+Nxed Bxed and 11 Qb3 £5 12 Bg3 Ned 13 Nxed Bxed 14 Nd2 Bgé.
+seem to lose a pawn.
+11..Qa5 12 Nd2 Nb6 13 Ned
+13 Nxb6 Qxb6 again leaves the b-pawn in difficulties. Now White
+hopes that his problems can be solved by advancing e4, but Smyslov
+was ready for that one
+13..Qbd! 14 Qb3 Nbxds! (Diagram 15)
+And now we know why Smyslov didn't succumb to any urge he may
+have felt to play . g6-g5. The exposed position of the bishop on hd 1s
+the key point in this simple. but pleasing combination
+15 cxd5
+Or 15 Nxd5 Nxd5 16 Qxb4 Nxb4 17 Bxe7 Rfef 18 Bxd6 Rad8 1s win-
+rung for Black
+15..Qxh4 16 Qxb7 Qba!
+Black's last few moves illustrate well the power of the queen
+17 Qxbd
+There 1s no choice for White as 17 Qxe7 Qxb2 loses material.
+17...cxb4 18 Nb5 Nxd5! 19 Bf3 Bd3! 20 Bxd5 Bxb5 21 Bxa8 Bxf1
+22 Bed Ba6 White resigns
+
+Summary
+1) The systems 1n this chapter are not inferior systems for White. as
+can be scen from the statistics, they are just played a bit less often
+than the others
+2) 5 Bd3 is a sohd system where White tries to reduce the impact of
+Black playing . f7-f5 It appeals to players who don't want to work too
+much as White usually plays the same initial moves against whatever
+Black does
+3) White's main idea with 5 Nge2 1s to play Ng3 and then advance his
+h-pawn. It 1s quite playable for Black to castle into this attack but he
+must take care about sacrifices on hd Certain Black players prefer to
+delay casthing to frustrate White's attacking ambitions
+4) The Smyslov system 1s an awkward line for Black if he insists on
+playing for .e7-¢5, but a relatively casy nde if he plays ..c7-c5
+
+174
