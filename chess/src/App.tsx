@@ -202,7 +202,7 @@ Also look for alternative commentary variations in parentheses and extract them 
 
   // Solitaire Guess-the-Move Interactive Challenge States
   const [isCorrectionMode, setIsCorrectionMode] = useState<boolean>(false);
-  const [solitairePlayer, setSolitairePlayer] = useState<'B' | 'W' | 'both'>('B');
+  const [solitairePlayer, setSolitairePlayer] = useState<'B' | 'W' | 'both' | 'auto'>('auto');
   const [solitaireStartFrom, setSolitaireStartFrom] = useState<'opening' | 'puzzle'>('opening');
   const [solitaireFrontierIndex, setSolitaireFrontierIndex] = useState<number>(-1);
   const [solitaireSidelineFrontierIndex, setSolitaireSidelineFrontierIndex] = useState<number>(-1);
@@ -338,7 +338,7 @@ Also look for alternative commentary variations in parentheses and extract them 
     }
   }, [activeExercise]);
 
-  const initializeSolitaire = (playerRole: 'W' | 'B' | 'both') => {
+  const initializeSolitaire = (playerRole: 'W' | 'B' | 'both' | 'auto') => {
     setIsPlaying(false);
     setIsCorrectionMode(true);
     setSolitairePlayer(playerRole);
@@ -359,7 +359,11 @@ Also look for alternative commentary variations in parentheses and extract them 
     const interactiveStartIndex = solitaireStartFrom === 'opening' ? 0 : openingMoves.length;
     setSolitaireSidelineFrontierIndex(-1);
 
-    if (playerRole === 'B') {
+    let resolvedRole: 'W' | 'B' | 'both' = playerRole === 'auto'
+      ? (gameMoves[interactiveStartIndex]?.player || 'W')
+      : playerRole;
+
+    if (resolvedRole === 'B') {
       // Find first Black move in the interactive puzzle section
       let firstBlackIdx = gameMoves.findIndex((m, index) => index >= interactiveStartIndex && m.player === 'B');
       if (firstBlackIdx === -1) {
@@ -494,8 +498,14 @@ Also look for alternative commentary variations in parentheses and extract them 
     triggerVoiceSynthesis(commentary);
 
     // Dynamic AI auto-response check
-    const isPlayingAsBlackOnly = solitairePlayer === 'B';
-    const isPlayingAsWhiteOnly = solitairePlayer === 'W';
+    let resolvedRole = solitairePlayer;
+    if (solitairePlayer === 'auto') {
+      const activePuzzleMoves = isSideline ? activeSideline.moves : gameMoves.slice(solitaireStartFrom === 'puzzle' ? openingMoves.length : 0);
+      resolvedRole = activePuzzleMoves[0]?.player || 'W';
+    }
+
+    const isPlayingAsBlackOnly = resolvedRole === 'B';
+    const isPlayingAsWhiteOnly = resolvedRole === 'W';
     
     const hasMoreMoves = nextIdx + 1 < movesList.length;
     if (hasMoreMoves) {
@@ -577,8 +587,12 @@ Also look for alternative commentary variations in parentheses and extract them 
     triggerVoiceSynthesis(`Alternative route entered: ${sld.name}. ${commentary}`);
 
     // Dynamic AI opponent response inside the newly entered sideline
-    const isPlayingAsBlackOnly = solitairePlayer === 'B';
-    const isPlayingAsWhiteOnly = solitairePlayer === 'W';
+    let resolvedRole = solitairePlayer;
+    if (solitairePlayer === 'auto') {
+      resolvedRole = sld.moves[0]?.player || 'W';
+    }
+    const isPlayingAsBlackOnly = resolvedRole === 'B';
+    const isPlayingAsWhiteOnly = resolvedRole === 'W';
 
     const hasMoreMoves = sld.moves.length > 1;
     if (hasMoreMoves) {
@@ -1163,7 +1177,12 @@ Parse all instructions, chess games, diagrams, commentaries, and sidelines. Refo
       <header className="flex flex-col md:flex-row md:items-center justify-between px-6 lg:px-12 py-6 border-b border-black/10 bg-[#FAF8F5]">
         <div className="flex flex-col sm:flex-row sm:items-baseline gap-4 text-left">
           <h1 className="text-4xl font-serif font-light tracking-tight italic text-[#1A1A1A]">Chess Codex</h1>
-          <span className="text-[10px] font-sans uppercase tracking-[0.2em] opacity-60">Interactive Playbook</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-sans uppercase tracking-[0.2em] opacity-60">Interactive Playbook</span>
+            <span className="px-1.5 py-0.5 text-[8px] bg-amber-900/10 border border-amber-950/15 text-amber-900 font-sans uppercase font-extrabold tracking-widest rounded select-none" title="Auto-Response Update">
+              v1.2.0
+            </span>
+          </div>
         </div>
         
         <div className="flex flex-wrap items-center gap-3 mt-4 md:mt-0 justify-end">
@@ -2054,7 +2073,7 @@ Black to play and win material.
       <footer className="h-12 bg-black text-white flex items-center px-6 lg:px-12 justify-between text-[10px] uppercase tracking-[0.25em] font-sans">
         <span>Processing Stream: Active ({enableSpeech ? "SPEECH ON" : "SPEECH MUTED"})</span>
         <span className="opacity-40 tracking-normal hidden md:inline">Memory Usage: 422MB // Latency: 14ms // AI Engine: Gemini 3.5-Flash</span>
-        <span>ID: #CX-88902</span>
+        <span>ID: #CX-88902 // v1.2.0</span>
       </footer>
 
       {/* Custom Sleek Editorial Toast Alert */}

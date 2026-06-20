@@ -35,8 +35,8 @@ interface ExercisesSectionProps {
   gameMoves: ChessMove[];
   isCorrectionMode: boolean;
   setIsCorrectionMode: (val: boolean) => void;
-  solitairePlayer: 'W' | 'B' | 'both';
-  setSolitairePlayer: (player: 'W' | 'B' | 'both') => void;
+  solitairePlayer: 'W' | 'B' | 'both' | 'auto';
+  setSolitairePlayer: (player: 'W' | 'B' | 'both' | 'auto') => void;
   solitaireStartFrom: 'opening' | 'puzzle';
   setSolitaireStartFrom: (val: 'opening' | 'puzzle') => void;
   correctionFeedback: { text: string; isCorrect: boolean | null };
@@ -109,7 +109,7 @@ export const ExercisesSection: React.FC<ExercisesSectionProps> = ({
   // Activate quiz validation by default when this section loads
   useEffect(() => {
     setIsCorrectionMode(true);
-    setSolitairePlayer('both'); // Guess all moves by default in quiz
+    setSolitairePlayer('auto'); // Auto-detect by default in quiz
     setSolitaireStartFrom('puzzle'); // Start from puzzle position by default
     return () => {
       setIsCorrectionMode(false);
@@ -176,11 +176,27 @@ export const ExercisesSection: React.FC<ExercisesSectionProps> = ({
     setHintRequested(false);
     setHintLevel(0);
 
-    // Check if exercise completed
-    const isCompleted = idx === activeMovesList.length - 1;
+    // Determine active puzzle moves and resolved player role to calculate completion & max score
+    const interactiveStartIndex = solitaireStartFrom === 'opening' ? 0 : openingMoves.length;
+    const activePuzzleMoves = activeSideline ? activeSideline.moves : gameMoves.slice(interactiveStartIndex);
+    
+    let resolvedRole = solitairePlayer;
+    if (solitairePlayer === 'auto') {
+      resolvedRole = activePuzzleMoves[0]?.player || 'W';
+    }
+
+    // Indices of the player's moves in the activePuzzleMoves list
+    const playerMovesIndices = activePuzzleMoves
+      .map((m, i) => (resolvedRole === 'both' || m.player === resolvedRole) ? i : -1)
+      .filter(i => i !== -1);
+
+    const playedPuzzleIndex = activeSideline ? idx : idx - interactiveStartIndex;
+    const lastPlayerMoveIndex = playerMovesIndices[playerMovesIndices.length - 1];
+
+    const isCompleted = playedPuzzleIndex === lastPlayerMoveIndex;
     if (isCompleted) {
-      // Maximum possible score (3 points per move)
-      const maxScore = activeMovesList.length * 3;
+      // Maximum possible score (3 points per move the player actually guessed)
+      const maxScore = Math.max(1, playerMovesIndices.length) * 3;
       
       setScores(prev => ({
         ...prev,
@@ -271,6 +287,48 @@ export const ExercisesSection: React.FC<ExercisesSectionProps> = ({
             <div className="bg-amber-50 border border-amber-900/10 rounded-lg px-3 py-1.5 text-center shrink-0">
               <span className="text-[9px] font-sans uppercase tracking-widest opacity-60 block font-bold text-amber-950">Quiz Score</span>
               <span className="text-lg font-mono font-bold text-amber-900">{exerciseMoveScore} pts</span>
+            </div>
+          </div>
+
+          {/* Quiz Options Selector Panel */}
+          <div className="grid grid-cols-2 gap-4 mb-4 bg-white/40 p-3 border border-black/5 rounded-xl text-xs">
+            {/* Play As Selector */}
+            <div className="flex flex-col gap-1 text-left">
+              <span className="text-[9px] font-sans font-bold uppercase tracking-wider text-stone-500">
+                Your Role
+              </span>
+              <select
+                value={solitairePlayer}
+                onChange={(e) => {
+                  const val = e.target.value as 'W' | 'B' | 'both' | 'auto';
+                  setSolitairePlayer(val);
+                  setTimeout(() => resetSolitaire(), 0);
+                }}
+                className="bg-white border border-black/10 rounded px-2 py-1.5 text-xs text-[#1A1A1A] outline-none focus:border-amber-500 transition-all font-serif cursor-pointer"
+              >
+                <option value="auto">🤖 Auto-Detect Side</option>
+                <option value="W">⚪ Play as White</option>
+                <option value="B">⚫ Play as Black</option>
+                <option value="both">🤝 Guess Both Sides</option>
+              </select>
+            </div>
+
+            {/* Start From Selector */}
+            <div className="flex flex-col gap-1 text-left">
+              <span className="text-[9px] font-sans font-bold uppercase tracking-wider text-stone-500">
+                Start Position
+              </span>
+              <select
+                value={solitaireStartFrom}
+                onChange={(e) => {
+                  const val = e.target.value as 'opening' | 'puzzle';
+                  setSolitaireStartFrom(val);
+                }}
+                className="bg-white border border-black/10 rounded px-2 py-1.5 text-xs text-[#1A1A1A] outline-none focus:border-amber-500 transition-all font-serif cursor-pointer"
+              >
+                <option value="puzzle">🧩 Puzzle Position</option>
+                <option value="opening">🏁 Move 1 (From Start)</option>
+              </select>
             </div>
           </div>
 
