@@ -329,6 +329,9 @@ def run_live_bwb_bot():
             logger.critical("❌ Could not connect to IBKR TWS/Gateway on ports 4002/7497.")
             return
             
+    # Run database auto-repair on startup with the connected ib instance
+    db.auto_repair_past_trades(broker.ib)
+            
     db.print_visible_ledger()
     
     max_vix_limit = 20.0

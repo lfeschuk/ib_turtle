@@ -45,11 +45,10 @@ class DataManager:
             if not self.cursor.fetchone():
                 self.cursor.execute("INSERT INTO bot_state VALUES (?, 'FLAT', 0.0, 0.0, 0, 0.0)", (strat,))
         self.conn.commit()
-        self.auto_repair_past_trades()
 
-    def auto_repair_past_trades(self):
+    def auto_repair_past_trades(self, ib):
         """Automatically scans the database on startup for any SPX Butterfly entries missing exits,
-        queries the SPX close price from Yahoo Finance, and inserts the missing expiration exits with correct PnL."""
+        queries the SPX close price from Yahoo Finance, and resolves the exact credit received from IBKR executions."""
         # Query only entries that do not have a corresponding exit in the local database
         self.cursor.execute("""
             SELECT e.id, e.timestamp_ist, e.price, e.qty 
@@ -67,13 +66,25 @@ class DataManager:
         if not entries:
             return
             
+        wing_width = 10.0
         repairs_made = False
+        
+        # Fetch recent executions from IBKR (last 7 days)
+        logger.info("🔌 Querying IBKR execution history to retrieve exact filled credits...")
+        try:
+            executions = ib.reqExecutions(ExecutionFilter())
+        except Exception as e:
+            logger.error(f"Failed to query IBKR executions: {e}")
+            executions = []
+        
         for entry_id, timestamp_ist, price, qty in entries:
             date_str = timestamp_ist.split()[0]
-                
-            logger.info(f"🛠️ Found missing exit for SPX Butterfly trade on {date_str}. Repairing automatically...")
+            logger.info(f"🛠️ Found missing exit for SPX Butterfly trade on {date_str}. Repairing...")
             
-            # Fetch SPX close price from Yahoo Finance
+            # The stored price in the database was the center_strike (our bug)
+            center_strike = price
+            
+            # 1. Fetch SPX Closing Price from Yahoo Finance
             import time
             import json
             import urllib.request
@@ -104,12 +115,41 @@ class DataManager:
                 logger.warning(f"Could not resolve SPX closing price for {date_str}. Skipping auto-repair.")
                 continue
                 
-            # Entry credit fallback (since it wasn't logged, we use default $7.50)
-            entry_credit = 7.50
-            wing_width = 10.0
-            
-            # Calculate PnL
-            close_distance = abs(spx_close - price) # price column stored the strike
+            # 2. Resolve Entry Credit (Premium) from IBKR executions
+            entry_credit = None
+            target_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            matching_execs = []
+            for req in executions:
+                if req.contract.symbol == 'SPX' and req.contract.secType == 'OPT':
+                    exec_time = req.execution.time
+                    if isinstance(exec_time, str):
+                        try:
+                            exec_date = datetime.datetime.strptime(exec_time.split()[0], "%Y%m%d").date()
+                        except:
+                            exec_date = None
+                    else:
+                        exec_date = exec_time.date()
+                        
+                    if exec_date == target_date:
+                        matching_execs.append(req)
+                        
+            if matching_execs:
+                # Calculate the net credit/debit of the combo
+                net_premium = 0.0
+                for req in matching_execs:
+                    exec_price = req.execution.price
+                    # SLD = Sold (Credit), BOT = Bought (Debit)
+                    sign = 1.0 if req.execution.side == 'SLD' else -1.0
+                    net_premium += exec_price * sign
+                entry_credit = abs(net_premium)
+                logger.info(f"💰 Found matching executions! Resolved exact premium from IBKR: ${entry_credit:.2f}")
+            else:
+                # Fallback to default estimate if date > 7 days ago
+                entry_credit = 7.50
+                logger.warning(f"⚠️ No matching executions found in IBKR history for {date_str} (likely > 7 days ago). Falling back to default credit estimate: ${entry_credit:.2f}")
+                
+            # 3. Calculate PnL
+            close_distance = abs(spx_close - center_strike)
             exp_value = min(wing_width, close_distance)
             pnl = (entry_credit - exp_value) * 100.0 * qty
             
@@ -119,7 +159,7 @@ class DataManager:
                                 (exit_timestamp, spx_close, qty, pnl))
             self.cursor.execute("UPDATE trade_log SET price=? WHERE id=?;", (entry_credit, entry_id))
             repairs_made = True
-            logger.info(f"✅ Repaired {date_str} trade: Close={spx_close:.2f} | Exp Value={exp_value:.2f} | PnL=${pnl:+.2f}")
+            logger.info(f"✅ Repaired {date_str} trade: Close={spx_close:.2f} | Credit={entry_credit:.2f} | Exp Value={exp_value:.2f} | PnL=${pnl:+.2f}")
             
         if repairs_made:
             self.conn.commit()
@@ -356,6 +396,9 @@ def run_live_dual_bot():
         if not broker.connect():
             logger.critical("❌ Could not connect to IBKR TWS/Gateway on ports 4002/7497.")
             return
+
+    # Run database auto-repair on startup with the connected ib instance
+    db.auto_repair_past_trades(broker.ib)
 
     db.print_visible_ledger()
     
