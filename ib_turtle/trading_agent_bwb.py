@@ -42,7 +42,18 @@ class DataManager:
     def auto_repair_past_trades(self):
         """Automatically scans the database on startup for any SPX BWB entries missing exits,
         queries the SPX close price from Yahoo Finance, and inserts the missing expiration exits with correct PnL."""
-        self.cursor.execute("SELECT id, timestamp_ist, strike, price, qty FROM trade_log WHERE action='ENTRY_CREDIT' ORDER BY id ASC;")
+        # Query only entries that do not have a corresponding exit in the local database
+        self.cursor.execute("""
+            SELECT e.id, e.timestamp_ist, e.strike, e.price, e.qty 
+            FROM trade_log e
+            WHERE e.action='ENTRY_CREDIT'
+            AND NOT EXISTS (
+                SELECT 1 FROM trade_log x 
+                WHERE x.action='EXPIRATION_EXIT' 
+                AND SUBSTR(x.timestamp_ist, 1, 10) = SUBSTR(e.timestamp_ist, 1, 10)
+            )
+            ORDER BY e.id ASC;
+        """)
         entries = self.cursor.fetchall()
         if not entries:
             return
@@ -53,10 +64,6 @@ class DataManager:
         
         for entry_id, timestamp_ist, strike, price, qty in entries:
             date_str = timestamp_ist.split()[0]
-            # Check if an exit already exists
-            self.cursor.execute("SELECT id FROM trade_log WHERE action='EXPIRATION_EXIT' AND timestamp_ist LIKE ?;", (f"{date_str}%",))
-            if self.cursor.fetchone():
-                continue
                 
             logger.info(f"🛠️ Found missing exit for SPX BWB trade on {date_str}. Repairing automatically...")
             
