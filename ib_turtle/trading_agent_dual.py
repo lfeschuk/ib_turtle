@@ -216,6 +216,11 @@ class IBBroker:
         self.ib.sleep(0.5)
         return trade
 
+    def place_market_order(self, action, qty):
+        order = MarketOrder(action, qty, transmit=True)
+        trade = self.ib.placeOrder(self.active_mes_contract, order)
+        return trade
+
     # --- SPX Options Setup ---
     def resolve_option_contract(self, strike, right, expiry):
         contract = Option(symbol='SPX', lastTradeDateOrContractMonth=expiry, strike=strike, right=right, exchange='CBOE', multiplier='100', currency='USD')
@@ -243,7 +248,13 @@ class IBBroker:
         order_action = 'SELL' if action == 'ENTRY_CREDIT' else 'BUY'
         order = MarketOrder(order_action, qty, tif='DAY')
         trade = self.ib.placeOrder(bag, order)
-        self.ib.sleep(2.0)
+        # Wait for the order to complete (up to 15 seconds timeout)
+        start_time = time.time()
+        while not trade.isDone():
+            self.ib.sleep(0.5)
+            if time.time() - start_time > 15:
+                logger.warning("⚠️ Order execution timed out after 15 seconds.")
+                break
         return trade
 
     def cancel_all_active_orders(self):
@@ -311,24 +322,19 @@ def run_live_dual_bot():
                 if current_time_str == "18:30" or ("18:30" < current_time_str < "22:55"):
                     vix = broker.get_index_price("VIX")
                     if vix is not None and not math.isnan(vix):
-                        if vix > vix_limit:
-                            logger.info(f"🔥 VIX is {vix:.2f} (> {vix_limit:.2f}). SELECTING MES 2h ORB STRATEGY TODAY.")
-                            db.save_daily_decision(today_str, vix, "MES_ORB", "DECIDED")
+                        # OVERRIDE FOR TESTING: Always trade MES_ORB regardless of VIX
+                        logger.info(f"⚠️ TESTING OVERRIDE: VIX is {vix:.2f}. Overriding VIX threshold rule and forcing MES 2h ORB strategy today.")
+                        db.save_daily_decision(today_str, vix, "MES_ORB", "DECIDED")
+                        
+                        # Retrieve 2-hour range and place OCO stop orders
+                        r_high, r_low = broker.get_2h_mes_range()
+                        if r_high and r_low:
+                            logger.info(f"📊 2-Hour Range: High={r_high:.2f} | Low={r_low:.2f}. Placing OCO Stops...")
+                            broker.cancel_all_active_orders()
+                            buy_stop_order = broker.place_stop_order('BUY', r_high + 0.50, qty_mes)
+                            sell_stop_order = broker.place_stop_order('SELL', r_low - 0.50, qty_mes)
                             
-                            # Retrieve 2-hour range and place OCO stop orders
-                            r_high, r_low = broker.get_2h_mes_range()
-                            if r_high and r_low:
-                                logger.info(f"📊 2-Hour Range: High={r_high:.2f} | Low={r_low:.2f}. Placing OCO Stops...")
-                                broker.cancel_all_active_orders()
-                                buy_stop_order = broker.place_stop_order('BUY', r_high + 0.50, qty_mes)
-                                sell_stop_order = broker.place_stop_order('SELL', r_low - 0.50, qty_mes)
-                                
-                                db.update_bot_state("MES_ORB", "PENDING", r_high + 0.50, r_low - 0.50, qty_mes, extra_param=r_low)
-                        else:
-                            logger.info(f"❄️ VIX is {vix:.2f} (<= {vix_limit:.2f}). SELECTING SPX IRON BUTTERFLY STRATEGY TODAY.")
-                            db.save_daily_decision(today_str, vix, "SPX_BUTTERFLY", "DECIDED")
-                            db.update_bot_state("SPX_BUTTERFLY", "FLAT", 0.0, 0.0, 0, 0.0)
-                            logger.info("⏳ Standby until 1:30 PM EST (20:30 IST) to execute SPX Iron Butterfly...")
+                            db.update_bot_state("MES_ORB", "PENDING", r_high + 0.50, r_low - 0.50, qty_mes, extra_param=r_low)
                     else:
                         logger.warning("⚠️ VIX price query returned NaN or None. Retrying VIX evaluation on next tick...")
 
@@ -348,9 +354,9 @@ def run_live_dual_bot():
                         logger.info(f"🎯 1:30 PM: ATM Strike is {center_strike}. Selling 10-wide SPX Iron Butterfly...")
                         
                         trade = broker.execute_iron_butterfly(center_strike, wing_width, 'ENTRY_CREDIT', qty_butterfly)
-                        credit = abs(trade.orderStatus.avgFillPrice) if trade and trade.fills else 7.50
+                        credit = abs(trade.orderStatus.avgFillPrice) if trade and trade.orderStatus.avgFillPrice and not math.isnan(trade.orderStatus.avgFillPrice) else 7.50
                         
-                        db.log_transaction("SPX_BUTTERFLY", "ENTRY_CREDIT", center_strike, qty_butterfly)
+                        db.log_transaction("SPX_BUTTERFLY", "ENTRY_CREDIT", credit, qty_butterfly)
                         db.update_bot_state("SPX_BUTTERFLY", "ACTIVE", center_strike, 0.0, qty_butterfly, extra_param=center_strike)
                         db.save_daily_decision(today_str, decision["vix"], "SPX_BUTTERFLY", "EXECUTING")
                         db.print_visible_ledger()
@@ -403,16 +409,18 @@ def run_live_dual_bot():
                         db.print_visible_ledger()
 
             # ------------------------------------------------------------------
-            # 4. TIME EXIT CUT-OFF (3:58 PM EST / 22:58 IST): OVERNIGHT FLAT RULE
+            # 4. TIME EXIT CUT-OFF (3:58 PM EST / 22:58 IST): OVERNIGHT FLAT RULE (FUTURES ONLY)
             # ------------------------------------------------------------------
             if now_est.hour == 15 and now_est.minute >= 58:
-                broker.cancel_all_active_orders()
-                
-                # Close MES Futures
+                # Close MES Futures (we must close futures at market, they don't expire)
                 if mes_state["side"] in ["ACTIVE_LONG", "ACTIVE_SHORT"]:
+                    broker.cancel_all_active_orders()
                     logger.info("⚠️ TIME CUT-OFF: Exiting active MES Futures Position...")
                     close_action = 'SELL' if mes_state["side"] == "ACTIVE_LONG" else 'BUY'
                     trade = broker.place_market_order(close_action, qty_mes)
+                    # wait for fill
+                    while not trade.isDone():
+                        broker.ib.sleep(0.5)
                     exit_p = trade.orderStatus.avgFillPrice if trade.orderStatus.avgFillPrice > 0 else broker.active_mes_contract.marketPrice()
                     pnl = (exit_p - mes_state["entry_price"]) * 5.0 * qty_mes if mes_state["side"] == "ACTIVE_LONG" else (mes_state["entry_price"] - exit_p) * 5.0 * qty_mes
                     
@@ -420,26 +428,38 @@ def run_live_dual_bot():
                     db.update_bot_state("MES_ORB", "FLAT", 0.0, 0.0, 0, 0.0)
                     db.save_daily_decision(today_str, decision["vix"], "MES_ORB", "COMPLETED")
                     db.print_visible_ledger()
-                    
-                # Close SPX Option Combination
-                if bf_state["side"] == "ACTIVE":
-                    logger.info("⚠️ TIME CUT-OFF: Exiting active SPX Iron Butterfly combination...")
-                    center_stk = bf_state["entry_price"]
-                    trade = broker.execute_iron_butterfly(center_stk, wing_width, 'CLOSE', qty_butterfly)
-                    exit_p = abs(trade.orderStatus.avgFillPrice) if trade and trade.fills else 10.00
-                    # PnL = Entry Credit - Exit Debit
-                    # Wait, our database logs entry_price as the center_strike. We don't have the exact credit in bot_state but we can read it from trade_log or just approximate it
-                    # Let's query trade_log for today's entry credit to get exact transaction PnL
-                    # (For robustness: default to $8.00 credit if db lookup fails)
-                    db.cursor.execute("SELECT price FROM trade_log WHERE strategy='SPX_BUTTERFLY' AND action='ENTRY_CREDIT' AND timestamp_ist LIKE ?", (f"{today_str}%",))
-                    db_row = db.cursor.fetchone()
-                    entry_credit = db_row[0] if db_row else 8.00
-                    pnl = (entry_credit - exit_p) * 100.0 * qty_butterfly
-                    
-                    db.log_transaction("SPX_BUTTERFLY", "TIME_CUT_EXIT", exit_p, qty_butterfly, pnl=pnl)
-                    db.update_bot_state("SPX_BUTTERFLY", "FLAT", 0.0, 0.0, 0, 0.0)
-                    db.save_daily_decision(today_str, decision["vix"], "SPX_BUTTERFLY", "COMPLETED")
-                    db.print_visible_ledger()
+
+            # ------------------------------------------------------------------
+            # 5. EXPIRATION PNL EVALUATION (4:02 PM EST / 23:02 IST)
+            # ------------------------------------------------------------------
+            if now_est.hour >= 16:
+                # We check time is >= 16:02 EST
+                if now_est.hour > 16 or (now_est.hour == 16 and now_est.minute >= 2):
+                    if bf_state["side"] == "ACTIVE":
+                        logger.info("⚠️ Market Close Reached. Calculating SPX Iron Butterfly expiration PnL...")
+                        center_stk = bf_state["entry_price"]
+                        
+                        # Fetch SPX closing price
+                        spx_close = broker.get_index_price("SPX")
+                        if spx_close is not None and not math.isnan(spx_close):
+                            # Calculate expiration value (debit to close)
+                            close_distance = abs(spx_close - center_stk)
+                            exp_value = min(wing_width, close_distance)
+                            
+                            # Retrieve the entry credit from db
+                            db.cursor.execute("SELECT price FROM trade_log WHERE strategy='SPX_BUTTERFLY' AND action='ENTRY_CREDIT' AND timestamp_ist LIKE ?", (f"{today_str}%",))
+                            db_row = db.cursor.fetchone()
+                            entry_credit = db_row[0] if db_row else 7.50
+                            
+                            pnl = (entry_credit - exp_value) * 100.0 * qty_butterfly
+                            logger.info(f"📊 SPX Expiration: Close={spx_close:.2f} | Strike={center_stk} | Exp Value={exp_value:.2f} | PnL=${pnl:+.2f}")
+                            
+                            db.log_transaction("SPX_BUTTERFLY", "EXPIRATION_EXIT", spx_close, qty_butterfly, pnl=pnl)
+                            db.update_bot_state("SPX_BUTTERFLY", "FLAT", 0.0, 0.0, 0, 0.0)
+                            db.save_daily_decision(today_str, decision["vix"], "SPX_BUTTERFLY", "COMPLETED")
+                            db.print_visible_ledger()
+                        else:
+                            logger.warning("⚠️ Failed to fetch SPX closing price. Retrying on next tick...")
 
         except Exception as err:
             logger.error(f"Error in automated loop cycle: {err}")
