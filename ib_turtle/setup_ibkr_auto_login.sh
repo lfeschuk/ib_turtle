@@ -22,20 +22,55 @@ print_warning() {
 
 # 1. Check Docker installation
 print_msg "Checking Docker installation..."
+OS_TYPE=$(uname)
+
 if ! command -v docker &> /dev/null; then
     print_warning "Docker is not installed or not in your PATH."
-    echo "Please download and install Docker Desktop for Mac from: https://www.docker.com/products/docker-desktop/"
-    echo "After installing, start Docker Desktop and run this script again."
+    if [ "$OS_TYPE" = "Darwin" ]; then
+        echo "Please download and install Docker Desktop for Mac from:"
+        echo "  https://www.docker.com/products/docker-desktop/"
+    elif [ "$OS_TYPE" = "Linux" ]; then
+        echo "Please install Docker for your Linux distribution."
+        echo "For Ubuntu/Debian, you can run:"
+        echo "  sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2"
+        echo "For other distributions, see: https://docs.docker.com/engine/install/"
+    else
+        echo "Please visit https://docs.docker.com/get-docker/ to install Docker on your OS."
+    fi
+    echo "After installing, start Docker and run this script again."
     exit 1
 fi
 
 if ! docker info &> /dev/null; then
     print_warning "Docker daemon is not running."
-    echo "Please start your Docker Desktop application and run this script again."
+    if [ "$OS_TYPE" = "Darwin" ]; then
+        echo "Please start your Docker Desktop application and run this script again."
+    else
+        echo "Please start the Docker service. On Linux, you can run:"
+        echo "  sudo systemctl start docker"
+    fi
     exit 1
 fi
 
 print_success "Docker is running."
+
+# 1.5 Install Python dependencies from pip
+print_msg "Checking and installing Python dependencies from pip..."
+PIP_CMD=""
+if command -v pip &> /dev/null; then
+    PIP_CMD="pip"
+elif command -v pip3 &> /dev/null; then
+    PIP_CMD="pip3"
+fi
+
+if [ -n "$PIP_CMD" ]; then
+    echo "Using $PIP_CMD to install required libraries..."
+    $PIP_CMD install ib-insync pandas numpy pytz
+    print_success "Python dependencies successfully installed/updated."
+else
+    print_warning "pip is not installed. Skipping python library installation."
+    echo "Please install pip and run: pip install ib-insync pandas numpy pytz"
+fi
 
 # 2. Collect Credentials securely
 echo ""
