@@ -37,6 +37,77 @@ class DataManager:
         if not self.cursor.fetchone():
             self.cursor.execute("INSERT INTO bot_state VALUES ('SPX_BWB', 'FLAT', 0.0, 0.0, 0)")
             self.conn.commit()
+        self.auto_repair_past_trades()
+
+    def auto_repair_past_trades(self):
+        """Automatically scans the database on startup for any SPX BWB entries missing exits,
+        queries the SPX close price from Yahoo Finance, and inserts the missing expiration exits with correct PnL."""
+        self.cursor.execute("SELECT id, timestamp_ist, strike, price, qty FROM trade_log WHERE action='ENTRY_CREDIT' ORDER BY id ASC;")
+        entries = self.cursor.fetchall()
+        if not entries:
+            return
+            
+        repairs_made = False
+        upper_g = 10
+        lower_g = 15
+        
+        for entry_id, timestamp_ist, strike, price, qty in entries:
+            date_str = timestamp_ist.split()[0]
+            # Check if an exit already exists
+            self.cursor.execute("SELECT id FROM trade_log WHERE action='EXPIRATION_EXIT' AND timestamp_ist LIKE ?;", (f"{date_str}%",))
+            if self.cursor.fetchone():
+                continue
+                
+            logger.info(f"🛠️ Found missing exit for SPX BWB trade on {date_str}. Repairing automatically...")
+            
+            # Fetch SPX close price from Yahoo Finance
+            import time
+            import json
+            import urllib.request
+            
+            spx_close = None
+            try:
+                t = time.strptime(date_str, "%Y-%m-%d")
+                epoch = int(time.mktime(t))
+                start = epoch - 86400 * 2
+                end = epoch + 86400 * 2
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/^GSPC?period1={start}&period2={end}&interval=1d"
+                headers = {'User-Agent': 'Mozilla/5.0'}
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    data = json.loads(response.read().decode())
+                    result = data['chart']['result'][0]
+                    timestamps = result.get('timestamp', [])
+                    closes = result.get('indicators', {}).get('quote', [{}])[0].get('close', [])
+                    for ts, close in zip(timestamps, closes):
+                        ts_date = time.strftime("%Y-%m-%d", time.localtime(ts))
+                        if ts_date == date_str and close is not None:
+                            spx_close = float(close)
+                            break
+            except Exception as e:
+                logger.error(f"Error fetching SPX close for {date_str}: {e}")
+                
+            if spx_close is None:
+                logger.warning(f"Could not resolve SPX closing price for {date_str}. Skipping auto-repair.")
+                continue
+                
+            # Calculate expiration value (debit to close)
+            exp_val_upper = max(0.0, strike + upper_g - spx_close)
+            exp_val_center = max(0.0, strike - spx_close)
+            exp_val_lower = max(0.0, strike - lower_g - spx_close)
+            exp_value = exp_val_upper - 2.0 * exp_val_center + exp_val_lower
+            
+            pnl = (price - exp_value) * 100.0 * qty
+            
+            # Insert missing exit
+            exit_timestamp = f"{date_str} 23:02:00"
+            self.cursor.execute("INSERT INTO trade_log (timestamp_ist, ticker, action, strike, price, qty, pnl) VALUES (?, 'SPX_BWB', 'EXPIRATION_EXIT', ?, ?, ?, ?);",
+                                (exit_timestamp, strike, spx_close, qty, pnl))
+            repairs_made = True
+            logger.info(f"✅ Repaired {date_str} BWB trade: Close={spx_close:.2f} | Exp Value={exp_value:.2f} | PnL=${pnl:+.2f}")
+            
+        if repairs_made:
+            self.conn.commit()
 
     def get_position_state(self):
         self.cursor.execute("SELECT current_side, entry_strike, entry_credit, qty FROM bot_state WHERE ticker='SPX_BWB'")
