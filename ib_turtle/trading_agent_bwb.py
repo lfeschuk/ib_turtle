@@ -213,9 +213,27 @@ class IBBroker:
             logger.warning(f"⚠️ Close BWB pricing failed. Falling back to Market Order to ensure flat exit.")
             
         trade = self.ib.placeOrder(bag, order)
-        # Wait until order is filled / completed
+        # Wait with a 30-second timeout
+        start_time = time.time()
         while not trade.isDone():
             self.ib.sleep(0.5)
+            if time.time() - start_time > 30:
+                logger.warning(f"⚠️ Order execution timed out after 30 seconds. Status: {trade.orderStatus.status}")
+                break
+        
+        # If timed out, cancel the order
+        if not trade.isDone():
+            logger.info("⚠️ Cancelling unfilled order...")
+            self.ib.cancelOrder(order)
+            self.ib.sleep(1.0)
+            
+            # Force close with a Market Order if we are exiting the position
+            if action == 'CLOSE':
+                logger.warning("🚨 CLOSE order failed to fill. Force-closing position with Market Order to ensure flat state...")
+                mkt_order = MarketOrder(order_action, qty, tif='DAY')
+                trade = self.ib.placeOrder(bag, mkt_order)
+                while not trade.isDone():
+                    self.ib.sleep(0.5)
         return trade
 
 # ==============================================================================
@@ -296,23 +314,30 @@ def run_live_bwb_bot():
                             logger.warning("⚠️ VIX price query returned NaN or None. Retrying on next tick...")
 
             # ------------------------------------------------------------------
-            # EXIT BLOCK (Executes exactly at 3:58 PM EST / 22:58 IST)
+            # EXPIRATION PNL EVALUATION (4:02 PM EST / 23:02 IST)
             # ------------------------------------------------------------------
             if state["side"] == "ACTIVE":
-                if now_est.hour == 15 and now_est.minute >= 58:
-                    logger.info("⚠️ TIME CUT-OFF REACHED. Closing Put BWB position at market...")
-                    
-                    trade = broker.execute_put_bwb(state["strike"], upper_g, lower_g, 'CLOSE', trade_qty)
-                    exit_price = abs(trade.orderStatus.avgFillPrice) if trade and trade.fills else 0.0
-                    
-                    # PnL = Entry Credit - Exit Cost
-                    # Note: Since the combo is priced negatively (credit), at expiration/close the exit debit is positive.
-                    # PnL = (Entry Credit - Exit Debit) * 100
-                    pnl = (state["credit"] - exit_price) * 100.0 * trade_qty
-                    
-                    db.log_transaction("TIME_CUT_EXIT", state["strike"], exit_price, trade_qty, pnl=pnl)
-                    db.update_position_state("FLAT", 0.0, 0.0, 0)
-                    db.print_visible_ledger()
+                if now_est.hour >= 16:
+                    if now_est.hour > 16 or (now_est.hour == 16 and now_est.minute >= 2):
+                        logger.info("⚠️ Market Close Reached. Calculating Put BWB expiration PnL...")
+                        
+                        # Fetch SPX closing price
+                        spx_close = broker.get_index_price("SPX")
+                        if spx_close is not None and not math.isnan(spx_close):
+                            # Calculate expiration value (debit to close)
+                            exp_val_upper = max(0.0, state["strike"] + upper_g - spx_close)
+                            exp_val_center = max(0.0, state["strike"] - spx_close)
+                            exp_val_lower = max(0.0, state["strike"] - lower_g - spx_close)
+                            exp_value = exp_val_upper - 2.0 * exp_val_center + exp_val_lower
+                            
+                            pnl = (state["credit"] - exp_value) * 100.0 * trade_qty
+                            logger.info(f"📊 SPX Expiration: Close={spx_close:.2f} | Strike={state['strike']} | Exp Value={exp_value:.2f} | PnL=${pnl:+.2f}")
+                            
+                            db.log_transaction("EXPIRATION_EXIT", state["strike"], spx_close, trade_qty, pnl=pnl)
+                            db.update_position_state("FLAT", 0.0, 0.0, 0)
+                            db.print_visible_ledger()
+                        else:
+                            logger.warning("⚠️ Failed to fetch SPX closing price. Retrying on next tick...")
 
         except Exception as err:
             logger.error(f"Error in BWB loop cycle: {err}")
