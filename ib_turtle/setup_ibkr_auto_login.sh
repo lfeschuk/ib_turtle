@@ -25,30 +25,61 @@ print_msg "Checking Docker installation..."
 OS_TYPE=$(uname)
 
 if ! command -v docker &> /dev/null; then
-    print_warning "Docker is not installed or not in your PATH."
+    print_warning "Docker is not installed."
+    echo "Attempting to install Docker automatically..."
+    
     if [ "$OS_TYPE" = "Darwin" ]; then
-        echo "Please download and install Docker Desktop for Mac from:"
-        echo "  https://www.docker.com/products/docker-desktop/"
+        if command -v brew &> /dev/null; then
+            echo "Installing Docker Desktop via Homebrew Cask..."
+            brew install --cask docker
+        else
+            print_warning "Homebrew is not installed. Cannot automate Docker installation on macOS."
+            echo "Please install Homebrew first, or download Docker Desktop from: https://www.docker.com/products/docker-desktop/"
+            exit 1
+        fi
     elif [ "$OS_TYPE" = "Linux" ]; then
-        echo "Please install Docker for your Linux distribution."
-        echo "For Ubuntu/Debian, you can run:"
-        echo "  sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2"
-        echo "For other distributions, see: https://docs.docker.com/engine/install/"
+        if command -v apt-get &> /dev/null; then
+            echo "Installing Docker and Docker Compose via apt-get (requires sudo)..."
+            sudo apt-get update
+            sudo apt-get install -y docker.io docker-compose-v2
+            # Add current user to docker group so they don't need sudo for docker commands
+            sudo usermod -aG docker $USER || true
+            echo "Note: You may need to log out and log back in for docker group membership to take effect."
+        elif command -v dnf &> /dev/null; then
+            echo "Installing Docker via dnf (requires sudo)..."
+            sudo dnf install -y docker docker-compose-plugin
+            sudo systemctl enable --now docker
+        else
+            print_warning "Unsupported package manager. Please install Docker manually."
+            echo "See: https://docs.docker.com/engine/install/"
+            exit 1
+        fi
     else
-        echo "Please visit https://docs.docker.com/get-docker/ to install Docker on your OS."
+        print_warning "Unsupported OS. Please install Docker manually."
+        exit 1
     fi
-    echo "After installing, start Docker and run this script again."
-    exit 1
 fi
 
 if ! docker info &> /dev/null; then
-    print_warning "Docker daemon is not running."
+    print_warning "Docker daemon is not running. Attempting to start it..."
     if [ "$OS_TYPE" = "Darwin" ]; then
-        echo "Please start your Docker Desktop application and run this script again."
-    else
-        echo "Please start the Docker service. On Linux, you can run:"
-        echo "  sudo systemctl start docker"
+        echo "Opening Docker Desktop..."
+        open -a Docker
+        echo "Waiting for Docker daemon to start (up to 30 seconds)..."
+        for i in {1..30}; do
+            if docker info &> /dev/null; then
+                break
+            fi
+            sleep 1
+        done
+    elif [ "$OS_TYPE" = "Linux" ]; then
+        echo "Starting Docker service (requires sudo)..."
+        sudo systemctl start docker || sudo service docker start
     fi
+fi
+
+if ! docker info &> /dev/null; then
+    print_warning "Could not start Docker daemon automatically. Please start Docker manually and rerun this script."
     exit 1
 fi
 

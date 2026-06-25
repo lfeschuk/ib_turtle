@@ -45,6 +45,76 @@ class DataManager:
             if not self.cursor.fetchone():
                 self.cursor.execute("INSERT INTO bot_state VALUES (?, 'FLAT', 0.0, 0.0, 0, 0.0)", (strat,))
         self.conn.commit()
+        self.auto_repair_past_trades()
+
+    def auto_repair_past_trades(self):
+        """Automatically scans the database on startup for any SPX Butterfly entries missing exits,
+        queries the SPX close price from Yahoo Finance, and inserts the missing expiration exits with correct PnL."""
+        self.cursor.execute("SELECT id, timestamp_ist, price, qty FROM trade_log WHERE strategy='SPX_BUTTERFLY' AND action='ENTRY_CREDIT' ORDER BY id ASC;")
+        entries = self.cursor.fetchall()
+        if not entries:
+            return
+            
+        repairs_made = False
+        for entry_id, timestamp_ist, price, qty in entries:
+            date_str = timestamp_ist.split()[0]
+            # Check if an exit already exists
+            self.cursor.execute("SELECT id FROM trade_log WHERE strategy='SPX_BUTTERFLY' AND (action='EXPIRATION_EXIT' OR action='TIME_CUT_EXIT') AND timestamp_ist LIKE ?;", (f"{date_str}%",))
+            if self.cursor.fetchone():
+                continue
+                
+            logger.info(f"🛠️ Found missing exit for SPX Butterfly trade on {date_str}. Repairing automatically...")
+            
+            # Fetch SPX close price from Yahoo Finance
+            import time
+            import json
+            import urllib.request
+            
+            spx_close = None
+            try:
+                t = time.strptime(date_str, "%Y-%m-%d")
+                epoch = int(time.mktime(t))
+                start = epoch - 86400 * 2
+                end = epoch + 86400 * 2
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/^GSPC?period1={start}&period2={end}&interval=1d"
+                headers = {'User-Agent': 'Mozilla/5.0'}
+                req = urllib.request.Request(url, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    data = json.loads(response.read().decode())
+                    result = data['chart']['result'][0]
+                    timestamps = result.get('timestamp', [])
+                    closes = result.get('indicators', {}).get('quote', [{}])[0].get('close', [])
+                    for ts, close in zip(timestamps, closes):
+                        ts_date = time.strftime("%Y-%m-%d", time.localtime(ts))
+                        if ts_date == date_str and close is not None:
+                            spx_close = float(close)
+                            break
+            except Exception as e:
+                logger.error(f"Error fetching SPX close for {date_str}: {e}")
+                
+            if spx_close is None:
+                logger.warning(f"Could not resolve SPX closing price for {date_str}. Skipping auto-repair.")
+                continue
+                
+            # Entry credit fallback (since it wasn't logged, we use default $7.50)
+            entry_credit = 7.50
+            wing_width = 10.0
+            
+            # Calculate PnL
+            close_distance = abs(spx_close - price) # price column stored the strike
+            exp_value = min(wing_width, close_distance)
+            pnl = (entry_credit - exp_value) * 100.0 * qty
+            
+            # Insert missing exit and retroactively update entry price to the credit received
+            exit_timestamp = f"{date_str} 23:02:00"
+            self.cursor.execute("INSERT INTO trade_log (timestamp_ist, strategy, action, price, qty, pnl) VALUES (?, 'SPX_BUTTERFLY', 'EXPIRATION_EXIT', ?, ?, ?);",
+                                (exit_timestamp, spx_close, qty, pnl))
+            self.cursor.execute("UPDATE trade_log SET price=? WHERE id=?;", (entry_credit, entry_id))
+            repairs_made = True
+            logger.info(f"✅ Repaired {date_str} trade: Close={spx_close:.2f} | Exp Value={exp_value:.2f} | PnL=${pnl:+.2f}")
+            
+        if repairs_made:
+            self.conn.commit()
 
     def get_daily_decision(self, date_str):
         self.cursor.execute("SELECT vix_value, selected_strategy, status FROM daily_decision WHERE date=?", (date_str,))
