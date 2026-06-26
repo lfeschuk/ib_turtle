@@ -488,7 +488,7 @@ def run_live_dual_bot():
             if decision and decision["strategy"] == "MES_ORB":
                 # A. Monitor OCO entry trigger
                 if mes_state["side"] == "PENDING":
-                    broker.ib.update()
+                    broker.ib.sleep(0)
                     long_filled = buy_stop_order and buy_stop_order.orderStatus.status == 'Filled'
                     short_filled = sell_stop_order and sell_stop_order.orderStatus.status == 'Filled'
                     
@@ -518,7 +518,7 @@ def run_live_dual_bot():
 
                 # B. Monitor MES Stop Loss execution
                 elif mes_state["side"] in ["ACTIVE_LONG", "ACTIVE_SHORT"]:
-                    broker.ib.update()
+                    broker.ib.sleep(0)
                     if stop_loss_order and stop_loss_order.orderStatus.status == 'Filled':
                         logger.warning("💥 MES STOP LOSS TRIGGERED. Position closed.")
                         exit_price = stop_loss_order.orderStatus.avgFillPrice
@@ -585,7 +585,7 @@ def run_live_dual_bot():
         except Exception as err:
             logger.error(f"Error in automated loop cycle: {err}")
 
-        time.sleep(15)
+        broker.ib.sleep(15)
 
 if __name__ == '__main__':
     run_live_dual_bot()
