@@ -46,22 +46,9 @@ class DataManager:
                 self.cursor.execute("INSERT INTO bot_state VALUES (?, 'FLAT', 0.0, 0.0, 0, 0.0)", (strat,))
         self.conn.commit()
 
-    def auto_repair_past_trades(self, ib):
+    def auto_repair_past_trades(self):
         """Automatically scans the database on startup for any SPX Butterfly entries missing exits,
-        queries the SPX close price from Yahoo Finance, and resolves the exact credit received from IBKR executions."""
-        # Delete any past EXPIRATION_EXIT records where the corresponding ENTRY_CREDIT has a price of 7.50 (fallback),
-        # so they can be re-repaired with the correct execution-based credits!
-        self.cursor.execute("""
-            DELETE FROM trade_log 
-            WHERE strategy='SPX_BUTTERFLY' AND action='EXPIRATION_EXIT'
-            AND SUBSTR(timestamp_ist, 1, 10) IN (
-                SELECT SUBSTR(timestamp_ist, 1, 10) 
-                FROM trade_log 
-                WHERE strategy='SPX_BUTTERFLY' AND action='ENTRY_CREDIT' AND price = 7.50
-            )
-        """)
-        self.conn.commit()
-
+        queries the SPX close price from Yahoo Finance, and inserts the missing expiration exits with a fallback credit."""
         # Query only entries that do not have a corresponding exit in the local database
         self.cursor.execute("""
             SELECT e.id, e.timestamp_ist, e.price, e.qty 
@@ -82,36 +69,14 @@ class DataManager:
         wing_width = 10.0
         repairs_made = False
         
-        # 1. Fetch completed orders from IBKR (persistent across Gateway restarts, last 7 days)
-        logger.info("🔌 Querying IBKR completed orders history...")
-        try:
-            completed_orders = ib.reqCompletedOrders(apiOnly=False)
-            logger.info(f"ℹ️ Found {len(completed_orders)} total completed orders in IBKR history.")
-            for i, o in enumerate(completed_orders):
-                logger.info(f"  [{i}] Symbol: {o.contract.symbol} | SecType: {o.contract.secType} | Status: {o.orderStatus.status} | CompletedTime: {o.orderState.completedTime} | LmtPrice: {o.order.lmtPrice} | AvgPrice: {o.orderStatus.avgFillPrice}")
-        except Exception as e:
-            logger.error(f"Failed to query completed orders: {e}")
-            completed_orders = []
-            
-        # 2. Fetch recent executions from IBKR (current session/day)
-        logger.info("🔌 Querying IBKR execution history...")
-        try:
-            executions = ib.reqExecutions(ExecutionFilter())
-            logger.info(f"ℹ️ Found {len(executions)} total executions in IBKR history.")
-            for i, r in enumerate(executions):
-                logger.info(f"  [{i}] Symbol: {r.contract.symbol} | SecType: {r.contract.secType} | Side: {r.execution.side} | Price: {r.execution.price} | Time: {r.execution.time}")
-        except Exception as e:
-            logger.error(f"Failed to query IBKR executions: {e}")
-            executions = []
-        
         for entry_id, timestamp_ist, price, qty in entries:
             date_str = timestamp_ist.split()[0]
-            logger.info(f"🛠️ Found missing exit for SPX Butterfly trade on {date_str}. Repairing...")
+            logger.info(f"🛠️ Found missing exit for SPX Butterfly trade on {date_str}. Repairing automatically...")
             
             # The stored price in the database was the center_strike (our bug)
             center_strike = price
             
-            # A. Fetch SPX Closing Price from Yahoo Finance
+            # Fetch SPX close price from Yahoo Finance
             import time
             import json
             import urllib.request
@@ -142,62 +107,8 @@ class DataManager:
                 logger.warning(f"Could not resolve SPX closing price for {date_str}. Skipping auto-repair.")
                 continue
                 
-            # B. Resolve Entry Credit (Premium)
-            entry_credit = None
-            target_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            
-            # Method 1: Match from Completed Orders (persistent across TWS restarts)
-            for comp_order in completed_orders:
-                contract = comp_order.contract
-                status = comp_order.orderStatus
-                order_state = comp_order.orderState
-                
-                if contract.secType == 'BAG' and contract.symbol == 'SPX' and status.status == 'Filled':
-                    comp_time = order_state.completedTime
-                    if comp_time:
-                        try:
-                            exec_date = datetime.datetime.strptime(comp_time.split()[0], "%Y%m%d").date()
-                        except:
-                            exec_date = None
-                            
-                        if exec_date == target_date:
-                            entry_credit = abs(status.avgFillPrice)
-                            logger.info(f"💰 Found matching completed order! Resolved exact premium: ${entry_credit:.2f}")
-                            break
-                            
-            # Method 2: Fallback to Execution History (if completed orders list was empty or didn't match)
-            if entry_credit is None:
-                matching_execs = []
-                for req in executions:
-                    if req.contract.symbol in ['SPX', 'SPXW'] and req.contract.secType == 'OPT':
-                        exec_time = req.execution.time
-                        if isinstance(exec_time, str):
-                            try:
-                                exec_date = datetime.datetime.strptime(exec_time.split()[0], "%Y%m%d").date()
-                            except:
-                                exec_date = None
-                        else:
-                            exec_date = exec_time.date()
-                            
-                        if exec_date == target_date:
-                            matching_execs.append(req)
-                            
-                if matching_execs:
-                    net_premium = 0.0
-                    for req in matching_execs:
-                        exec_price = req.execution.price
-                        sign = 1.0 if req.execution.side == 'SLD' else -1.0
-                        net_premium += exec_price * sign
-                    entry_credit = abs(net_premium)
-                    logger.info(f"💰 Found matching executions! Resolved exact premium: ${entry_credit:.2f}")
-                    
-            # Method 3: Fallback to default estimate
-            if entry_credit is None or entry_credit == 0.0:
-                entry_credit = 7.50
-                opt_orders = [f"{o.contract.symbol} completed at {o.orderState.completedTime}" for o in completed_orders if o.contract.secType in ['BAG', 'OPT']]
-                logger.warning(f"⚠️ No matching completed orders or executions found in IBKR history for {date_str}. Fallback to default. Completed option/bag orders in history: {opt_orders}")
-                
-            # 3. Calculate PnL
+            # Fallback to default estimate for past paper trades
+            entry_credit = 7.50
             close_distance = abs(spx_close - center_strike)
             exp_value = min(wing_width, close_distance)
             pnl = (entry_credit - exp_value) * 100.0 * qty
@@ -446,8 +357,8 @@ def run_live_dual_bot():
             logger.critical("❌ Could not connect to IBKR TWS/Gateway on ports 4002/7497.")
             return
 
-    # Run database auto-repair on startup with the connected ib instance
-    db.auto_repair_past_trades(broker.ib)
+    # Run database auto-repair on startup
+    db.auto_repair_past_trades()
 
     db.print_visible_ledger()
     
