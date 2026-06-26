@@ -86,6 +86,9 @@ class DataManager:
         logger.info("🔌 Querying IBKR completed orders history...")
         try:
             completed_orders = ib.reqCompletedOrders(apiOnly=False)
+            logger.info(f"ℹ️ Found {len(completed_orders)} total completed orders in IBKR history.")
+            for i, o in enumerate(completed_orders):
+                logger.info(f"  [{i}] Symbol: {o.contract.symbol} | SecType: {o.contract.secType} | Status: {o.orderStatus.status} | CompletedTime: {o.orderState.completedTime} | LmtPrice: {o.order.lmtPrice} | AvgPrice: {o.orderStatus.avgFillPrice}")
         except Exception as e:
             logger.error(f"Failed to query completed orders: {e}")
             completed_orders = []
@@ -94,6 +97,9 @@ class DataManager:
         logger.info("🔌 Querying IBKR execution history...")
         try:
             executions = ib.reqExecutions(ExecutionFilter())
+            logger.info(f"ℹ️ Found {len(executions)} total executions in IBKR history.")
+            for i, r in enumerate(executions):
+                logger.info(f"  [{i}] Symbol: {r.contract.symbol} | SecType: {r.contract.secType} | Side: {r.execution.side} | Price: {r.execution.price} | Time: {r.execution.time}")
         except Exception as e:
             logger.error(f"Failed to query IBKR executions: {e}")
             executions = []
