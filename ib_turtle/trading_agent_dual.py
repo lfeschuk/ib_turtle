@@ -82,8 +82,16 @@ class DataManager:
         wing_width = 10.0
         repairs_made = False
         
-        # Fetch recent executions from IBKR (last 7 days)
-        logger.info("🔌 Querying IBKR execution history to retrieve exact filled credits...")
+        # 1. Fetch completed orders from IBKR (persistent across Gateway restarts, last 7 days)
+        logger.info("🔌 Querying IBKR completed orders history...")
+        try:
+            completed_orders = ib.reqCompletedOrders(apiOnly=False)
+        except Exception as e:
+            logger.error(f"Failed to query completed orders: {e}")
+            completed_orders = []
+            
+        # 2. Fetch recent executions from IBKR (current session/day)
+        logger.info("🔌 Querying IBKR execution history...")
         try:
             executions = ib.reqExecutions(ExecutionFilter())
         except Exception as e:
@@ -97,7 +105,7 @@ class DataManager:
             # The stored price in the database was the center_strike (our bug)
             center_strike = price
             
-            # 1. Fetch SPX Closing Price from Yahoo Finance
+            # A. Fetch SPX Closing Price from Yahoo Finance
             import time
             import json
             import urllib.request
@@ -128,41 +136,60 @@ class DataManager:
                 logger.warning(f"Could not resolve SPX closing price for {date_str}. Skipping auto-repair.")
                 continue
                 
-            # 2. Resolve Entry Credit (Premium) from IBKR executions
+            # B. Resolve Entry Credit (Premium)
             entry_credit = None
             target_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-            matching_execs = []
-            for req in executions:
-                if req.contract.symbol in ['SPX', 'SPXW'] and req.contract.secType == 'OPT':
-                    exec_time = req.execution.time
-                    if isinstance(exec_time, str):
+            
+            # Method 1: Match from Completed Orders (persistent across TWS restarts)
+            for comp_order in completed_orders:
+                contract = comp_order.contract
+                status = comp_order.orderStatus
+                order_state = comp_order.orderState
+                
+                if contract.secType == 'BAG' and contract.symbol == 'SPX' and status.status == 'Filled':
+                    comp_time = order_state.completedTime
+                    if comp_time:
                         try:
-                            exec_date = datetime.datetime.strptime(exec_time.split()[0], "%Y%m%d").date()
+                            exec_date = datetime.datetime.strptime(comp_time.split()[0], "%Y%m%d").date()
                         except:
                             exec_date = None
-                    else:
-                        exec_date = exec_time.date()
-                        
-                    if exec_date == target_date:
-                        matching_execs.append(req)
-                        
-            if matching_execs:
-                # Calculate the net credit/debit of the combo
-                net_premium = 0.0
-                for req in matching_execs:
-                    exec_price = req.execution.price
-                    # SLD = Sold (Credit), BOT = Bought (Debit)
-                    sign = 1.0 if req.execution.side == 'SLD' else -1.0
-                    net_premium += exec_price * sign
-                entry_credit = abs(net_premium)
-                logger.info(f"💰 Found matching executions! Resolved exact premium from IBKR: ${entry_credit:.2f}")
-            else:
-                # Debug logging of other option executions if no match was found
-                opt_execs = [f"{r.contract.symbol} on {r.execution.time}" for r in executions if r.contract.secType == 'OPT']
-                logger.warning(f"⚠️ No matching SPX/SPXW executions found in IBKR history for {date_str}. Found option executions in log: {opt_execs}")
-                # Fallback to default estimate if date > 7 days ago or not found
+                            
+                        if exec_date == target_date:
+                            entry_credit = abs(status.avgFillPrice)
+                            logger.info(f"💰 Found matching completed order! Resolved exact premium: ${entry_credit:.2f}")
+                            break
+                            
+            # Method 2: Fallback to Execution History (if completed orders list was empty or didn't match)
+            if entry_credit is None:
+                matching_execs = []
+                for req in executions:
+                    if req.contract.symbol in ['SPX', 'SPXW'] and req.contract.secType == 'OPT':
+                        exec_time = req.execution.time
+                        if isinstance(exec_time, str):
+                            try:
+                                exec_date = datetime.datetime.strptime(exec_time.split()[0], "%Y%m%d").date()
+                            except:
+                                exec_date = None
+                        else:
+                            exec_date = exec_time.date()
+                            
+                        if exec_date == target_date:
+                            matching_execs.append(req)
+                            
+                if matching_execs:
+                    net_premium = 0.0
+                    for req in matching_execs:
+                        exec_price = req.execution.price
+                        sign = 1.0 if req.execution.side == 'SLD' else -1.0
+                        net_premium += exec_price * sign
+                    entry_credit = abs(net_premium)
+                    logger.info(f"💰 Found matching executions! Resolved exact premium: ${entry_credit:.2f}")
+                    
+            # Method 3: Fallback to default estimate
+            if entry_credit is None or entry_credit == 0.0:
                 entry_credit = 7.50
-                logger.warning(f"⚠️ Falling back to default credit estimate: ${entry_credit:.2f}")
+                opt_orders = [f"{o.contract.symbol} completed at {o.orderState.completedTime}" for o in completed_orders if o.contract.secType in ['BAG', 'OPT']]
+                logger.warning(f"⚠️ No matching completed orders or executions found in IBKR history for {date_str}. Fallback to default. Completed option/bag orders in history: {opt_orders}")
                 
             # 3. Calculate PnL
             close_distance = abs(spx_close - center_strike)
