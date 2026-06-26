@@ -423,7 +423,7 @@ def run_live_bwb_bot():
         except Exception as err:
             logger.error(f"Error in BWB loop cycle: {err}")
 
-        time.sleep(15)
+        broker.ib.sleep(15)
 
 if __name__ == '__main__':
     run_live_bwb_bot()
