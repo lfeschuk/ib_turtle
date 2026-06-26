@@ -49,6 +49,19 @@ class DataManager:
     def auto_repair_past_trades(self, ib):
         """Automatically scans the database on startup for any SPX Butterfly entries missing exits,
         queries the SPX close price from Yahoo Finance, and resolves the exact credit received from IBKR executions."""
+        # Delete any past EXPIRATION_EXIT records where the corresponding ENTRY_CREDIT has a price of 7.50 (fallback),
+        # so they can be re-repaired with the correct execution-based credits!
+        self.cursor.execute("""
+            DELETE FROM trade_log 
+            WHERE strategy='SPX_BUTTERFLY' AND action='EXPIRATION_EXIT'
+            AND SUBSTR(timestamp_ist, 1, 10) IN (
+                SELECT SUBSTR(timestamp_ist, 1, 10) 
+                FROM trade_log 
+                WHERE strategy='SPX_BUTTERFLY' AND action='ENTRY_CREDIT' AND price = 7.50
+            )
+        """)
+        self.conn.commit()
+
         # Query only entries that do not have a corresponding exit in the local database
         self.cursor.execute("""
             SELECT e.id, e.timestamp_ist, e.price, e.qty 
