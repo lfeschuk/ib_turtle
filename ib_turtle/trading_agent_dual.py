@@ -133,7 +133,7 @@ class DataManager:
             target_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
             matching_execs = []
             for req in executions:
-                if req.contract.symbol == 'SPX' and req.contract.secType == 'OPT':
+                if req.contract.symbol in ['SPX', 'SPXW'] and req.contract.secType == 'OPT':
                     exec_time = req.execution.time
                     if isinstance(exec_time, str):
                         try:
@@ -157,9 +157,12 @@ class DataManager:
                 entry_credit = abs(net_premium)
                 logger.info(f"💰 Found matching executions! Resolved exact premium from IBKR: ${entry_credit:.2f}")
             else:
-                # Fallback to default estimate if date > 7 days ago
+                # Debug logging of other option executions if no match was found
+                opt_execs = [f"{r.contract.symbol} on {r.execution.time}" for r in executions if r.contract.secType == 'OPT']
+                logger.warning(f"⚠️ No matching SPX/SPXW executions found in IBKR history for {date_str}. Found option executions in log: {opt_execs}")
+                # Fallback to default estimate if date > 7 days ago or not found
                 entry_credit = 7.50
-                logger.warning(f"⚠️ No matching executions found in IBKR history for {date_str} (likely > 7 days ago). Falling back to default credit estimate: ${entry_credit:.2f}")
+                logger.warning(f"⚠️ Falling back to default credit estimate: ${entry_credit:.2f}")
                 
             # 3. Calculate PnL
             close_distance = abs(spx_close - center_strike)
