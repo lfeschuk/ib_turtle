@@ -104,7 +104,7 @@ class DataManager:
             exp_val_lower = max(0.0, strike - lower_g - spx_close)
             exp_value = exp_val_upper - 2.0 * exp_val_center + exp_val_lower
             
-            pnl = (price - exp_value) * 100.0 * qty
+            pnl = (price + exp_value) * 100.0 * qty
             
             # Insert missing exit
             exit_timestamp = f"{date_str} 23:02:00"
@@ -136,6 +136,12 @@ class DataManager:
 
     def print_visible_ledger(self):
         df = pd.read_sql_query("SELECT timestamp_ist, action, strike, price, qty, pnl FROM trade_log ORDER BY id DESC LIMIT 10", self.conn)
+        
+        # Calculate cumulative PnL
+        self.cursor.execute("SELECT SUM(pnl) FROM trade_log")
+        cum_pnl_row = self.cursor.fetchone()
+        cum_pnl = cum_pnl_row[0] if cum_pnl_row and cum_pnl_row[0] is not None else 0.0
+        
         print("\n" + "🍗" + "="*85 + "🍗")
         print(f"{'IST TIMESTAMP':<20} | {'ACTION':<22} | {'ATM STRIKE':<10} | {'PRICE':<8} | {'QTY':<4} | {'REALIZED PNL'}")
         print("-" * 91)
@@ -145,6 +151,8 @@ class DataManager:
             pnl_val = row['pnl']
             pnl_str = f"${pnl_val:+.2f}" if pnl_val != 0.0 else "-"
             print(f"{row['timestamp_ist']:<20} | {row['action']:<22} | {row['strike']:<10.1f} | {row['price']:<8.2f} | {row['qty']:<4} | {pnl_str}")
+        print("-" * 91)
+        print(f"{'💵 CUMULATIVE REALIZED PNL:':<70} | {f'${cum_pnl:+.2f}' if cum_pnl != 0.0 else '-'}")
         print("="*89)
 
 # ==============================================================================
@@ -411,7 +419,7 @@ def run_live_bwb_bot():
                             exp_val_lower = max(0.0, state["strike"] - lower_g - spx_close)
                             exp_value = exp_val_upper - 2.0 * exp_val_center + exp_val_lower
                             
-                            pnl = (state["credit"] - exp_value) * 100.0 * trade_qty
+                            pnl = (state["credit"] + exp_value) * 100.0 * trade_qty
                             logger.info(f"📊 SPX Expiration: Close={spx_close:.2f} | Strike={state['strike']} | Exp Value={exp_value:.2f} | PnL=${pnl:+.2f}")
                             
                             db.log_transaction("EXPIRATION_EXIT", state["strike"], spx_close, trade_qty, pnl=pnl)

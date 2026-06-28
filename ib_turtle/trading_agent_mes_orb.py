@@ -65,6 +65,12 @@ class DataManager:
 
     def print_visible_ledger(self):
         df = pd.read_sql_query("SELECT timestamp_ist, ticker, action, price, qty, pnl FROM trade_log ORDER BY id DESC LIMIT 10", self.conn)
+        
+        # Calculate cumulative PnL
+        self.cursor.execute("SELECT SUM(pnl) FROM trade_log")
+        cum_pnl_row = self.cursor.fetchone()
+        cum_pnl = cum_pnl_row[0] if cum_pnl_row and cum_pnl_row[0] is not None else 0.0
+        
         print("\n" + "🎯" + "="*85 + "🎯")
         print(f"{'IST TIMESTAMP':<20} | {'ASSET':<6} | {'STRATEGY ACTION':<18} | {'PRICE':<10} | {'QTY':<5} | {'REALIZED PNL'}")
         print("-" * 91)
@@ -74,6 +80,8 @@ class DataManager:
             pnl_val = row['pnl']
             pnl_str = f"${pnl_val:+.2f}" if pnl_val != 0.0 else "-"
             print(f"{row['timestamp_ist']:<20} | {row['ticker']:<6} | {row['action']:<18} | {row['price']:<10.2f} | {row['qty']:<5} | {pnl_str}")
+        print("-" * 91)
+        print(f"{'💵 CUMULATIVE REALIZED PNL:':<70} | {f'${cum_pnl:+.2f}' if cum_pnl != 0.0 else '-'}")
         print("="*89)
 
 # ==============================================================================
