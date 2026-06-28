@@ -403,19 +403,22 @@ def run_live_dual_bot():
                 if current_time_str == "18:30" or ("18:30" < current_time_str < "22:55"):
                     vix = broker.get_index_price("VIX")
                     if vix is not None and not math.isnan(vix):
-                        # OVERRIDE FOR TESTING: Always trade MES_ORB regardless of VIX
-                        logger.info(f"⚠️ TESTING OVERRIDE: VIX is {vix:.2f}. Overriding VIX threshold rule and forcing MES 2h ORB strategy today.")
-                        db.save_daily_decision(today_str, vix, "MES_ORB", "DECIDED")
-                        
-                        # Retrieve 2-hour range and place OCO stop orders
-                        r_high, r_low = broker.get_2h_mes_range()
-                        if r_high and r_low:
-                            logger.info(f"📊 2-Hour Range: High={r_high:.2f} | Low={r_low:.2f}. Placing OCO Stops...")
-                            broker.cancel_all_active_orders()
-                            buy_stop_order = broker.place_stop_order('BUY', r_high + 0.50, qty_mes)
-                            sell_stop_order = broker.place_stop_order('SELL', r_low - 0.50, qty_mes)
+                        if vix > vix_limit:
+                            logger.info(f"🔥 VIX is {vix:.2f} (> {vix_limit:.1f}). Selecting MES 2h ORB strategy today.")
+                            db.save_daily_decision(today_str, vix, "MES_ORB", "DECIDED")
                             
-                            db.update_bot_state("MES_ORB", "PENDING", r_high + 0.50, r_low - 0.50, qty_mes, extra_param=r_low)
+                            # Retrieve 2-hour range and place OCO stop orders
+                            r_high, r_low = broker.get_2h_mes_range()
+                            if r_high and r_low:
+                                logger.info(f"📊 2-Hour Range: High={r_high:.2f} | Low={r_low:.2f}. Placing OCO Stops...")
+                                broker.cancel_all_active_orders()
+                                buy_stop_order = broker.place_stop_order('BUY', r_high + 0.50, qty_mes)
+                                sell_stop_order = broker.place_stop_order('SELL', r_low - 0.50, qty_mes)
+                                
+                                db.update_bot_state("MES_ORB", "PENDING", r_high + 0.50, r_low - 0.50, qty_mes, extra_param=r_low)
+                        else:
+                            logger.info(f"💤 VIX is {vix:.2f} (<= {vix_limit:.1f}). Selecting SPX Iron Butterfly strategy today.")
+                            db.save_daily_decision(today_str, vix, "SPX_BUTTERFLY", "DECIDED")
                     else:
                         logger.warning("⚠️ VIX price query returned NaN or None. Retrying VIX evaluation on next tick...")
 

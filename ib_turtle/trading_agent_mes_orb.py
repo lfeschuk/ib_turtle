@@ -271,29 +271,24 @@ def run_live_bot():
                 # Target time is exactly 11:30 AM EST (18:30 IST)
                 if current_time_str == "18:30" and not range_established:
                     vix_price = broker.get_vix_price()
+                    vix_str = f"{vix_price:.2f}" if (vix_price is not None and not math.isnan(vix_price)) else "N/A"
+                    logger.info(f"📊 Daily trigger. VIX is {vix_str}. Triggering 2h ORB setup unconditionally...")
                     
-                    if vix_price is not None and not math.isnan(vix_price):
-                        if vix_price > max_vix_limit:
-                            logger.info(f"🔥 VIX is {vix_price:.2f} (above {max_vix_limit:.2f}). Triggering 2h ORB setup...")
-                            
-                            range_high, range_low = broker.get_2h_range()
-                            if range_high and range_low:
-                                range_established = True
-                                
-                                # Place Entry Stop Orders
-                                long_entry_price = range_high + 0.50
-                                short_entry_price = range_low - 0.50
-                                
-                                logger.info(f"🛒 Placing OCO Entry Stop Orders: Buy Stop at {long_entry_price:.2f} | Sell Stop at {short_entry_price:.2f}")
-                                
-                                broker.cancel_all_active_orders()
-                                buy_stop_order = broker.place_stop_order('BUY', long_entry_price, trade_qty)
-                                sell_stop_order = broker.place_stop_order('SELL', short_entry_price, trade_qty)
-                                
-                                db.update_bot_state("MES", "PENDING_OCO", range_high, range_low, 0.0, 0.0, trade_qty)
-                        else:
-                            logger.warning(f"🚫 VIX is {vix_price:.2f} (below {max_vix_limit:.2f}). Skipping ORB strategy today.")
-                            skipped_today = True
+                    range_high, range_low = broker.get_2h_range()
+                    if range_high and range_low:
+                        range_established = True
+                        
+                        # Place Entry Stop Orders
+                        long_entry_price = range_high + 0.50
+                        short_entry_price = range_low - 0.50
+                        
+                        logger.info(f"🛒 Placing OCO Entry Stop Orders: Buy Stop at {long_entry_price:.2f} | Sell Stop at {short_entry_price:.2f}")
+                        
+                        broker.cancel_all_active_orders()
+                        buy_stop_order = broker.place_stop_order('BUY', long_entry_price, trade_qty)
+                        sell_stop_order = broker.place_stop_order('SELL', short_entry_price, trade_qty)
+                        
+                        db.update_bot_state("MES", "PENDING_OCO", range_high, range_low, 0.0, 0.0, trade_qty)
                             
                 elif current_time_str > "18:35" and not range_established and state["side"] == "FLAT":
                     logger.warning("🚫 11:30 AM EST has passed and range was not established today. Sitting in cash.")
@@ -304,7 +299,7 @@ def run_live_bot():
             # ------------------------------------------------------------------
             elif state["side"] == "PENDING_OCO":
                 # Check if either stop order was filled
-                broker.ib.update()
+                broker.ib.sleep(0)
                 
                 long_filled = buy_stop_order and buy_stop_order.orderStatus.status == 'Filled'
                 short_filled = sell_stop_order and sell_stop_order.orderStatus.status == 'Filled'
@@ -341,7 +336,7 @@ def run_live_bot():
             # 3. RISK MANAGEMENT & TIME CLOSE
             # ------------------------------------------------------------------
             elif state["side"] in ["ACTIVE_LONG", "ACTIVE_SHORT"]:
-                broker.ib.update()
+                broker.ib.sleep(0)
                 
                 # A. Check Stop Loss execution
                 stop_filled = stop_loss_order and stop_loss_order.orderStatus.status == 'Filled'
@@ -366,6 +361,10 @@ def run_live_bot():
                     action = 'SELL' if state["side"] == "ACTIVE_LONG" else 'BUY'
                     trade = broker.place_market_order(action, trade_qty)
                     
+                    # Wait for order completion
+                    while not trade.isDone():
+                        broker.ib.sleep(0.5)
+                    
                     exit_price = trade.orderStatus.avgFillPrice if trade.orderStatus.avgFillPrice > 0 else broker.active_contract.marketPrice()
                     
                     if state["side"] == "ACTIVE_LONG":
@@ -380,7 +379,7 @@ def run_live_bot():
         except Exception as err:
             logger.error(f"Error in automated loop cycle: {err}")
 
-        time.sleep(15)
+        broker.ib.sleep(15)
 
 if __name__ == '__main__':
     run_live_bot()
