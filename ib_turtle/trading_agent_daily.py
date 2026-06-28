@@ -41,9 +41,7 @@ class DataManager:
         self.conn = sqlite3.connect(db_name, check_same_thread=False)
         self.cursor = self.conn.cursor()
         
-        # Core Tables - Drop bot_state and trade_log on startup to migrate schema cleanly
-        self.cursor.execute("DROP TABLE IF EXISTS bot_state")
-        self.cursor.execute("DROP TABLE IF EXISTS trade_log")
+        # Core Tables - Keep existing state and logs across startups
         
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS bot_state 
             (ticker TEXT PRIMARY KEY, current_side TEXT, virtual_capital REAL, shares_held INTEGER, last_execution_price REAL, stop_price REAL)''')
@@ -92,6 +90,12 @@ class DataManager:
     def print_visible_ledger(self):
         """Builds a beautiful execution ledger directly inside the terminal window"""
         df = pd.read_sql_query("SELECT timestamp, ticker, action, price, size, pnl, explanation FROM trade_log ORDER BY id DESC LIMIT 10", self.conn)
+        
+        # Calculate cumulative PnL
+        self.cursor.execute("SELECT SUM(pnl) FROM trade_log")
+        cum_pnl_row = self.cursor.fetchone()
+        cum_pnl = cum_pnl_row[0] if cum_pnl_row and cum_pnl_row[0] is not None else 0.0
+        
         print("\n" + "📜" + "="*85 + "📜")
         print(f"{'TIMESTAMP':<20} | {'TICKER':<6} | {'ACTION':<12} | {'PRICE':<8} | {'QTY':<5} | {'REALIZED PNL'}")
         print("-" * 91)
@@ -104,14 +108,17 @@ class DataManager:
             explanation = row['explanation'] if row['explanation'] else "No explanation recorded."
             print(f"  └─ 💡 {explanation}")
             print("-" * 91)
+        print(f"{'💵 CUMULATIVE REALIZED PNL:':<70} | {f'${cum_pnl:+.2f}' if cum_pnl != 0.0 else '-'}")
         print("="*89)
 
     def print_performance_dashboard(self):
         df = pd.read_sql_query("SELECT pnl FROM trade_log WHERE pnl != 0.0", self.conn)
         total_capital = self.get_capital()
+        total_pnl = df['pnl'].sum() if not df.empty else 0.0
         
         print("\n📊 CRITICAL METRICS DASHBOARD")
         print(f"• Net Portfolio Standing: ${total_capital:,.2f}")
+        print(f"• Total Realized PnL:    {f'${total_pnl:+.2f}' if total_pnl != 0.0 else '-'}")
         if df.empty:
             print("• Win Rate: N/A (No Closed Round-Trip Trades)")
             return
@@ -306,6 +313,10 @@ def run_live_bot():
                 if df_5m.empty or df_1h.empty:
                     return
                     
+                # Discard the active, incomplete bar to prevent whipsaws
+                df_5m = df_5m.iloc[:-1]
+                df_1h = df_1h.iloc[:-1]
+                    
                 signal, price, fast_ema, filter_ema = calculate_indicators_and_signal(df_5m, df_1h)
                 state = db.get_position_state(active_ticker)
                 
@@ -361,6 +372,10 @@ def run_live_bot():
                     
                     if df_5m.empty or df_1h.empty:
                         continue
+                        
+                    # Discard the active, incomplete bar to prevent whipsaws
+                    df_5m = df_5m.iloc[:-1]
+                    df_1h = df_1h.iloc[:-1]
                         
                     signal, price, fast_ema, filter_ema = calculate_indicators_and_signal(df_5m, df_1h)
                     
