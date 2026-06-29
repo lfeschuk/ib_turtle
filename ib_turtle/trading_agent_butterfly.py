@@ -282,8 +282,8 @@ def run_live_bot():
             # ENTRY LOGIC BLOCK (Executes exactly at 1:30 PM EST / 20:30 IST)
             # ------------------------------------------------------------------
             if state["side"] == "FLAT" and not is_weekend:
-                # Check if we are at the exact entry minute
-                if current_time_str == "20:30":
+                # Trigger at 20:30, or catch up if we are past 20:30 and before 22:00 IST (3:00 PM EST)
+                if current_time_str == "20:30" or ("20:30" < current_time_str < "22:00"):
                     if not entered_today:
                         spx_price = broker.get_spx_price()
                         vix_price = broker.get_vix_price()
