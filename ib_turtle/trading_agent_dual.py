@@ -439,7 +439,8 @@ def run_live_dual_bot():
                         last_standby_log_minute = current_time_str
                         logger.debug(f"⏳ Standby: Time is {current_time_str}. Waiting for 20:30 IST entry window...")
                 
-                if current_time_str == "20:30":
+                # Trigger at 20:30, or catch up if we are past 20:30 and before 22:00 IST (3:00 PM EST)
+                if current_time_str == "20:30" or ("20:30" < current_time_str < "22:00"):
                     spx = broker.get_index_price("SPX")
                     if spx is not None and not math.isnan(spx):
                         center_strike = round(spx / 5) * 5
