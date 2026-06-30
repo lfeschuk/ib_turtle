@@ -433,25 +433,42 @@ def run_live_dual_bot():
             # ------------------------------------------------------------------
             # 2. 1:30 PM EST (20:30 IST): EXECUTE SPX IRON BUTTERFLY (IF SELECTED)
             # ------------------------------------------------------------------
-            if decision and decision["strategy"] == "SPX_BUTTERFLY" and bf_state["side"] == "FLAT":
-                if current_time_str < "20:30":
-                    if last_standby_log_minute != current_time_str:
-                        last_standby_log_minute = current_time_str
-                        logger.debug(f"⏳ Standby: Time is {current_time_str}. Waiting for 20:30 IST entry window...")
-                
-                if current_time_str == "20:30":
+            if current_time_str == "20:30":
+                if not decision:
+                    logger.warning("⚠️ 20:30 Entry Triggered, but NO daily decision was found in the database. Cannot trade.")
+                elif decision["strategy"] != "SPX_BUTTERFLY":
+                    logger.info(f"ℹ️ 20:30 Entry Triggered, but today's selected strategy is {decision['strategy']} (not SPX_BUTTERFLY). Skipping butterfly.")
+                elif bf_state["side"] != "FLAT":
+                    logger.info(f"ℹ️ 20:30 Entry Triggered, but butterfly position state is already {bf_state['side']}. Skipping entry.")
+                else:
                     spx = broker.get_index_price("SPX")
                     if spx is not None and not math.isnan(spx):
                         center_strike = round(spx / 5) * 5
                         logger.info(f"🎯 1:30 PM: ATM Strike is {center_strike}. Selling 10-wide SPX Iron Butterfly...")
                         
                         trade = broker.execute_iron_butterfly(center_strike, wing_width, 'ENTRY_CREDIT', qty_butterfly)
-                        credit = abs(trade.orderStatus.avgFillPrice) if trade and trade.orderStatus.avgFillPrice and not math.isnan(trade.orderStatus.avgFillPrice) else 7.50
-                        
-                        db.log_transaction("SPX_BUTTERFLY", "ENTRY_CREDIT", credit, qty_butterfly)
-                        db.update_bot_state("SPX_BUTTERFLY", "ACTIVE", center_strike, 0.0, qty_butterfly, extra_param=center_strike)
-                        db.save_daily_decision(today_str, decision["vix"], "SPX_BUTTERFLY", "EXECUTING")
-                        db.print_visible_ledger()
+                        if trade is not None:
+                            # Wait up to 30 seconds for fill status to update
+                            for _ in range(60):
+                                broker.ib.sleep(0.5)
+                                if trade.orderStatus.status == 'Filled':
+                                    break
+                                if trade.orderStatus.status in ['Rejected', 'Cancelled']:
+                                    break
+                                    
+                            if trade.orderStatus.status == 'Filled':
+                                credit = abs(trade.orderStatus.avgFillPrice)
+                                db.log_transaction("SPX_BUTTERFLY", "ENTRY_CREDIT", credit, qty_butterfly)
+                                db.update_bot_state("SPX_BUTTERFLY", "ACTIVE", center_strike, 0.0, qty_butterfly, extra_param=center_strike)
+                                db.save_daily_decision(today_str, decision["vix"], "SPX_BUTTERFLY", "EXECUTING")
+                                db.print_visible_ledger()
+                            else:
+                                logger.error(f"❌ Iron Butterfly order did not fill. Status: {trade.orderStatus.status}. Reason: {trade.orderStatus.whyHeld or 'Unknown'}")
+                                broker.cancel_all_active_orders()
+                        else:
+                            logger.error("❌ Broker failed to place the Iron Butterfly order (returned None).")
+                    else:
+                        logger.error("❌ SPX price query returned NaN or None at 20:30. Cannot determine ATM strike for entry!")
 
             # ------------------------------------------------------------------
             # 3. STRATEGY IN-FLIGHT MONITORING & OCO ENTRY CHECK

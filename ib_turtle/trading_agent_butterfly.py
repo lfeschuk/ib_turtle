@@ -284,11 +284,17 @@ def run_live_bot():
             if state["side"] == "FLAT" and not is_weekend:
                 # Check if we are at the exact entry minute
                 if current_time_str == "20:30":
-                    if not entered_today:
+                    if entered_today:
+                        logger.info("ℹ️ 20:30 Entry Triggered, but we already entered or skipped a trade today.")
+                    else:
                         spx_price = broker.get_spx_price()
                         vix_price = broker.get_vix_price()
                         
-                        if spx_price is not None and not math.isnan(spx_price) and vix_price is not None and not math.isnan(vix_price):
+                        if spx_price is None or math.isnan(spx_price):
+                            logger.error("❌ SPX price query returned NaN or None at 20:30. Cannot trade.")
+                        elif vix_price is None or math.isnan(vix_price):
+                            logger.error("❌ VIX price query returned NaN or None at 20:30. Cannot trade.")
+                        else:
                             # VIX filter check
                             if vix_price <= max_vix_limit:
                                 center_strike = round(spx_price / 5) * 5
@@ -299,12 +305,31 @@ def run_live_bot():
                                     logger.info(f"🎯 TRIGGER: Entering trade for {trade_qty} contract(s)...")
                                     
                                     trade = broker.execute_iron_butterfly(center_strike=center_strike, wing_width=wing_width, action='ENTRY_CREDIT', qty=trade_qty)
-                                    if trade:
-                                        credit_filled = broker.fetch_combo_execution_premium(trade)
-                                        db.log_transaction("SPX", "BUTTERFLY_ENTRY", center_strike, credit_filled, trade_qty)
-                                        db.update_position_state("SPX", "ACTIVE", center_strike, credit_filled, trade_qty)
+                                    if trade is not None:
+                                        # Wait up to 30 seconds for fill status to update
+                                        for _ in range(60):
+                                            broker.ib.sleep(0.5)
+                                            if trade.orderStatus.status == 'Filled':
+                                                break
+                                            if trade.orderStatus.status in ['Rejected', 'Cancelled']:
+                                                break
+                                                
+                                        if trade.orderStatus.status == 'Filled':
+                                            credit_filled = broker.fetch_combo_execution_premium(trade)
+                                            db.log_transaction("SPX", "BUTTERFLY_ENTRY", center_strike, credit_filled, trade_qty)
+                                            db.update_position_state("SPX", "ACTIVE", center_strike, credit_filled, trade_qty)
+                                            entered_today = True
+                                            db.print_visible_ledger()
+                                        else:
+                                            logger.error(f"❌ Iron Butterfly order did not fill. Status: {trade.orderStatus.status}. Reason: {trade.orderStatus.whyHeld or 'Unknown'}")
+                                            broker.cancel_all_active_orders()
+                                            entered_today = True  # Stop checking for today
+                                    else:
+                                        logger.error("❌ Broker failed to place the Iron Butterfly order (returned None).")
                                         entered_today = True
-                                        db.print_visible_ledger()
+                                else:
+                                    logger.error(f"❌ Failed to retrieve butterfly option premium for strike {center_strike}. Cannot trade.")
+                                    entered_today = True
                             else:
                                 if not skipped_today_logged:
                                     logger.warning(f"🚫 VIX LIMIT FILTER: VIX is {vix_price:.2f} (above maximum {max_vix_limit:.2f} limit). Skipping today's trade.")
