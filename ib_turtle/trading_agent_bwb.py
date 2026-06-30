@@ -373,8 +373,8 @@ def run_live_bwb_bot():
             # ENTRY BLOCK (Executes exactly at 1:30 PM EST / 20:30 IST)
             # ------------------------------------------------------------------
             if state["side"] == "FLAT" and not is_weekend and not skipped_today:
-                # Trigger at 20:30 IST, or catch up if bot started late during the afternoon (before 21:00 IST)
-                if current_time_str == "20:30" or ("20:30" < current_time_str < "21:00"):
+                # Check if we are at the exact entry minute
+                if current_time_str == "20:30":
                     if not entered_today:
                         vix = broker.get_index_price("VIX")
                         if vix is not None and not math.isnan(vix):
@@ -431,7 +431,22 @@ def run_live_bwb_bot():
         except Exception as err:
             logger.error(f"Error in BWB loop cycle: {err}")
 
-        broker.ib.sleep(15)
+        # Calculate next wakeup time to align with exact event boundaries
+        now_ist = datetime.datetime.now(IST)
+        target_2030 = now_ist.replace(hour=20, minute=30, second=0, microsecond=0)
+        target_2302 = now_ist.replace(hour=23, minute=2, second=0, microsecond=0)
+        
+        sleep_secs = 15.0
+        
+        # Check if any target is in the future and close (within 5 minutes)
+        for target in [target_2030, target_2302]:
+            diff = (target - now_ist).total_seconds()
+            if 0 < diff <= 300:
+                sleep_secs = diff
+                logger.info(f"⏰ Precise scheduling: Adjusting sleep to {sleep_secs:.2f} seconds to hit {target.strftime('%H:%M:%S')} IST exactly.")
+                break
+                
+        broker.ib.sleep(sleep_secs)
 
 if __name__ == '__main__':
     run_live_bwb_bot()
