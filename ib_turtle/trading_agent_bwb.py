@@ -375,32 +375,47 @@ def run_live_bwb_bot():
             if state["side"] == "FLAT" and not is_weekend and not skipped_today:
                 # Check if we are at the exact entry minute
                 if current_time_str == "20:30":
-                    if not entered_today:
+                    if entered_today:
+                        logger.info("ℹ️ 20:30 Entry Triggered, but we already entered a BWB trade today.")
+                    else:
                         vix = broker.get_index_price("VIX")
-                        if vix is not None and not math.isnan(vix):
+                        if vix is None or math.isnan(vix):
+                            logger.error("❌ VIX price query returned NaN or None at 20:30. Cannot trade.")
+                        else:
                             if vix <= max_vix_limit:
                                 spx = broker.get_index_price("SPX")
-                                if spx is not None and not math.isnan(spx):
+                                if spx is None or math.isnan(spx):
+                                    logger.error("❌ SPX price query returned NaN or None at 20:30. Cannot trade.")
+                                else:
                                     center_strike = round(spx / 5) * 5
-                                    logger.info(f"🎯 1:30 PM BWB Entry: VIX={vix:.2f} | SPX={spx:.2f} | ATM Strike={center_strike}")
+                                    logger.info(f"🎯 1:30 PM BWB Entry Conditions: VIX={vix:.2f} (Pass) | SPX={spx:.2f} | Strike={center_strike}")
                                     
                                     trade = broker.execute_put_bwb(center_strike, upper_g, lower_g, 'ENTRY_CREDIT', trade_qty)
-                                    if trade is not None and trade.orderStatus.status == 'Filled':
-                                        credit = abs(trade.orderStatus.avgFillPrice)
-                                        db.log_transaction("ENTRY_CREDIT", center_strike, credit, trade_qty)
-                                        db.update_position_state("ACTIVE", center_strike, credit, trade_qty)
-                                        entered_today = True
-                                        db.print_visible_ledger()
+                                    if trade is not None:
+                                        # Wait up to 30 seconds for fill status to update
+                                        for _ in range(60):
+                                            broker.ib.sleep(0.5)
+                                            if trade.orderStatus.status == 'Filled':
+                                                break
+                                            if trade.orderStatus.status in ['Rejected', 'Cancelled']:
+                                                break
+                                                
+                                        if trade.orderStatus.status == 'Filled':
+                                            credit = abs(trade.orderStatus.avgFillPrice)
+                                            db.log_transaction("ENTRY_CREDIT", center_strike, credit, trade_qty)
+                                            db.update_position_state("ACTIVE", center_strike, credit, trade_qty)
+                                            entered_today = True
+                                            db.print_visible_ledger()
+                                        else:
+                                            logger.error(f"❌ Put BWB order did not fill. Status: {trade.orderStatus.status}. Reason: {trade.orderStatus.whyHeld or 'Unknown'}")
+                                            broker.cancel_all_active_orders()
+                                            skipped_today = True
                                     else:
-                                        logger.warning("🚫 Put BWB Entry did not execute or fill (credit threshold not met or quoting failed). Skipping entry for today.")
+                                        logger.error("❌ Broker failed to place the BWB order (returned None).")
                                         skipped_today = True
-                                else:
-                                    logger.warning("⚠️ SPX price query returned NaN or None. Retrying on next tick...")
                             else:
-                                logger.warning(f"🚫 VIX is {vix:.2f} (above {max_vix_limit:.2f}). Skipping BWB entry today.")
+                                logger.warning(f"🚫 VIX LIMIT FILTER: VIX is {vix:.2f} (above maximum {max_vix_limit:.2f} limit). Skipping BWB entry today.")
                                 skipped_today = True
-                        else:
-                            logger.warning("⚠️ VIX price query returned NaN or None. Retrying on next tick...")
 
             # ------------------------------------------------------------------
             # EXPIRATION PNL EVALUATION (4:02 PM EST / 23:02 IST)
