@@ -439,8 +439,7 @@ def run_live_dual_bot():
                         last_standby_log_minute = current_time_str
                         logger.debug(f"⏳ Standby: Time is {current_time_str}. Waiting for 20:30 IST entry window...")
                 
-                # Trigger at 20:30, or catch up if we are past 20:30 and before 22:00 IST (3:00 PM EST)
-                if current_time_str == "20:30" or ("20:30" < current_time_str < "22:00"):
+                if current_time_str == "20:30":
                     spx = broker.get_index_price("SPX")
                     if spx is not None and not math.isnan(spx):
                         center_strike = round(spx / 5) * 5
@@ -557,7 +556,24 @@ def run_live_dual_bot():
         except Exception as err:
             logger.error(f"Error in automated loop cycle: {err}")
 
-        broker.ib.sleep(15)
+        # Calculate next wakeup time to align with exact event boundaries
+        now_ist = datetime.datetime.now(IST)
+        target_1830 = now_ist.replace(hour=18, minute=30, second=0, microsecond=0)
+        target_2030 = now_ist.replace(hour=20, minute=30, second=0, microsecond=0)
+        target_2258 = now_ist.replace(hour=22, minute=58, second=0, microsecond=0)
+        target_2302 = now_ist.replace(hour=23, minute=2, second=0, microsecond=0)
+        
+        sleep_secs = 15.0
+        
+        # Check if any target is in the future and close (within 5 minutes)
+        for target in [target_1830, target_2030, target_2258, target_2302]:
+            diff = (target - now_ist).total_seconds()
+            if 0 < diff <= 300:
+                sleep_secs = diff
+                logger.info(f"⏰ Precise scheduling: Adjusting sleep to {sleep_secs:.2f} seconds to hit {target.strftime('%H:%M:%S')} IST exactly.")
+                break
+                
+        broker.ib.sleep(sleep_secs)
 
 if __name__ == '__main__':
     run_live_dual_bot()
