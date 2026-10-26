@@ -14,6 +14,7 @@ except ModuleNotFoundError:  # Python 3.10 (Ubuntu 22.04)
 
 MODES = ("demo", "shadow", "paper", "live")
 SIZING_MODES = ("static", "perbet", "perbet_house", "perbet_dd")
+BWB_SIZING_MODES = ("earned_ramp", "earned_ramp_strict", "fixed_7.5", "fixed_12.5", "fixed_20", "hwm_brake")
 
 
 @dataclass
@@ -31,8 +32,32 @@ class SizingSettings:
 
 
 @dataclass
+class BwbSettings:
+    enabled: bool = True
+    initial_capital: float = 100_000.0   # independent $100k paper allocation for Strategy 2 (0DTE Put BWB)
+    isolated_capital: bool = True        # track strategy's own $100k ledger independently of shared IBKR account
+    delta_mid: float = 0.20              # 20-delta (0.20) or 15-delta (0.15) middle short put strike
+    w1_sd: float = 0.32                  # upper wing width in 1D SD units (0.32 for 20d, 0.28 for 15d)
+    w_risk_sd: float = 1.30              # lower net risk width in 1D SD units
+    real_curv_bps: float = 27.0          # empirical Cboe 0DTE wing curvature haircut in bps of W_risk
+    sizing_mode: str = "earned_ramp"     # Earned-Money ("House-Money") Kelly Ramp: 7.5% base -> 20% at +33% gain
+    base_collat_pct: float = 0.075       # 7.5% collateral risk at initial capital W_0
+    floor_collat_pct: float = 0.050      # 5.0% floor if equity dips below W_0
+    max_collat_pct: float = 0.200        # 20.0% maximum collateral cap on earned profits
+    profit_share: float = 0.50           # 50% of earned profits (W - W_0) allocated to Kelly ramp
+    symbol: str = "SPX"                  # "SPX" (SPXW $100 mult) or "XSP" (Mini-SPX $100 mult, 1/10th notional)
+    use_xsp_below_nlv: float = 25_000.0  # auto-select XSP if account equity < $25k
+    discrete_strikes: bool = False       # False = continuous backtest parity; True = round to $5 (SPXW) / $1 (XSP)
+    entry_minutes_after_open: int = 60   # 10:30 AM ET post-initial-balance entry window
+    client_id_offset: int = 1            # TWS clientId = cfg.client_id + client_id_offset
+    panel_path: str = ""                 # optional custom path to daily_panel.pkl for historical replay
+
+
+@dataclass
 class LiveConfig:
     mode: str = "shadow"
+    initial_capital: float = 100_000.0   # independent $100k paper allocation for Strategy 1 (Gap Short)
+    isolated_capital: bool = True        # track Strategy 1's own $100k ledger independently in paper/shadow
     tws_host: str = "127.0.0.1"
     tws_port: int = 7497            # TWS paper 7497, TWS live 7496 (IB Gateway: 4002 / 4001)
     client_id: int = 17
@@ -54,6 +79,7 @@ class LiveConfig:
     ntfy_url: str = ""              # e.g. https://ntfy.sh/<your-private-topic>
     telegram_chat_id: str = ""
     sizing: SizingSettings = field(default_factory=SizingSettings)
+    bwb: BwbSettings = field(default_factory=BwbSettings)
 
     @property
     def data_path(self) -> Path:
@@ -80,6 +106,16 @@ class LiveConfig:
             raise ValueError("sizing.kelly_mult must be > 0 and <= 1")
         if not self.sizing.kelly_mult <= self.sizing.profit_kelly_mult <= 1:
             raise ValueError("sizing.profit_kelly_mult must be >= sizing.kelly_mult and <= 1")
+        if self.initial_capital <= 0:
+            raise ValueError("initial_capital must be > 0")
+        if self.bwb.sizing_mode not in BWB_SIZING_MODES:
+            raise ValueError(f"bwb.sizing_mode must be one of {BWB_SIZING_MODES}")
+        if self.bwb.initial_capital <= 0:
+            raise ValueError("bwb.initial_capital must be > 0")
+        if not 0.05 <= self.bwb.delta_mid <= 0.40:
+            raise ValueError("bwb.delta_mid must be between 0.05 and 0.40")
+        if not 0 < self.bwb.base_collat_pct <= self.bwb.max_collat_pct <= 0.50:
+            raise ValueError("bwb.base_collat_pct must be > 0 and <= bwb.max_collat_pct <= 0.50")
 
 
 def _apply(obj, values: dict) -> None:
@@ -89,6 +125,8 @@ def _apply(obj, values: dict) -> None:
             raise ValueError(f"unknown setting: {key}")
         if key == "sizing":
             _apply(obj.sizing, value)
+        elif key == "bwb":
+            _apply(obj.bwb, value)
         else:
             setattr(obj, key, value)
 

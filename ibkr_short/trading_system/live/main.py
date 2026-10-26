@@ -97,6 +97,8 @@ async def _run(cfg: LiveConfig) -> int:
     from .auth import AuthStore
     from .borrow import BorrowTable
     from .broker import IBKRBroker, SimBroker
+    from .bwb_broker import IBKRBwbBroker, SimBwbBroker
+    from .bwb_service import BwbBotService
     from .live_strategy import PerBetModel
     from .notify import Notifier
     from .service import BotService
@@ -117,14 +119,30 @@ async def _run(cfg: LiveConfig) -> int:
             return 1
     else:
         broker = IBKRBroker(cfg, readonly=(cfg.mode == "shadow"), borrow=BorrowTable(cfg.data_path / "ibkr_usa.txt"))
-    service = BotService(cfg, broker, journal, Notifier(cfg, secrets), model)
-    app = create_app(service, cfg, AuthStore(journal, secrets["password_hash"]))
+    notifier = Notifier(cfg, secrets)
+    service = BotService(cfg, broker, journal, notifier, model)
+
+    bwb_service = None
+    bwb_broker = None
+    if cfg.bwb.enabled:
+        bwb_journal = Journal(cfg.data_path / f"bwb-{cfg.mode}.db")
+        if cfg.mode == "demo":
+            bwb_broker = SimBwbBroker(cfg)
+        else:
+            bwb_broker = IBKRBwbBroker(cfg, readonly=(cfg.mode == "shadow"))
+        bwb_service = BwbBotService(cfg, bwb_broker, bwb_journal, notifier)
+
+    app = create_app(service, cfg, AuthStore(journal, secrets["password_hash"]), bwb_service=bwb_service)
     server = uvicorn.Server(uvicorn.Config(app, host=cfg.http_host, port=cfg.http_port, log_level="info",
                                            access_log=False, server_header=False, proxy_headers=False))
-    log.info("app on http://%s:%s (mode %s)", cfg.http_host, cfg.http_port, cfg.mode)
+    log.info("app on http://%s:%s (mode %s, bwb_enabled=%s)", cfg.http_host, cfg.http_port, cfg.mode, cfg.bwb.enabled)
     tasks = [asyncio.create_task(server.serve()), asyncio.create_task(service.run())]
+    if bwb_service is not None:
+        tasks.append(asyncio.create_task(bwb_service.run()))
     done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
     service.stop()
+    if bwb_service is not None:
+        bwb_service.stop()
     server.should_exit = True
     for t in pending:
         try:
@@ -132,6 +150,8 @@ async def _run(cfg: LiveConfig) -> int:
         except (asyncio.TimeoutError, asyncio.CancelledError):
             t.cancel()
     await broker.disconnect()
+    if bwb_broker is not None:
+        await bwb_broker.disconnect()
     for t in done:
         if t.exception():
             raise t.exception()

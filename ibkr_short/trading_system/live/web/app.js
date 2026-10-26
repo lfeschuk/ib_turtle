@@ -1,11 +1,13 @@
 'use strict';
-// Gap Short control app. Builds every element with createElement/textContent: no HTML strings, no inline code.
+// Dual-Strategy Trading Control App (Small-Cap 100%+ Gap Short & 0DTE SPX Put BWB).
+// Builds every element with createElement/textContent: no HTML strings, no inline code.
 (() => {
   const POLL_MS = 10000;
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const root = document.getElementById('app');
   const view = {};
   let pollTimer = null;
+  let bwbEnabled = true;
 
   // ---------------------------------------------------------------- DOM helpers
   function h(tag, props, ...kids) {
@@ -115,8 +117,9 @@
       maxlength: 256, required: true });
     const err = h('p', { class: 'error', text: message || '' });
     const btn = h('button', { class: 'btn primary wide', type: 'submit', text: 'Sign in' });
-    const form = h('form', { class: 'login' }, h('div', { class: 'logo' }, icon(72)), h('h1', { text: 'Gap Short' }),
-      h('p', { class: 'muted', text: 'Trading control' }), pw, btn, err);
+    const form = h('form', { class: 'login' }, h('div', { class: 'logo' }, icon(72)),
+      h('h1', { text: 'Trading Control' }),
+      h('p', { class: 'muted', text: 'Gap Short ($100k) · 0DTE Put BWB ($100k)' }), pw, btn, err);
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       btn.disabled = true;
@@ -136,39 +139,92 @@
     pw.focus();
   }
 
+  const STRATEGIES = [
+    ['both', 'Both ($200k)'],
+    ['gapshort', 'Gap Short ($100k)'],
+    ['bwb', '0DTE BWB ($100k)'],
+  ];
   const TABS = [['now', 'Now'], ['report', 'Report'], ['activity', 'Activity']];
+  let currentStrategy = 'both';
   let currentTab = TABS.some(([k]) => '#' + k === window.location.hash) ? window.location.hash.slice(1) : 'now';
+
+  function selectStrategy(strat) {
+    currentStrategy = strat;
+    for (const [k, b] of Object.entries(view.stratButtons || {})) {
+      b.className = 'strat-btn' + (k === strat ? ' on' : '');
+    }
+    if (view.tabbar) view.tabbar.hidden = (strat === 'both');
+    updatePaneVisibility();
+    refresh();
+  }
 
   function selectTab(key) {
     currentTab = key;
-    for (const [k, pane] of Object.entries(view.panes || {})) pane.hidden = k !== key;
     for (const [k, b] of Object.entries(view.tabButtons || {})) {
       b.className = 'tab' + (k === key ? ' on' : '');
       b.setAttribute('aria-selected', k === key ? 'true' : 'false');
     }
+    updatePaneVisibility();
     history.replaceState(null, '', '#' + key);
     window.scrollTo(0, 0);
+  }
+
+  function updatePaneVisibility() {
+    if (!view.panes) return;
+    if (currentStrategy === 'both') {
+      view.panes.overview.hidden = false;
+      view.panes.now.hidden = true;
+      view.panes.report.hidden = true;
+      view.panes.activity.hidden = true;
+    } else {
+      view.panes.overview.hidden = true;
+      for (const [k, pane] of Object.entries(view.panes)) {
+        if (k === 'overview') continue;
+        pane.hidden = k !== currentTab;
+      }
+    }
   }
 
   function showMain() {
     view.badge = h('span', { class: 'badge' });
     view.dot = h('span', { class: 'dot', title: 'TWS connection' });
     view.state = h('span', { class: 'state' });
+    view.brandTitle = h('span', { text: 'Portfolio Control' });
+
+    view.stratButtons = {};
+    const stratbar = h('div', { class: 'strats', role: 'navigation', 'aria-label': 'Strategy selector' });
+    for (const [key, label] of STRATEGIES) {
+      if (!bwbEnabled && key !== 'gapshort') continue;
+      view.stratButtons[key] = h('button', {
+        class: 'strat-btn' + (key === currentStrategy ? ' on' : ''),
+        type: 'button',
+        text: label,
+        onclick: () => selectStrategy(key),
+      });
+      stratbar.appendChild(view.stratButtons[key]);
+    }
+    if (!bwbEnabled) currentStrategy = 'gapshort';
+
     view.tabButtons = {};
-    const tabbar = h('nav', { class: 'tabs', role: 'tablist' });
+    view.tabbar = h('nav', { class: 'tabs', role: 'tablist' });
     for (const [key, label] of TABS) {
       view.tabButtons[key] = h('button', { class: 'tab', type: 'button', role: 'tab', text: label, onclick: () => selectTab(key) });
-      tabbar.appendChild(view.tabButtons[key]);
+      view.tabbar.appendChild(view.tabButtons[key]);
     }
+
     const top = h('header', { class: 'top' },
-      h('div', { class: 'top-row' }, h('div', { class: 'brand' }, icon(26), h('span', { text: 'Gap Short' })),
+      h('div', { class: 'top-row' }, h('div', { class: 'brand' }, icon(26), view.brandTitle),
         h('div', { class: 'top-right' }, view.badge, view.dot, view.state)),
-      tabbar);
-    for (const k of ['account', 'controls', 'positions', 'signals', 'day', 'edge', 'compare', 'equity', 'orders', 'trades', 'events']) {
+      bwbEnabled ? stratbar : null,
+      view.tabbar);
+
+    for (const k of ['ovCombined', 'ovGap', 'ovBwb', 'account', 'bwbStruct', 'controls', 'positions', 'signals',
+                     'day', 'edge', 'compare', 'equity', 'orders', 'trades', 'events']) {
       view[k] = h('section', { class: 'card' });
     }
     view.panes = {
-      now: h('div', { class: 'pane' }, view.account, view.controls, view.positions, view.signals),
+      overview: h('div', { class: 'pane' }, view.ovCombined, view.ovGap, view.ovBwb),
+      now: h('div', { class: 'pane' }, view.account, view.bwbStruct, view.controls, view.positions, view.signals),
       report: h('div', { class: 'pane' }, view.day, view.edge, view.compare, view.equity),
       activity: h('div', { class: 'pane' }, view.orders, view.trades, view.events),
     };
@@ -176,9 +232,10 @@
     const foot = h('footer', { class: 'foot' }, view.updated,
       h('button', { class: 'link', type: 'button', text: 'Sign out', onclick: signOut }));
     root.className = '';
-    root.replaceChildren(top, h('main', { class: 'content' }, view.panes.now, view.panes.report, view.panes.activity, foot));
+    root.replaceChildren(top, h('main', { class: 'content' },
+      view.panes.overview, view.panes.now, view.panes.report, view.panes.activity, foot));
+    selectStrategy(currentStrategy);
     selectTab(currentTab);
-    refresh();
     startPolling();
   }
 
@@ -186,33 +243,151 @@
   const STATE_TEXT = { running: 'Running', paused: 'Paused', connecting: 'Connecting', disconnected: 'Offline',
     error: 'Error', starting: 'Starting' };
 
+  function sparkSvg(rows) {
+    const vals = (rows || []).map((r) => r.nlv).filter(isNum);
+    if (vals.length < 2) return null;
+    const lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || 1;
+    const pts = vals.map((v, i) => (i / (vals.length - 1) * 100).toFixed(2) + ',' + (38 - (v - lo) / span * 34).toFixed(2)).join(' ');
+    const chart = svg('svg', { class: 'spark', viewBox: '0 0 100 40', preserveAspectRatio: 'none', role: 'img', 'aria-label': 'Equity chart' });
+    chart.appendChild(svg('line', { class: 'base', x1: 0, y1: 39.5, x2: 100, y2: 39.5 }));
+    chart.appendChild(svg('polyline', { points: pts }));
+    return chart;
+  }
+
+  function renderOverview(ov) {
+    const comb = ov.combined || {};
+    const gs = (ov.strategies && ov.strategies.gapshort) || {};
+    const bwb = (ov.strategies && ov.strategies.bwb) || {};
+    const gsSt = gs.status || {};
+    const bwbSt = bwb.status || {};
+
+    view.brandTitle.textContent = 'Both Strategies ($200k)';
+    view.badge.textContent = (gsSt.mode || 'paper').toUpperCase();
+    view.badge.className = 'badge mode-' + (gsSt.mode || 'paper');
+    const conn = Boolean(gsSt.connected || bwbSt.connected);
+    view.dot.className = 'dot ' + (conn ? 'ok' : 'bad');
+    view.state.textContent = '2 Bots Active';
+
+    // 1. Combined $200k Portfolio Card
+    view.ovCombined.replaceChildren(
+      h('h2', {}, h('span', { text: 'Combined Paper Portfolio' }), h('span', { text: 'Base ' + money(comb.initial_capital || 200000) })),
+      h('div', { class: 'big', text: money(comb.net_liquidation) }),
+      h('div', { class: 'grid' }, [
+        stat('Total Return', pct(comb.total_return_pct, true), tone(comb.total_return_pct)),
+        stat('Today P&L', money(comb.day_pnl, true), tone(comb.day_pnl)),
+        stat('Active Positions', String(comb.positions || 0)),
+        stat('Allocation', '2 × $100,000 Independent'),
+      ]),
+      h('div', { class: 'note', text: 'Each strategy trades and compounds its own independent $100,000 paper-trading ledger.' })
+    );
+
+    // 2. Strategy 1 Card: Small-Cap 100%+ Gap Short ($100k)
+    const gsKids = [
+      h('h2', {}, h('span', { text: 'Strategy 1 · Small-Cap 100%+ Gap Short' }),
+        h('span', { text: STATE_TEXT[gsSt.state] || gsSt.state || '' })),
+      h('div', { class: 'big', text: money(gsSt.net_liquidation) }),
+      h('div', { class: 'grid' }, [
+        stat('Return vs $100k', pct(gsSt.total_return_pct, true), tone(gsSt.total_return_pct)),
+        stat('Today', money(gsSt.day_pnl, true), tone(gsSt.day_pnl)),
+        stat('From Peak', pct(gsSt.drawdown_pct, true), tone(gsSt.drawdown_pct)),
+        stat('Open Shorts', isNum(gsSt.positions) ? gsSt.positions + ' / ' + gsSt.max_positions : '0'),
+      ]),
+    ];
+    const gsSpark = sparkSvg(gs.equity);
+    if (gsSpark) gsKids.push(gsSpark);
+    if (gsSt.last_decision && gsSt.last_decision.day) {
+      const d = gsSt.last_decision;
+      gsKids.push(h('div', { class: 'note', text: 'Last decision ' + d.day + ': ' + d.candidates + ' signals, ' + d.placed + ' shorts' }));
+    }
+    gsKids.push(h('div', { class: 'item-actions' },
+      h('button', { class: 'btn primary small', type: 'button', text: 'Open Gap Short ($100k) →',
+        onclick: () => selectStrategy('gapshort') })));
+    view.ovGap.replaceChildren(...gsKids);
+
+    // 3. Strategy 2 Card: 0DTE SPX Put BWB ($100k)
+    if (bwbSt && bwbSt.strategy === 'bwb') {
+      const sz = bwbSt.sizing || {};
+      const bp = bwbSt.bwb_plan || {};
+      const bwbKids = [
+        h('h2', {}, h('span', { text: 'Strategy 2 · 0DTE SPX Put BWB' }),
+          h('span', { text: STATE_TEXT[bwbSt.state] || bwbSt.state || '' })),
+        h('div', { class: 'big', text: money(bwbSt.net_liquidation) }),
+        h('div', { class: 'grid' }, [
+          stat('Return vs $100k', pct(bwbSt.total_return_pct, true), tone(bwbSt.total_return_pct)),
+          stat('Today', money(bwbSt.day_pnl, true), tone(bwbSt.day_pnl)),
+          stat('From Peak', pct(bwbSt.drawdown_pct, true), tone(bwbSt.drawdown_pct)),
+          stat('Earned Kelly %', pct(bwbSt.collat_pct) + ' (7.5%→20%)'),
+          stat('House Cushion', money(sz.house_cushion_dollars, true), tone(sz.house_cushion_dollars)),
+          stat('F1 Term Gate', bp.day ? (bp.f1_pass ? 'PASS (VIX1D < VIX)' : 'GATED (Cash)') : 'Waiting'),
+        ]),
+        h('div', { class: 'ramp-track' },
+          h('div', { class: 'ramp-fill', style: 'width:' + Math.round(bwbSt.ramp_progress_pct || 0) + '%' })),
+      ];
+      if (bp.day && bp.k_mid) {
+        bwbKids.push(h('div', { class: 'note',
+          text: bp.day + ' ' + bp.trade_key + ' · Credit ' + price(bp.net_credit_pts) + ' pts · BE ' + Math.round(bp.k_be) + ' · ' + (sz.house_cushion_dollars > 0 ? 'House-money active' : 'Principal shield active') }));
+      }
+      const bwbSpark = sparkSvg(bwb.equity);
+      if (bwbSpark) bwbKids.push(bwbSpark);
+      bwbKids.push(h('div', { class: 'item-actions' },
+        h('button', { class: 'btn primary small', type: 'button', text: 'Open 0DTE BWB ($100k) →',
+          onclick: () => selectStrategy('bwb') })));
+      view.ovBwb.hidden = false;
+      view.ovBwb.replaceChildren(...bwbKids);
+    } else {
+      view.ovBwb.hidden = true;
+    }
+  }
+
   function renderStatus(s) {
+    const isBwb = s.strategy === 'bwb';
+    view.brandTitle.textContent = isBwb ? '0DTE Put BWB ($100k)' : 'Gap Short ($100k)';
     view.badge.textContent = (s.mode || '').toUpperCase();
     view.badge.className = 'badge mode-' + s.mode;
     view.dot.className = 'dot ' + (s.connected ? 'ok' : 'bad');
     view.state.textContent = STATE_TEXT[s.state] || s.state;
 
-    const kids = [h('h2', {}, h('span', { text: 'Account' }), h('span', { text: s.account || '' }))];
+    const kids = [h('h2', {}, h('span', { text: isBwb ? '0DTE BWB Ledger ($100k Base)' : 'Gap Short Ledger ($100k Base)' }),
+      h('span', { text: s.account || '' }))];
     kids.push(h('div', { class: 'big', text: money(s.net_liquidation) }));
-    const grid = [
-      stat('Today', money(s.day_pnl, true), tone(s.day_pnl)),
-      stat('From peak', pct(s.drawdown_pct, true), tone(s.drawdown_pct)),
-      stat('Open shorts', isNum(s.positions) ? s.positions + ' / ' + s.max_positions : '–'),
-      stat('Margin used', pct(s.margin_use_pct)),
-    ];
-    const share = (m) => { const n = Math.round(1 / m); return Math.abs(1 / m - n) < 0.05 ? '1/' + n : m.toFixed(2); };
-    if (s.sizing && s.sizing.mode === 'perbet_dd') {
-      grid.push(stat('Room before limit', pct(s.cushion_pct)));
-      grid.push(stat('Sizing', 'Per-bet Kelly, ' + Math.round(s.sizing.dd_limit * 100) + '% limit'));
-    } else if (s.sizing && s.sizing.mode === 'perbet') {
-      grid.push(stat('Sizing', 'Per-bet Kelly × ' + share(s.sizing.kelly_mult)));
-    } else if (s.sizing && s.sizing.mode === 'perbet_house') {
-      grid.push(stat('Profit this year', pct(s.house_pct) + ' of account'));
-      grid.push(stat('Sizing', 'Kelly × ' + share(s.sizing.kelly_mult) + ', profit × ' + share(s.sizing.profit_kelly_mult)));
-    } else if (s.sizing) {
-      grid.push(stat('Sizing', (s.sizing.static_pct * 100).toFixed(1) + '% per short'));
+
+    if (isBwb) {
+      const sz = s.sizing || {};
+      const grid = [
+        stat('Return vs $100k', pct(s.total_return_pct, true), tone(s.total_return_pct)),
+        stat('Today', money(s.day_pnl, true), tone(s.day_pnl)),
+        stat('From peak', pct(s.drawdown_pct, true), tone(s.drawdown_pct)),
+        stat('Dip below $100k', pct(s.initial_dd_pct, true), tone(s.initial_dd_pct)),
+        stat('Earned Kelly %', pct(s.collat_pct) + ' (7.5%→20%)'),
+        stat('House cushion', money(sz.house_cushion_dollars, true) + ' (' + pct(sz.house_cushion_pct, true) + ')', tone(sz.house_cushion_dollars)),
+      ];
+      kids.push(h('div', { class: 'grid' }, grid));
+      kids.push(h('div', { class: 'ramp-track' },
+        h('div', { class: 'ramp-fill', style: 'width:' + Math.round(s.ramp_progress_pct || 0) + '%' })));
+      kids.push(h('div', { class: 'note', text: 'Earned-Money Kelly Ramp: starts at 7.5% collateral to protect your initial $100k, and scales with 50% of earned profits up to the 20.0% cap at +33% gain (+4.5%/yr T-Bill yield on cash).' }));
+    } else {
+      const grid = [
+        stat('Return vs $100k', pct(s.total_return_pct, true), tone(s.total_return_pct)),
+        stat('Today', money(s.day_pnl, true), tone(s.day_pnl)),
+        stat('From peak', pct(s.drawdown_pct, true), tone(s.drawdown_pct)),
+        stat('Open shorts', isNum(s.positions) ? s.positions + ' / ' + s.max_positions : '–'),
+        stat('Margin used', pct(s.margin_use_pct)),
+      ];
+      const share = (m) => { const n = Math.round(1 / m); return Math.abs(1 / m - n) < 0.05 ? '1/' + n : m.toFixed(2); };
+      if (s.sizing && s.sizing.mode === 'perbet_dd') {
+        grid.push(stat('Room before limit', pct(s.cushion_pct)));
+        grid.push(stat('Sizing', 'Per-bet Kelly, ' + Math.round(s.sizing.dd_limit * 100) + '% limit'));
+      } else if (s.sizing && s.sizing.mode === 'perbet') {
+        grid.push(stat('Sizing', 'Per-bet Kelly × ' + share(s.sizing.kelly_mult)));
+      } else if (s.sizing && s.sizing.mode === 'perbet_house') {
+        grid.push(stat('Profit this year', pct(s.house_pct) + ' of account'));
+        grid.push(stat('Sizing', 'Kelly × ' + share(s.sizing.kelly_mult) + ', profit × ' + share(s.sizing.profit_kelly_mult)));
+      } else if (s.sizing) {
+        grid.push(stat('Sizing', (s.sizing.static_pct * 100).toFixed(1) + '% per short'));
+      }
+      kids.push(h('div', { class: 'grid' }, grid));
     }
-    kids.push(h('div', { class: 'grid' }, grid));
+
     if (s.demo) kids.push(h('div', { class: 'note', text: 'Demo day ' + s.demo.day + ' (' + s.demo.done + ' of ' + s.demo.total + ')' }));
     else if (s.next && s.next.name) {
       const mins = s.next.in_minutes;
@@ -221,37 +396,67 @@
     }
     if (s.last_decision && s.last_decision.day) {
       const d = s.last_decision;
-      const txt = 'Last close ' + d.day + ': ' + d.candidates + ' signals, ' + d.placed + ' shorts, ' + d.exits + ' day-3 exits' + (d.note ? ' (' + d.note + ')' : '');
+      const txt = isBwb
+        ? 'Last check ' + d.day + ': ' + (d.placed ? 'Placed 0DTE BWB' : 'Skipped') + (d.note ? ' (' + d.note + ')' : '')
+        : 'Last close ' + d.day + ': ' + d.candidates + ' signals, ' + d.placed + ' shorts, ' + d.exits + ' day-3 exits' + (d.note ? ' (' + d.note + ')' : '');
       kids.push(h('div', { class: 'note', text: txt }));
     }
     if (s.mode === 'shadow') kids.push(h('div', { class: 'note', text: 'Shadow mode: read-only, the bot only logs what it would do.' }));
     if (s.problem) kids.push(h('div', { class: 'warn', text: s.problem }));
     view.account.replaceChildren(...kids);
+
+    // Render BWB Structure Card when viewing Strategy 2
+    if (isBwb && s.bwb_plan) {
+      const bp = s.bwb_plan;
+      view.bwbStruct.hidden = false;
+      view.bwbStruct.replaceChildren(
+        h('h2', {}, h('span', { text: '0DTE Put BWB Structure' }), h('span', { text: bp.day || '' })),
+        h('div', { class: 'grid' }, [
+          stat('Causal F1 Gate', bp.f1_pass ? 'PASS (VIX1D < VIX)' : 'GATED (Sit in Cash)', bp.f1_pass ? 'pos' : 'neg'),
+          stat('SPX Open / 1D IV', price(bp.spot_open) + ' · ' + pct(bp.iv1d_pct)),
+          stat('+1 Upper Long Put', Math.round(bp.k_hi) + 'P (W1=' + bp.w1_pts.toFixed(1) + 'pt)'),
+          stat('-2 Middle Short Puts', Math.round(bp.k_mid) + 'P (' + Math.round(bp.delta_mid * 100) + 'Δ tent peak)'),
+          stat('+1 Lower Long Put', Math.round(bp.k_lo) + 'P (W2=' + bp.w2_pts.toFixed(1) + 'pt)'),
+          stat('Lower Breakeven', Math.round(bp.k_be) + ' (W_risk=' + bp.w_risk_pts.toFixed(1) + 'pt)'),
+          stat('Net Credit', price(bp.net_credit_pts) + ' pts ($' + Math.round(bp.net_credit_pts * 100) + '/ct)'),
+          stat('Target Size', bp.contracts.toFixed(2) + 'x (' + money(bp.collat_budget) + ' collat)'),
+        ]),
+        h('div', { class: 'note', text: bp.f1_reason || '' })
+      );
+    } else {
+      view.bwbStruct.hidden = true;
+    }
   }
 
   function renderControls(s, positions) {
+    const isBwb = s.strategy === 'bwb';
     const paused = s.state === 'paused';
     const real = positions.filter((p) => !p.virtual);
     const pauseBtn = h('button', { class: 'btn ' + (paused ? 'primary' : ''), type: 'button',
-      text: paused ? 'Resume trading' : 'Pause new shorts', onclick: () => togglePause(paused) });
+      text: paused ? 'Resume trading' : (isBwb ? 'Pause new BWB' : 'Pause new shorts'), onclick: () => togglePause(paused) });
     const flatBtn = h('button', { class: 'btn danger', type: 'button', text: 'Close all',
       disabled: !real.length, onclick: flattenAll });
-    view.controls.replaceChildren(h('h2', { text: 'Controls' }), h('div', { class: 'row' }, pauseBtn, flatBtn),
-      h('div', { class: 'note', text: paused ? 'Paused: no new shorts. Open shorts keep their stops, targets and day-3 exits.' : 'Pausing stops new shorts only. Open shorts stay protected.' }));
+    view.controls.replaceChildren(h('h2', { text: 'Controls (' + (isBwb ? '0DTE BWB' : 'Gap Short') + ')' }),
+      h('div', { class: 'row' }, pauseBtn, flatBtn),
+      h('div', { class: 'note', text: paused
+        ? 'Paused: no new entries for this strategy.'
+        : 'Controls apply only to this strategy; the other $100k strategy continues unaffected.' }));
   }
 
   function renderPositions(list) {
+    const isBwb = currentStrategy === 'bwb';
     const virtual = list.length > 0 && list.every((p) => p.virtual);
-    const kids = [h('h2', {}, h('span', { text: virtual ? 'Virtual shorts' : 'Open shorts' }), h('span', { text: String(list.length) }))];
-    if (!list.length) kids.push(h('div', { class: 'empty', text: 'No open shorts' }));
+    const title = isBwb ? 'Open 0DTE BWB Spread' : (virtual ? 'Virtual shorts' : 'Open shorts');
+    const kids = [h('h2', {}, h('span', { text: title }), h('span', { text: String(list.length) }))];
+    if (!list.length) kids.push(h('div', { class: 'empty', text: isBwb ? 'No open 0DTE BWB spread (cash settles at 16:00 ET)' : 'No open shorts' }));
     for (const p of list) {
       kids.push(h('div', { class: 'item' },
         h('div', { class: 'item-head' },
           h('span', {}, h('span', { class: 'sym', text: p.symbol }), p.setups ? h('span', { class: 'chip', text: p.setups }) : null,
             p.virtual ? h('span', { class: 'chip would', text: 'virtual' }) : null),
           h('span', { class: tone(p.pnl), text: money(p.pnl, true) + '  ' + pct(p.pnl_pct, true) })),
-        h('div', { class: 'sub', text: shares(p.shares) + ' sh, entry ' + price(p.entry) + ', last ' + price(p.last) }),
-        h('div', { class: 'sub', text: 'Stop ' + price(p.stop) + ' · target ' + price(p.target) + (isNum(p.day) ? ' · day ' + p.day + ' of ' + p.hold_days : '') }),
+        h('div', { class: 'sub', text: shares(p.shares) + (isBwb ? ' spread(s), credit ' : ' sh, entry ') + price(p.entry) + ', mark ' + price(p.last) }),
+        h('div', { class: 'sub', text: (isBwb ? 'Floor ' : 'Stop ') + price(p.stop) + ' · ' + (isBwb ? 'tent peak ' : 'target ') + price(p.target) + (isNum(p.day) ? ' · day ' + p.day + ' of ' + p.hold_days : '') }),
         p.virtual ? null : h('div', { class: 'item-actions' }, h('button', { class: 'btn danger small', type: 'button', text: 'Close',
           onclick: () => closeOne(p.symbol) }))));
     }
@@ -366,20 +571,20 @@
     let right = '', cls = 'muted', sub = '';
     if (e.type === 'new') {
       right = 'edge ' + frac(e.exp_ret, true);
-      sub = e.virtual ? 'Would short ' + shares(e.shares) + ' at the close, ' + price(e.close)
-        : 'Sold ' + shares(e.shares) + ' at ' + price(e.fill) + ' · close ' + price(e.close) + (isNum(e.vs_close) ? ' (' + frac(e.vs_close, true) + ')' : '');
+      sub = e.virtual ? 'Would enter ' + shares(e.shares) + ', ref ' + price(e.close)
+        : 'Entered ' + shares(e.shares) + ' at ' + price(e.fill);
     } else if (e.type === 'exit') {
       right = money(e.pnl, true);
       cls = tone(e.pnl);
-      sub = e.virtual ? 'Covered at ' + price(e.fill) + ', ' + frac(e.ret, true)
-        : 'Bought at ' + price(e.fill) + ' · backtest ' + (e.model_open ? 'still open' : price(e.model_fill) + ' (' + e.model_reason + '), fills ' + money(e.gap, true));
+      sub = e.virtual ? 'Settled at ' + price(e.fill) + ', ' + frac(e.ret, true)
+        : 'Settled · backtest ' + (e.model_open ? 'still open' : '(' + e.model_reason + '), fills ' + money(e.gap, true));
     } else if (e.type === 'missed') {
       right = 'edge ' + frac(e.exp_ret, true);
-      sub = 'Not shorted: ' + e.note;
+      sub = 'Not entered: ' + e.note;
     } else {
       right = 'check';
       cls = 'warn-text';
-      sub = 'The backtest exited at the ' + e.reason + ', but the real short is still open.';
+      sub = 'The backtest exited at the ' + e.reason + ', but the real position is still open.';
     }
     return h('div', { class: 'item' }, head(right, cls), h('div', { class: 'sub', text: sub }));
   }
@@ -398,14 +603,11 @@
     const kids = [head, h('div', { class: 'grid' }, grid)];
     const events = r.events || [];
     if (events.length) kids.push(h('div', { class: 'sub-h', text: 'Today' }), ...events.map(eventItem));
-    else kids.push(h('div', { class: 'note', text: 'No new shorts or exits on this day.' }));
+    else kids.push(h('div', { class: 'note', text: 'No new entries or exits on this day.' }));
     if ((r.daily || []).length >= 2) {
       kids.push(h('div', { class: 'sub-h', text: 'Last ' + r.daily.length + ' days' }), dailyChart(r.daily, shadow),
         legend(shadow ? [['theory', 'Shadow book'], ['exp', 'Expected']] : [['actual', 'Actual'], ['theory', 'Backtest'], ['exp', 'Expected']]));
     }
-    kids.push(h('div', { class: 'note', text: shadow
-      ? 'Shadow book: the shorts the bot would have placed, with the backtest\u2019s fills and costs. Expected: their average edge.'
-      : 'Backtest: the same shorts with the backtest\u2019s fills and costs. Expected: their average edge. A single day is mostly luck.' }));
     view.day.replaceChildren(...kids);
   }
 
@@ -434,20 +636,12 @@
         kids.push(h('div', { class: 'grid' }, stat('Per trade, actual', frac(ex.actual_ret, true), tone(ex.actual_ret)),
           stat('Same trades, backtest', frac(ex.backtest_ret, true), tone(ex.backtest_ret)),
           stat('Fills vs backtest', frac(ex.gap, true) + ' per trade', tone(ex.gap)), stat('In dollars', money(ex.gap_usd, true), tone(ex.gap_usd))));
-        kids.push(h('div', { class: 'note', text: 'Entry ' + frac(ex.entry, true) + ' · exit ' + frac(ex.exit, true) + ' · borrow ' + frac(ex.borrow, true) + ' · commissions ' + frac(ex.fees, true) + ' (per trade, vs the backtest\u2019s 0.5% slippage per side and 150%/yr borrow)' }));
       }
     }
     if (mi.n) {
       const reasons = Object.entries(mi.reasons || {}).map(([k, v]) => v + ' ' + k).join(', ');
       kids.push(h('div', { class: 'note', text: 'Missed signals: ' + mi.n + ' (' + reasons + '). The backtest made ' + money(mi.theory_usd, true) + ' on them.' }));
     }
-    const tm = r.timing || {};
-    if (tm.n) {
-      kids.push(h('div', { class: 'note', text: tm.not_at_close
-        ? tm.not_at_close + ' of ' + tm.n + ' shorts no longer met the rules at the final close (the bot decides at 15:45).'
-        : 'All ' + tm.n + ' shorts still met the rules at the final close (the bot decides at 15:45).' }));
-    }
-    if (ed.needed) kids.push(h('div', { class: 'note', text: 'Shaded band: the normal range of luck around the expected profit. If the edge vanished, this check would usually flag it within about ' + ed.needed + ' trades.' }));
     view.edge.replaceChildren(...kids);
   }
 
@@ -499,7 +693,7 @@
       kids.push(h('div', { class: 'item' }, h('div', { class: 'item-head' },
         h('span', {}, h('span', { class: 'sym', text: t.symbol }), h('span', { class: 'chip', text: t.exit_reason || '' })),
         h('span', { class: tone(t.pnl), text: money(t.pnl, true) })),
-      h('div', { class: 'sub', text: t.entry_date + ' → ' + (t.exit_date || '') + ' · ' + price(t.entry_price) + ' → ' + price(t.exit_price) })));
+      h('div', { class: 'sub', text: t.entry_date + ' → ' + (t.exit_date || '') + ' · ' + (t.setups || '') })));
     }
     view.trades.replaceChildren(...kids);
   }
@@ -513,38 +707,42 @@
   }
 
   // ---------------------------------------------------------------- actions
+  function qStrat() {
+    return '?strategy=' + encodeURIComponent(currentStrategy === 'bwb' ? 'bwb' : 'gapshort');
+  }
+
   async function togglePause(paused) {
     const ok = await ask({
-      title: paused ? 'Resume trading?' : 'Pause new shorts?',
-      message: paused ? 'The bot will place new shorts again at the next close.' : 'No new shorts until you resume. Open shorts keep their stops, targets and day-3 exits.',
+      title: paused ? 'Resume trading?' : 'Pause new entries?',
+      message: paused ? 'The strategy will place new entries again at the next decision window.' : 'No new entries for this strategy until you resume.',
       confirmText: paused ? 'Resume' : 'Pause',
     });
     if (!ok) return;
     try {
-      await api(paused ? '/api/resume' : '/api/pause', {});
+      await api((paused ? '/api/resume' : '/api/pause') + qStrat(), {});
       toast(paused ? 'Resumed' : 'Paused', 'ok');
       refresh();
     } catch (e) { toast(e.message, 'bad'); }
   }
 
   async function closeOne(symbol) {
-    const pw = await ask({ title: 'Close ' + symbol + '?', danger: true, password: true, confirmText: 'Close short',
-      message: 'Cancels its stop and target and buys it back now, or at the next open if the market is closed.' });
+    const pw = await ask({ title: 'Close ' + symbol + '?', danger: true, password: true, confirmText: 'Close position',
+      message: 'Closes this position now, or at the next open if the market is closed.' });
     if (!pw) return;
     try {
-      const r = await api('/api/close', { symbol, password: pw });
-      toast('Buy-back sent (' + r.order_type + ')', 'ok');
+      const r = await api('/api/close' + qStrat(), { symbol, password: pw });
+      toast('Close sent (' + r.order_type + ')', 'ok');
       refresh();
     } catch (e) { toast(e.message, 'bad'); }
   }
 
   async function flattenAll() {
-    const pw = await ask({ title: 'Close all shorts?', danger: true, password: true, confirmText: 'Close all',
-      message: 'Buys back every open short and pauses the bot. Use this only if something is wrong.' });
+    const pw = await ask({ title: 'Close all positions?', danger: true, password: true, confirmText: 'Close all',
+      message: 'Closes every open position in this strategy and pauses it.' });
     if (!pw) return;
     try {
-      const r = await api('/api/flatten', { password: pw });
-      toast(r.covered + ' buy-backs sent; bot paused', 'ok');
+      const r = await api('/api/flatten' + qStrat(), { password: pw });
+      toast(r.covered + ' closed; strategy paused', 'ok');
       refresh();
     } catch (e) { toast(e.message, 'bad'); }
   }
@@ -558,19 +756,28 @@
   async function refresh() {
     if (!view.account) return;
     try {
-      const [s, p, sg, eq, o, t, ev, rep] = await Promise.all([api('/api/status'), api('/api/positions'),
-        api('/api/signals'), api('/api/equity'), api('/api/orders'), api('/api/trades'), api('/api/events'),
-        api('/api/report')]);
-      if (!view.account) return;
-      renderStatus(s);
-      renderControls(s, p.positions);
-      renderPositions(p.positions);
-      renderSignals(sg);
-      renderReport(rep);
-      renderEquity(eq.equity);
-      renderOrders(o.orders);
-      renderTrades(t.trades);
-      renderEvents(ev.events);
+      if (currentStrategy === 'both') {
+        const ov = await api('/api/overview');
+        if (!view.account) return;
+        renderOverview(ov);
+      } else {
+        const qs = qStrat();
+        const [s, p, sg, eq, o, t, ev, rep] = await Promise.all([
+          api('/api/status' + qs), api('/api/positions' + qs), api('/api/signals' + qs),
+          api('/api/equity' + qs), api('/api/orders' + qs), api('/api/trades' + qs),
+          api('/api/events' + qs), api('/api/report' + qs),
+        ]);
+        if (!view.account) return;
+        renderStatus(s);
+        renderControls(s, p.positions);
+        renderPositions(p.positions);
+        renderSignals(sg);
+        renderReport(rep);
+        renderEquity(eq.equity);
+        renderOrders(o.orders);
+        renderTrades(t.trades);
+        renderEvents(ev.events);
+      }
       view.updated.textContent = 'Updated ' + new Date().toLocaleTimeString();
     } catch (e) {
       if (view.updated) view.updated.textContent = e.message;
@@ -595,6 +802,7 @@
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
     try {
       const s = await api('/api/session');
+      bwbEnabled = s.bwb_enabled !== false;
       if (s.authenticated) showMain(); else showLogin();
     } catch (_) {
       showLogin('Cannot reach the laptop. Is the service running and Tailscale on?');

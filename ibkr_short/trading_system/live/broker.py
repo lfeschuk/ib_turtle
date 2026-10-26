@@ -328,7 +328,8 @@ class SimBroker:
         self._np, self._pd = np, pd
         self.cfg = cfg
         self.adp = YahooReplayAdapter(use_nasdaq_verified_bars=True, include_edgar_pit=True)
-        self.engine_cfg = EngineConfig(pos_pct=cfg.sizing.static_pct, locate_fee_pct=0.0,
+        self.engine_cfg = EngineConfig(initial_capital=cfg.initial_capital,
+                                       pos_pct=cfg.sizing.static_pct, locate_fee_pct=0.0,
                                        borrow_annual=cfg.borrow_annual, max_borrow_annual=cfg.max_borrow_annual,
                                        slip_per_side=cfg.slip_per_side, tax_rate=0.25, enforce_clean_data=True,
                                        enforce_whale_gate=False, max_positions=cfg.max_positions,

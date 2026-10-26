@@ -12,10 +12,15 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from pydantic import BaseModel, Field
 
+from typing import TYPE_CHECKING
+
 from .auth import (CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE, SESSION_LIFETIME_S, AuthStore, LoginLimiter, TokenBucket,
                    csrf_ok, new_csrf_token)
 from .config import LiveConfig
 from .service import BotService
+
+if TYPE_CHECKING:
+    from .bwb_service import BwbBotService
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +49,7 @@ _SECURITY_HEADERS = {
     "Strict-Transport-Security": "max-age=31536000",
 }
 _MAX_BODY = 4096
-_SYMBOL = re.compile(r"^[A-Z][A-Z0-9.]{0,9}$")
+_SYMBOL = re.compile(r"^([A-Z][A-Z0-9.]{0,9}|(SPXW|XSP)( \d+/\d+/\d+P)?)$")
 
 
 class PasswordBody(BaseModel):
@@ -52,7 +57,7 @@ class PasswordBody(BaseModel):
 
 
 class CloseBody(BaseModel):
-    symbol: str = Field(min_length=1, max_length=10)
+    symbol: str = Field(min_length=1, max_length=32)
     password: str = Field(min_length=1, max_length=256)
 
 
@@ -60,11 +65,22 @@ def _set_cookie(resp: Response, key: str, value: str, httponly: bool, max_age: i
     resp.set_cookie(key, value, max_age=max_age, path="/", secure=True, httponly=httponly, samesite="strict")
 
 
-def create_app(service: BotService, cfg: LiveConfig, auth: AuthStore, web_dir: Path = WEB_DIR) -> FastAPI:
+def create_app(service: BotService, cfg: LiveConfig, auth: AuthStore, web_dir: Path = WEB_DIR,
+               bwb_service: BwbBotService | None = None) -> FastAPI:
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     files = {route: ((web_dir / name).read_bytes(), media) for route, (name, media) in _STATIC.items()}
     bucket = TokenBucket()
     login_limiter = LoginLimiter()
+
+    def _svc(request: Request):
+        strat = (request.query_params.get("strategy") or "gapshort").lower()
+        if strat == "gapshort":
+            return service
+        if strat == "bwb":
+            if bwb_service is None:
+                raise HTTPException(status_code=404, detail="0DTE BWB strategy not enabled")
+            return bwb_service
+        raise HTTPException(status_code=422, detail="bad strategy")
 
     @app.middleware("http")
     async def guard(request: Request, call_next):
@@ -119,7 +135,8 @@ def create_app(service: BotService, cfg: LiveConfig, auth: AuthStore, web_dir: P
     @app.get("/api/session")
     async def session(request: Request):
         resp = JSONResponse({"authenticated": auth.valid_session(request.cookies.get(SESSION_COOKIE)),
-                             "mode": cfg.mode})
+                             "mode": cfg.mode,
+                             "bwb_enabled": bwb_service is not None})
         if not request.cookies.get(CSRF_COOKIE):
             _set_cookie(resp, CSRF_COOKIE, new_csrf_token(), httponly=False)
         return resp
@@ -144,59 +161,91 @@ def create_app(service: BotService, cfg: LiveConfig, auth: AuthStore, web_dir: P
         return resp
 
     # ------------------------------------------------------------------ read
+    @app.get("/api/overview")
+    async def overview(request: Request):
+        require_session(request)
+        gs_status = await service.status()
+        gs_eq = service.journal.equity(400)
+        strats: dict = {"gapshort": {"status": gs_status, "equity": gs_eq}}
+        comb_init = float(gs_status.get("initial_capital") or cfg.initial_capital)
+        comb_nlv = float(gs_status.get("net_liquidation") or comb_init)
+        comb_day = float(gs_status.get("day_pnl") or 0.0)
+        comb_pos = int(gs_status.get("positions") or 0)
+
+        if bwb_service is not None:
+            bwb_status = await bwb_service.status()
+            bwb_eq = bwb_service.journal.equity(400)
+            strats["bwb"] = {"status": bwb_status, "equity": bwb_eq}
+            b_init = float(bwb_status.get("initial_capital") or cfg.bwb.initial_capital)
+            comb_init += b_init
+            comb_nlv += float(bwb_status.get("net_liquidation") or b_init)
+            comb_day += float(bwb_status.get("day_pnl") or 0.0)
+            comb_pos += int(bwb_status.get("positions") or 0)
+
+        return {
+            "combined": {
+                "initial_capital": comb_init,
+                "net_liquidation": comb_nlv,
+                "total_return_pct": (comb_nlv / comb_init - 1.0) * 100.0 if comb_init > 0 else 0.0,
+                "day_pnl": comb_day,
+                "positions": comb_pos,
+            },
+            "strategies": strats,
+        }
+
     @app.get("/api/status")
     async def status(request: Request):
         require_session(request)
-        return await service.status()
+        return await _svc(request).status()
 
     @app.get("/api/positions")
     async def positions(request: Request):
         require_session(request)
-        return {"positions": await service.positions_view()}
+        return {"positions": await _svc(request).positions_view()}
 
     @app.get("/api/orders")
     async def orders(request: Request):
         require_session(request)
-        return {"orders": await service.orders_view()}
+        return {"orders": await _svc(request).orders_view()}
 
     @app.get("/api/signals")
     async def signals(request: Request):
         require_session(request)
-        return service.signals_view()
+        return _svc(request).signals_view()
 
     @app.get("/api/trades")
     async def trades(request: Request):
         require_session(request)
-        return {"trades": service.journal.recent_trades(50)}
+        return {"trades": _svc(request).journal.recent_trades(50)}
 
     @app.get("/api/equity")
     async def equity(request: Request):
         require_session(request)
-        return {"equity": service.journal.equity(400)}
+        return {"equity": _svc(request).journal.equity(400)}
 
     @app.get("/api/events")
     async def events(request: Request):
         require_session(request)
-        return {"events": service.journal.events(60)}
+        return {"events": _svc(request).journal.events(60)}
 
     @app.get("/api/report")
     async def report(request: Request):
         require_session(request)
-        return service.report_view()
+        return _svc(request).report_view()
 
     # ------------------------------------------------------------------ actions
     @app.post("/api/pause")
     async def pause(request: Request):
         require_session(request)
         require_csrf(request)
-        await service.pause()
+        await _svc(request).pause()
         return {"ok": True}
 
     @app.post("/api/resume")
     async def resume(request: Request):
         require_session(request)
         require_csrf(request)
-        await service.resume()
+        await _svc(request).resume()
         return {"ok": True}
 
     @app.post("/api/close")
@@ -208,9 +257,9 @@ def create_app(service: BotService, cfg: LiveConfig, auth: AuthStore, web_dir: P
         if not _SYMBOL.match(symbol):
             raise HTTPException(status_code=422, detail="bad symbol")
         try:
-            how = await service.close_position(symbol)
+            how = await _svc(request).close_position(symbol)
         except LookupError:
-            raise HTTPException(status_code=404, detail="no open short in that symbol")
+            raise HTTPException(status_code=404, detail="no open position in that symbol")
         return {"ok": True, "order_type": how}
 
     @app.post("/api/flatten")
@@ -218,7 +267,7 @@ def create_app(service: BotService, cfg: LiveConfig, auth: AuthStore, web_dir: P
         require_session(request)
         require_csrf(request)
         require_password(body.password)
-        n = await service.flatten()
+        n = await _svc(request).flatten()
         return {"ok": True, "covered": n}
 
     return app

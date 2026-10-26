@@ -46,6 +46,9 @@ def _finite(x) -> bool:
 
 
 class BotService:
+    strategy_id = "gapshort"
+    strategy_name = "Small-Cap 100%+ Gap Short"
+
     def __init__(self, cfg: LiveConfig, broker, journal: Journal, notifier: Notifier,
                  model: PerBetModel | None = None):
         self.cfg = cfg
@@ -55,6 +58,7 @@ class BotService:
         self.model = model
         self.edge = model if model is not None else _packaged_model()  # expected edge for the end-of-day report
         self.engine_cfg = EngineConfig(
+            initial_capital=cfg.initial_capital,
             pos_pct=cfg.sizing.static_pct, locate_fee_pct=0.0, borrow_annual=cfg.borrow_annual,
             max_borrow_annual=cfg.max_borrow_annual, use_live_borrow_rate=False, slip_per_side=cfg.slip_per_side,
             tax_rate=0.25, enforce_clean_data=True, enforce_whale_gate=False, max_positions=cfg.max_positions,
@@ -598,7 +602,9 @@ class BotService:
     async def status(self) -> dict:
         b = self.broker
         connected = b.is_connected()
-        out = {"mode": self.cfg.mode, "connected": connected, "account": mask_account(getattr(b, "account_id", "")),
+        w0 = float(self.cfg.initial_capital)
+        out = {"strategy": "gapshort", "strategy_name": self.strategy_name, "initial_capital": w0,
+               "mode": self.cfg.mode, "connected": connected, "account": mask_account(getattr(b, "account_id", "")),
                "state": "paused" if self.paused and self.state == "running" else self.state,
                "problem": self.problem, "next": self._next_action(), "last_decision": self.last_decision,
                "max_positions": self.cfg.max_positions,
@@ -624,6 +630,7 @@ class BotService:
         year_start = self._year_start_adj(today)
         out.update({
             "net_liquidation": nlv,
+            "total_return_pct": (nlv / w0 - 1.0) * 100.0 if w0 > 0 and math.isfinite(nlv) else None,
             "day_pnl": nlv - prev["nlv"] if prev else None,
             "drawdown_pct": (adj / peak - 1.0) * 100 if peak > 0 else None,
             "cushion_pct": max(0.0, adj - (1 - self.cfg.sizing.dd_limit) * peak) / nlv * 100 if nlv > 0 else None,

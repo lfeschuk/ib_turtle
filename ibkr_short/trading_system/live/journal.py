@@ -59,6 +59,8 @@ class Journal:
         self._db.row_factory = sqlite3.Row
         self._lock = threading.Lock()
         with self._lock:
+            self._db.execute("PRAGMA journal_mode = WAL")
+            self._db.execute("PRAGMA synchronous = NORMAL")
             self._db.executescript(_SCHEMA)
             for table, column, decl in _MIGRATIONS:  # constants, not user input
                 cols = {r["name"] for r in self._db.execute(f"PRAGMA table_info({table})")}

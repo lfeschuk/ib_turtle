@@ -1,6 +1,11 @@
-# Gap-short service settings. Copy to ~/.config/gapshort/config.toml and edit.
+# Dual-Strategy service settings (Strategy 1: Small-Cap Gap Short + Strategy 2: 0DTE SPX Put BWB).
+# Copy to ~/.config/gapshort/config.toml and edit.
 # Stages: "demo" (no TWS) -> "shadow" (TWS read-only) -> "paper" (paper orders) -> "live".
-mode = "shadow"
+mode = "paper"
+
+# Independent starting capital for Strategy 1 (Small-Cap 100%+ Gap Short)
+initial_capital = 100000.0
+isolated_capital = true
 
 # TWS paper uses 7497 (live 7496). IB Gateway uses 4002 / 4001.
 tws_host = "127.0.0.1"
@@ -40,3 +45,22 @@ model_path = "~/gapshort/trading_system/live/model_perbet.json"
 max_position_pct = 0.10
 liquidity_cap_pct = 0.01
 tax_rate = 0.25
+
+[bwb]
+# Strategy 2: Vol-Scaled 0DTE SPX Put Broken-Wing Butterfly (BWB) with Earned-Money ("House-Money") Kelly Ramp
+enabled = true
+initial_capital = 100000.0
+isolated_capital = true
+delta_mid = 0.20                  # 0.20 (20-delta middle short put) or 0.15 (15-delta)
+w1_sd = 0.32                      # upper wing width in 1D SD units (0.32 for 20d, 0.28 for 15d)
+w_risk_sd = 1.30                  # lower net risk width in 1D SD units
+real_curv_bps = 27.0              # empirical Cboe 0DTE wing curvature haircut in bps of W_risk
+sizing_mode = "earned_ramp"       # "earned_ramp" (7.5% base + 50% of earned profit up to 20% cap at +33% gain)
+base_collat_pct = 0.075           # 7.5% collateral risk at $100k initial capital
+floor_collat_pct = 0.050          # 5.0% floor if equity dips below $100k
+max_collat_pct = 0.200            # 20.0% maximum collateral cap on earned profits
+profit_share = 0.50               # 50% of earned profits allocated to Kelly ramp
+symbol = "SPX"                    # "SPX" (SPXW $100 mult) or "XSP" (Mini-SPX 1/10th size)
+use_xsp_below_nlv = 25000.0
+entry_minutes_after_open = 60     # 10:30 AM ET post-initial-balance entry window
+client_id_offset = 1              # connects to TWS as client_id + 1 (18) alongside Gap Short (17)
