@@ -1,0 +1,42 @@
+# Gap-short service settings. Copy to ~/.config/gapshort/config.toml and edit.
+# Stages: "demo" (no TWS) -> "shadow" (TWS read-only) -> "paper" (paper orders) -> "live".
+mode = "shadow"
+
+# TWS paper uses 7497 (live 7496). IB Gateway uses 4002 / 4001.
+tws_host = "127.0.0.1"
+tws_port = 7497
+client_id = 17
+allow_live = false
+
+# The app listens on the laptop only; `tailscale serve` publishes it to your phone over HTTPS.
+http_host = "127.0.0.1"
+http_port = 8787
+
+data_dir = "~/.local/share/gapshort"
+secrets_path = "~/.config/gapshort/secrets.json"
+
+# Orders go out 15 minutes before the close (15:45 ET, 12:45 on half days); the day is checked 15 minutes after.
+decision_minutes_before_close = 15
+reconcile_minutes_after_close = 15
+
+max_positions = 6
+hold_days = 3
+cooldown_days = 10
+slip_per_side = 0.005
+borrow_annual = 1.50
+max_borrow_annual = 3.00
+
+# Phone alerts: either or both. Put tokens in secrets.json, not here.
+ntfy_url = ""            # e.g. "https://ntfy.sh/pick-a-long-random-topic-name"
+telegram_chat_id = ""
+
+[sizing]
+mode = "static"          # "static" for shadow, paper and the first live months; at full size "perbet_house"
+static_pct = 0.035       # "perbet_house": the money the year started with at kelly_mult, this year's profit at
+kelly_mult = 0.1667      #   profit_kelly_mult (1/6 and 1/3 of each short's own Kelly size)
+profit_kelly_mult = 0.3333
+dd_limit = 0.20          # ("perbet" = kelly_mult only; "perbet_dd" = drawdown limit; kept for reference)
+model_path = "~/gapshort/trading_system/live/model_perbet.json"
+max_position_pct = 0.10
+liquidity_cap_pct = 0.01
+tax_rate = 0.25
