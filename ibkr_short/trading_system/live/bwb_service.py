@@ -53,11 +53,12 @@ class BwbBotService:
     strategy_id = "bwb"
     strategy_name = "0DTE SPX Put BWB"
 
-    def __init__(self, cfg: LiveConfig, broker, journal: Journal, notifier: Notifier):
+    def __init__(self, cfg: LiveConfig, broker, journal: Journal, notifier: Notifier, peer_service=None):
         self.cfg = cfg
         self.broker = broker
         self.journal = journal
         self.notifier = notifier
+        self.peer_service = peer_service
         self.edge = _BwbEdgeRef(cfg.bwb.delta_mid)
         self.lock = asyncio.Lock()
         self.state = "starting"
@@ -68,6 +69,7 @@ class BwbBotService:
         # Cached in-memory equity & HWM so long multi-year replays run in milliseconds
         self._eq_cache: float | None = None
         self._hwm_cache: float | None = None
+        self._yr_anchor_cache: tuple[str, float] | None = None
         self._active_day: str | None = None
         self._active_plan: BwbPlan | None = None
         self._active_size: BwbSizeDecision | None = None
@@ -108,6 +110,53 @@ class BwbBotService:
     def _trade_key(self, plan: BwbPlan) -> str:
         return f"{plan.symbol} {plan.k_hi:.0f}/{plan.k_mid:.0f}/{plan.k_lo:.0f}P"
 
+    def _year_start_anchor(self, today: str, current_eq: float) -> float:
+        w0 = float(self.cfg.bwb.initial_capital)
+        yr = today[:4]
+        pin_day = self.journal.get("year_start_day")
+        pin_adj = self.journal.get("year_start_adj")
+        if pin_day and pin_adj and pin_day[:4] == yr:
+            try:
+                return max(w0, float(pin_adj))
+            except ValueError:
+                pass
+        if self._yr_anchor_cache is not None and self._yr_anchor_cache[0] == yr:
+            return self._yr_anchor_cache[1]
+        first = self.journal.first_equity_since(f"{yr}-01-01")
+        anchor = max(w0, float(first["adj"] if first and first.get("adj") else (first["nlv"] if first else current_eq)))
+        self._yr_anchor_cache = (yr, anchor)
+        return anchor
+
+    async def _shared_state(self, today: str) -> tuple[float, float, float, float]:
+        """Returns (equity, hwm, year_start_anchor, other_margin_used_pct) accounting for isolated vs shared capital."""
+        eq, hwm = self._current_equity_and_hwm()
+        other_m_pct = 0.0
+        if not self.cfg.bwb.isolated_capital:
+            if self.peer_service is not None:
+                try:
+                    gs_st = await self.peer_service.status()
+                    gs_w0 = float(gs_st.get("initial_capital") or self.cfg.initial_capital)
+                    gs_nlv = float(gs_st.get("net_liquidation") or gs_w0)
+                    other_m_pct = max(0.0, float(gs_st.get("margin_use_pct") or 0.0) / 100.0)
+                    # Add Gap Short's cumulative P&L onto the shared capital pool in demo/shadow
+                    if self.cfg.mode in ("demo", "shadow"):
+                        eq = max(1.0, eq + (gs_nlv - gs_w0))
+                        hwm = max(hwm, eq)
+                except Exception:
+                    pass
+            if self.cfg.mode in ("paper", "live") and self.broker.is_connected() and hasattr(self.broker, "account"):
+                try:
+                    acct = await self.broker.account()
+                    if acct.net_liquidation > 0:
+                        eq = float(acct.net_liquidation)
+                        hwm = max(hwm, eq)
+                        if self._active_plan is None:
+                            other_m_pct = max(other_m_pct, float(acct.maint_margin) / eq)
+                except Exception:
+                    pass
+        yr_anchor = self._year_start_anchor(today, eq)
+        return eq, hwm, yr_anchor, other_m_pct
+
     # ----------------------------------------------------------------- morning 10:30 ET decision
     async def decision_cycle(self, allow_entries: bool = True) -> dict:
         async with self.lock:
@@ -116,10 +165,18 @@ class BwbBotService:
             self.journal.set("last_decision_day", today)
 
             snap = await b.market_snapshot()
-            eq, hwm = self._current_equity_and_hwm()
+            eq, hwm, yr_anchor, other_m_pct = await self._shared_state(today)
             plan = build_bwb_plan(snap, self.cfg.bwb, equity=eq)
             discrete = self.cfg.mode in ("paper", "live") and self.cfg.bwb.discrete_strikes
-            size = size_bwb_bet(eq, hwm, plan, self.cfg.bwb, discrete_contracts=discrete)
+            size = size_bwb_bet(
+                eq,
+                hwm,
+                plan,
+                self.cfg.bwb,
+                discrete_contracts=discrete,
+                year_start_equity=yr_anchor,
+                other_margin_used_pct=other_m_pct,
+            )
             tkey = self._trade_key(plan)
             setup_label = f"{int(round(plan.delta_mid * 100))}Δ Put BWB ({plan.k_hi:.0f}/{plan.k_mid:.0f}/{plan.k_lo:.0f})"
             score = float(snap.vix_open - snap.iv1d_morning_pct)
@@ -481,9 +538,16 @@ class BwbBotService:
     async def status(self) -> dict:
         b = self.broker
         connected = b.is_connected()
-        eq, hwm = self._current_equity_and_hwm()
-        w0 = float(self.cfg.bwb.initial_capital)
-        f_t = compute_earned_kelly_fraction(eq, w0, hwm, self.cfg.bwb)
+        today = b.today().isoformat() if connected else "2026-01-01"
+        eq, hwm, yr_anchor, other_m_pct = await self._shared_state(today)
+        w0 = yr_anchor if self.cfg.bwb.sizing_mode == "yearly_house" else float(self.cfg.bwb.initial_capital)
+        f_raw = compute_earned_kelly_fraction(
+            eq, self.cfg.bwb.initial_capital, hwm, self.cfg.bwb, year_start_equity=yr_anchor
+        )
+        if not self.cfg.bwb.isolated_capital or other_m_pct > 0.0:
+            f_t = min(f_raw, max(0.0, float(self.cfg.bwb.max_combined_margin_pct) - other_m_pct))
+        else:
+            f_t = f_raw
         house_dollars = max(0.0, eq - w0)
         house_pct = (house_dollars / w0) * 100.0 if w0 > 0 else 0.0
         span = max(1e-9, self.cfg.bwb.max_collat_pct - self.cfg.bwb.base_collat_pct)
@@ -495,7 +559,10 @@ class BwbBotService:
         out = {
             "strategy": "bwb",
             "strategy_name": self.strategy_name,
-            "initial_capital": w0,
+            "initial_capital": float(self.cfg.bwb.initial_capital),
+            "isolated_capital": self.cfg.bwb.isolated_capital,
+            "year_start_anchor": yr_anchor,
+            "other_margin_used_pct": other_m_pct * 100.0,
             "mode": self.cfg.mode,
             "connected": connected,
             "account": mask_account(getattr(b, "account_id", "")),
@@ -530,8 +597,8 @@ class BwbBotService:
                 "net_liquidation": eq,
                 "day_pnl": eq - float(prev["nlv"]) if prev else 0.0,
                 "drawdown_pct": (eq / hwm - 1.0) * 100.0 if hwm > 0 else 0.0,
-                "initial_dd_pct": min(0.0, (eq / w0 - 1.0) * 100.0) if w0 > 0 else 0.0,
-                "total_return_pct": (eq / w0 - 1.0) * 100.0 if w0 > 0 else 0.0,
+                "initial_dd_pct": min(0.0, (eq / float(self.cfg.bwb.initial_capital) - 1.0) * 100.0),
+                "total_return_pct": (eq / float(self.cfg.bwb.initial_capital) - 1.0) * 100.0,
                 "cushion_pct": house_pct,
                 "house_pct": house_pct,
                 "collat_pct": f_t * 100.0,
@@ -641,6 +708,7 @@ class BwbBotService:
         self.journal.reset()
         self._eq_cache = None
         self._hwm_cache = None
+        self._yr_anchor_cache = None
         self.state = "running"
         self._log("info", "demo", "0DTE Put BWB demo started: replaying historical SPX/VIX1D data")
         while not self._stop.is_set():
@@ -651,6 +719,7 @@ class BwbBotService:
                 self.journal.reset()
                 self._eq_cache = None
                 self._hwm_cache = None
+                self._yr_anchor_cache = None
                 self._log("info", "demo", "0DTE Put BWB demo restarted from the beginning")
             sim.begin_day()
             await self.decision_cycle(allow_entries=True)

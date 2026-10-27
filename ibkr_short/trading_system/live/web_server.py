@@ -167,18 +167,28 @@ def create_app(service: BotService, cfg: LiveConfig, auth: AuthStore, web_dir: P
         gs_status = await service.status()
         gs_eq = service.journal.equity(400)
         strats: dict = {"gapshort": {"status": gs_status, "equity": gs_eq}}
-        comb_init = float(gs_status.get("initial_capital") or cfg.initial_capital)
-        comb_nlv = float(gs_status.get("net_liquidation") or comb_init)
+        gs_init = float(gs_status.get("initial_capital") or cfg.initial_capital)
+        gs_nlv = float(gs_status.get("net_liquidation") or gs_init)
+        comb_init = gs_init
+        comb_nlv = gs_nlv
         comb_day = float(gs_status.get("day_pnl") or 0.0)
         comb_pos = int(gs_status.get("positions") or 0)
+        shared_cap = False
 
         if bwb_service is not None:
             bwb_status = await bwb_service.status()
             bwb_eq = bwb_service.journal.equity(400)
             strats["bwb"] = {"status": bwb_status, "equity": bwb_eq}
             b_init = float(bwb_status.get("initial_capital") or cfg.bwb.initial_capital)
-            comb_init += b_init
-            comb_nlv += float(bwb_status.get("net_liquidation") or b_init)
+            b_nlv = float(bwb_status.get("net_liquidation") or b_init)
+            shared_cap = (not cfg.isolated_capital) and (not cfg.bwb.isolated_capital)
+            if shared_cap:
+                # Single shared $100k pool: bwb_status.net_liquidation already incorporates shared equity
+                comb_init = gs_init
+                comb_nlv = b_nlv
+            else:
+                comb_init += b_init
+                comb_nlv += b_nlv
             comb_day += float(bwb_status.get("day_pnl") or 0.0)
             comb_pos += int(bwb_status.get("positions") or 0)
 
@@ -189,6 +199,7 @@ def create_app(service: BotService, cfg: LiveConfig, auth: AuthStore, web_dir: P
                 "total_return_pct": (comb_nlv / comb_init - 1.0) * 100.0 if comb_init > 0 else 0.0,
                 "day_pnl": comb_day,
                 "positions": comb_pos,
+                "shared_capital": shared_cap,
             },
             "strategies": strats,
         }

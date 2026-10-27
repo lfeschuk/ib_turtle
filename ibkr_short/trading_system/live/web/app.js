@@ -261,24 +261,32 @@
     const gsSt = gs.status || {};
     const bwbSt = bwb.status || {};
 
-    view.brandTitle.textContent = 'Both Strategies ($200k)';
+    const sharedCap = Boolean(comb.shared_capital);
+    const baseStr = money(comb.initial_capital || (sharedCap ? 100000 : 200000));
+    view.brandTitle.textContent = sharedCap ? 'Both Strategies ($100k Shared)' : 'Both Strategies ($200k)';
+    if (view.stratButtons && view.stratButtons.both) {
+      view.stratButtons.both.textContent = sharedCap ? 'Both ($100k Shared)' : 'Both ($200k)';
+    }
     view.badge.textContent = (gsSt.mode || 'paper').toUpperCase();
     view.badge.className = 'badge mode-' + (gsSt.mode || 'paper');
     const conn = Boolean(gsSt.connected || bwbSt.connected);
     view.dot.className = 'dot ' + (conn ? 'ok' : 'bad');
     view.state.textContent = '2 Bots Active';
 
-    // 1. Combined $200k Portfolio Card
+    // 1. Combined Portfolio Card
     view.ovCombined.replaceChildren(
-      h('h2', {}, h('span', { text: 'Combined Paper Portfolio' }), h('span', { text: 'Base ' + money(comb.initial_capital || 200000) })),
+      h('h2', {}, h('span', { text: sharedCap ? 'Shared Capital Portfolio' : 'Combined Paper Portfolio' }),
+        h('span', { text: 'Base ' + baseStr })),
       h('div', { class: 'big', text: money(comb.net_liquidation) }),
       h('div', { class: 'grid' }, [
         stat('Total Return', pct(comb.total_return_pct, true), tone(comb.total_return_pct)),
         stat('Today P&L', money(comb.day_pnl, true), tone(comb.day_pnl)),
         stat('Active Positions', String(comb.positions || 0)),
-        stat('Allocation', '2 × $100,000 Independent'),
+        stat('Allocation', sharedCap ? '1 × $100k Shared (95% Guard)' : '2 × $100,000 Independent'),
       ]),
-      h('div', { class: 'note', text: 'Each strategy trades and compounds its own independent $100,000 paper-trading ledger.' })
+      h('div', { class: 'note', text: sharedCap
+        ? 'Both strategies share the same $100,000 capital pool (10:30–16:00 BWB + overnight Gap Short, 95% combined margin ceiling).'
+        : 'Each strategy trades and compounds its own independent $100,000 paper-trading ledger.' })
     );
 
     // 2. Strategy 1 Card: Small-Cap 100%+ Gap Short ($100k)

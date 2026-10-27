@@ -245,12 +245,15 @@ def build_bwb_plan(snap: BwbMarketSnapshot, cfg_bwb: BwbSettings, equity: float 
 
 
 def compute_earned_kelly_fraction(equity: float, initial_capital: float, hwm: float,
-                                  cfg_bwb: BwbSettings) -> float:
+                                  cfg_bwb: BwbSettings, year_start_equity: float | None = None) -> float:
     """Computes daily collateral fraction f_t under the configured Kelly rule."""
-    w0 = max(float(initial_capital), 1.0)
+    mode = cfg_bwb.sizing_mode
+    if mode == "yearly_house" and year_start_equity is not None and year_start_equity > 0:
+        w0 = max(float(initial_capital), float(year_start_equity))
+    else:
+        w0 = max(float(initial_capital), 1.0)
     w = max(float(equity), 0.0) / w0
     hwm_r = max(float(hwm), float(equity), w0) / w0
-    mode = cfg_bwb.sizing_mode
 
     if mode == "fixed_7.5":
         return 0.075
@@ -271,7 +274,7 @@ def compute_earned_kelly_fraction(equity: float, initial_capital: float, hwm: fl
             cfg_bwb.base_collat_pct
             + (cfg_bwb.max_collat_pct - cfg_bwb.base_collat_pct) * np.clip((w - 1.0) / 0.30, 0.0, 1.0),
         ))
-    # Default: "earned_ramp" (Earned-Money Ramp A: 7.5% base + 50% of earned profit up to 20.0% cap)
+    # Default: "earned_ramp" or "yearly_house" (7.5% base + 50% of earned profit above W_0 up to 20.0% cap)
     if w <= 1.0:
         return float(cfg_bwb.floor_collat_pct
                      + (cfg_bwb.base_collat_pct - cfg_bwb.floor_collat_pct)
@@ -283,13 +286,30 @@ def compute_earned_kelly_fraction(equity: float, initial_capital: float, hwm: fl
 
 
 def size_bwb_bet(equity: float, hwm: float, plan: BwbPlan, cfg_bwb: BwbSettings,
-                 discrete_contracts: bool = False) -> BwbSizeDecision:
+                 discrete_contracts: bool = False, year_start_equity: float | None = None,
+                 other_margin_used_pct: float = 0.0) -> BwbSizeDecision:
     """Computes target collateral budget and contract count from the Earned-Money Kelly Ramp."""
-    w0 = cfg_bwb.initial_capital
-    f_t = compute_earned_kelly_fraction(equity, w0, hwm, cfg_bwb)
+    if cfg_bwb.sizing_mode == "yearly_house" and year_start_equity is not None and year_start_equity > 0:
+        w0 = max(float(cfg_bwb.initial_capital), float(year_start_equity))
+    else:
+        w0 = float(cfg_bwb.initial_capital)
+
+    f_raw = compute_earned_kelly_fraction(equity, cfg_bwb.initial_capital, hwm, cfg_bwb,
+                                          year_start_equity=year_start_equity)
+    f_t = f_raw
+    guard_clipped = False
+    if (not cfg_bwb.isolated_capital) or other_margin_used_pct > 0.0:
+        avail_pct = max(0.0, float(cfg_bwb.max_combined_margin_pct) - float(other_margin_used_pct))
+        if f_raw > avail_pct + 1e-6:
+            f_t = avail_pct
+            guard_clipped = True
+
     budget = f_t * equity
     if discrete_contracts and plan.margin_per_contract > 0:
-        contracts = float(max(1, round(budget / plan.margin_per_contract)))
+        if budget < 0.5 * plan.margin_per_contract:
+            contracts = 0.0
+        else:
+            contracts = float(max(1, round(budget / plan.margin_per_contract)))
         margin_dollars = contracts * plan.margin_per_contract
     else:
         contracts = budget / plan.margin_per_contract if plan.margin_per_contract > 0 else 0.0
@@ -300,12 +320,15 @@ def size_bwb_bet(equity: float, hwm: float, plan: BwbPlan, cfg_bwb: BwbSettings,
     span = max(1e-9, cfg_bwb.max_collat_pct - cfg_bwb.base_collat_pct)
     ramp_pct = float(np.clip((f_t - cfg_bwb.base_collat_pct) / span, 0.0, 1.0) * 100.0)
 
+    anchor_lbl = "Jan-1 lock" if cfg_bwb.sizing_mode == "yearly_house" else "base"
     if equity <= w0:
-        note = f"Principal shield active ({f_t:.2%} collateral, protecting ${w0:,.0f} base)"
+        note = f"Principal shield active ({f_t:.2%} collateral, protecting ${w0:,.0f} {anchor_lbl})"
     elif f_t >= cfg_bwb.max_collat_pct - 1e-6:
-        note = f"Full House-Money Kelly ({f_t:.1%} collateral, +${house_dollars:,.0f} earned cushion)"
+        note = f"Full House-Money Kelly ({f_t:.1%} collateral, +${house_dollars:,.0f} earned above {anchor_lbl})"
     else:
-        note = f"House-Money Ramp ({f_t:.2%} collateral, {ramp_pct:.0f}% to 20% cap)"
+        note = f"House-Money Ramp ({f_t:.2%} collateral, {ramp_pct:.0f}% to {cfg_bwb.max_collat_pct:.0%} cap)"
+    if guard_clipped:
+        note += f" [95% shared-margin guard: Gap Short using {other_margin_used_pct:.1%}]"
 
     return BwbSizeDecision(
         collat_fraction=f_t,

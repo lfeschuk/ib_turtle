@@ -28,7 +28,7 @@ def cmd_reset_year_start(cfg: LiveConfig) -> int:
     """Make the last recorded equity this year's starting point for the house-money sizing.
 
     Use it after a deposit or withdrawal (once the bot has recorded the new equity after the close), or when
-    switching to "perbet_house" in the middle of a year, so that only trading profit counts as house money.
+    switching to "perbet_house" / "yearly_house" in the middle of a year, so that only trading profit counts as house money.
     """
     journal = _journal(cfg)
     last = journal.last_equity_before("9999-12-31")
@@ -37,8 +37,15 @@ def cmd_reset_year_start(cfg: LiveConfig) -> int:
         return 1
     journal.set("year_start_day", last["day"])
     journal.set("year_start_adj", repr(float(last["adj"])))
-    print(f"House-money starting point set to ${last['adj']:,.0f} (equity of {last['day']}, net of tax owed). "
+    print(f"Gap Short house-money starting point set to ${last['adj']:,.0f} (equity of {last['day']}, net of tax owed). "
           f"It applies until the end of {last['day'][:4]}.")
+    if cfg.bwb.enabled:
+        bwb_j = Journal(cfg.data_path / f"bwb-{cfg.mode}.db")
+        b_last = bwb_j.last_equity_before("9999-12-31")
+        if b_last:
+            bwb_j.set("year_start_day", b_last["day"])
+            bwb_j.set("year_start_adj", repr(float(b_last["adj"])))
+            print(f"0DTE BWB house-money starting point set to ${b_last['adj']:,.0f} (equity of {b_last['day']}).")
     return 0
 
 
@@ -130,7 +137,7 @@ async def _run(cfg: LiveConfig) -> int:
             bwb_broker = SimBwbBroker(cfg)
         else:
             bwb_broker = IBKRBwbBroker(cfg, readonly=(cfg.mode == "shadow"))
-        bwb_service = BwbBotService(cfg, bwb_broker, bwb_journal, notifier)
+        bwb_service = BwbBotService(cfg, bwb_broker, bwb_journal, notifier, peer_service=service)
 
     app = create_app(service, cfg, AuthStore(journal, secrets["password_hash"]), bwb_service=bwb_service)
     server = uvicorn.Server(uvicorn.Config(app, host=cfg.http_host, port=cfg.http_port, log_level="info",

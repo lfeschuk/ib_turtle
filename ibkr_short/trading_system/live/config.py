@@ -14,7 +14,7 @@ except ModuleNotFoundError:  # Python 3.10 (Ubuntu 22.04)
 
 MODES = ("demo", "shadow", "paper", "live")
 SIZING_MODES = ("static", "perbet", "perbet_house", "perbet_dd")
-BWB_SIZING_MODES = ("earned_ramp", "earned_ramp_strict", "fixed_7.5", "fixed_12.5", "fixed_20", "hwm_brake")
+BWB_SIZING_MODES = ("earned_ramp", "yearly_house", "earned_ramp_strict", "fixed_7.5", "fixed_12.5", "fixed_20", "hwm_brake")
 
 
 @dataclass
@@ -40,11 +40,12 @@ class BwbSettings:
     w1_sd: float = 0.32                  # upper wing width in 1D SD units (0.32 for 20d, 0.28 for 15d)
     w_risk_sd: float = 1.30              # lower net risk width in 1D SD units
     real_curv_bps: float = 27.0          # empirical Cboe 0DTE wing curvature haircut in bps of W_risk
-    sizing_mode: str = "earned_ramp"     # Earned-Money ("House-Money") Kelly Ramp: 7.5% base -> 20% at +33% gain
-    base_collat_pct: float = 0.075       # 7.5% collateral risk at initial capital W_0
+    sizing_mode: str = "earned_ramp"     # "earned_ramp" (from W_0) or "yearly_house" (locks in Jan-1 equity each year)
+    base_collat_pct: float = 0.075       # 7.5% collateral risk at initial/Jan-1 capital W_0
     floor_collat_pct: float = 0.050      # 5.0% floor if equity dips below W_0
     max_collat_pct: float = 0.200        # 20.0% maximum collateral cap on earned profits
     profit_share: float = 0.50           # 50% of earned profits (W - W_0) allocated to Kelly ramp
+    max_combined_margin_pct: float = 0.95  # 95% combined IBKR maintenance margin ceiling when sharing capital
     symbol: str = "SPX"                  # "SPX" (SPXW $100 mult) or "XSP" (Mini-SPX $100 mult, 1/10th notional)
     use_xsp_below_nlv: float = 25_000.0  # auto-select XSP if account equity < $25k
     discrete_strikes: bool = False       # False = continuous backtest parity; True = round to $5 (SPXW) / $1 (XSP)
