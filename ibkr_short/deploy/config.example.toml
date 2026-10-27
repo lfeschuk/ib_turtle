@@ -1,0 +1,67 @@
+# Dual-Strategy service settings (Strategy 1: Small-Cap Gap Short + Strategy 2: 0DTE SPX Put BWB).
+# Copy to ~/.config/gapshort/config.toml and edit.
+# Stages: "demo" (no TWS) -> "shadow" (TWS read-only) -> "paper" (paper orders) -> "live".
+mode = "paper"
+
+# Independent starting capital for Strategy 1 (Small-Cap 100%+ Gap Short)
+initial_capital = 100000.0
+isolated_capital = true
+
+# TWS paper uses 7497 (live 7496). IB Gateway uses 4002 / 4001.
+tws_host = "127.0.0.1"
+tws_port = 7497
+client_id = 17
+allow_live = false
+
+# The app listens on the laptop only; `tailscale serve` publishes it to your phone over HTTPS.
+http_host = "127.0.0.1"
+http_port = 8787
+
+data_dir = "~/.local/share/gapshort"
+secrets_path = "~/.config/gapshort/secrets.json"
+
+# Orders go out 15 minutes before the close (15:45 ET, 12:45 on half days); the day is checked 15 minutes after.
+decision_minutes_before_close = 15
+reconcile_minutes_after_close = 15
+
+max_positions = 6
+hold_days = 3
+cooldown_days = 10
+slip_per_side = 0.005
+borrow_annual = 1.50
+max_borrow_annual = 3.00
+
+# Phone alerts: either or both. Put tokens in secrets.json, not here.
+ntfy_url = ""            # e.g. "https://ntfy.sh/pick-a-long-random-topic-name"
+telegram_chat_id = ""
+
+[sizing]
+mode = "static"          # "static" for shadow, paper and the first live months; at full size "perbet_house"
+static_pct = 0.035       # "perbet_house": the money the year started with at kelly_mult, this year's profit at
+kelly_mult = 0.1667      #   profit_kelly_mult (1/6 and 1/3 of each short's own Kelly size)
+profit_kelly_mult = 0.3333
+dd_limit = 0.20          # ("perbet" = kelly_mult only; "perbet_dd" = drawdown limit; kept for reference)
+model_path = "~/gapshort/trading_system/live/model_perbet.json"
+max_position_pct = 0.10
+liquidity_cap_pct = 0.01
+tax_rate = 0.25
+
+[bwb]
+# Strategy 2: Vol-Scaled 0DTE SPX Put Broken-Wing Butterfly (BWB) with Earned-Money ("House-Money") Kelly Ramp
+enabled = true
+initial_capital = 100000.0
+isolated_capital = true           # true = independent $100k paper ledger; false = share the same $100k pool with Gap Short
+delta_mid = 0.20                  # 0.20 (20-delta middle short put) or 0.15 (15-delta)
+w1_sd = 0.32                      # upper wing width in 1D SD units (0.32 for 20d, 0.28 for 15d)
+w_risk_sd = 1.30                  # lower net risk width in 1D SD units
+real_curv_bps = 27.0              # empirical Cboe 0DTE wing curvature haircut in bps of W_risk
+sizing_mode = "earned_ramp"       # "earned_ramp" (from $100k W_0) or "yearly_house" (locks in Jan-1 equity every year)
+base_collat_pct = 0.075           # 7.5% collateral risk at initial/Jan-1 capital
+floor_collat_pct = 0.050          # 5.0% floor if equity dips below principal anchor
+max_collat_pct = 0.200            # 20.0% maximum collateral cap on earned profits
+profit_share = 0.50               # 50% of earned profits allocated to Kelly ramp
+max_combined_margin_pct = 0.95    # 95% IBKR maintenance margin ceiling when isolated_capital = false
+symbol = "SPX"                    # "SPX" (SPXW $100 mult) or "XSP" (Mini-SPX 1/10th size)
+use_xsp_below_nlv = 25000.0
+entry_minutes_after_open = 60     # 10:30 AM ET post-initial-balance entry window
+client_id_offset = 1              # connects to TWS as client_id + 1 (18) alongside Gap Short (17)

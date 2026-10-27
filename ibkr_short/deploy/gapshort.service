@@ -1,0 +1,15 @@
+[Unit]
+Description=Gap-short trading service and phone app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=%h/gapshort
+ExecStart=%h/gapshort/.venv/bin/python -m trading_system.live.main run --config %h/.config/gapshort/config.toml
+Restart=always
+RestartSec=15
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

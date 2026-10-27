@@ -1,0 +1,6 @@
+numpy>=2.0
+pandas>=2.2
+ib_async>=2.0
+fastapi>=0.115
+uvicorn>=0.30
+tomli>=2.0; python_version < "3.11"
