@@ -14,6 +14,34 @@ This repository contains the complete, self-contained trading service that runs 
 
 ---
 
+## One-Command Automated PC Installer (`install_pc.sh`) — Recommended
+
+You do **not** need to run the installation steps manually. We included an all-in-one installer script (`install_pc.sh`) that does everything automatically, checks for any issues, and prints the exact next steps at the end:
+
+1. **If you copied the `ibkr_short` folder to your Ubuntu PC:**
+   ```bash
+   cd /path/to/ibkr_short
+   bash install_pc.sh
+   ```
+2. **Or if you copied `install_pc.sh` and `dist/gapshort-live-20261027.tar.gz` to `~/Downloads` on your PC:**
+   ```bash
+   cd ~/Downloads
+   bash install_pc.sh
+   ```
+
+### What `bash install_pc.sh` Does Automatically:
+- **Step 1**: Checks Python 3, installs `python3-venv` / `pip` / `curl` if missing, enables NTP clock sync, and prevents Ubuntu from sleeping/suspending during market hours.
+- **Step 2**: Creates `~/gapshort` and unpacks/copies both bots (`Gap Short` + `0DTE SPX Put BWB`) into `~/gapshort`.
+- **Step 3**: Creates `~/gapshort/.venv`, installs all Python dependencies (`numpy`, `pandas`, `ib_async`, `fastapi`, `uvicorn`), and runs a strategy math self-test.
+- **Step 4**: Auto-detects whether **IB Gateway (`port 4002`)** or **TWS (`port 7497`)** is listening, asks whether you want **Independent (`2 × $100k`)** or **Shared (`1 × $100k` with Jan-1 lock & `95%` margin guard)** mode, and writes `~/.config/gapshort/config.toml`.
+- **Step 5**: Prompts you to set your web/phone dashboard password (`~/.config/gapshort/secrets.json`).
+- **Step 6**: Installs, enables, and starts the background `systemd` service (`gapshort.service`) and verifies `http://localhost:8787` is live.
+- **Step 7**: Runs a live API diagnostic (`check`) against IB Gateway if open, checks Tailscale, and prints a color-coded **`[OK]` / `[WARN]` / `[FAIL]`** summary with the exact next steps required.
+
+*(Non-interactive flags are also supported: `bash install_pc.sh --yes --port 4002` or `bash install_pc.sh --yes --port 4002 --shared-100k`.)*
+
+---
+
 ## FAQ: What is `~/gapshort`? Do I Need to Install Anything First?
 
 - **No — you do NOT need to install any external `gapshort` package first.**
