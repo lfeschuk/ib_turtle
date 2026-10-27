@@ -52,18 +52,27 @@ Also in Ubuntu Desktop Settings:
 
 ---
 
-## 2. Install & Configure IBKR TWS on the PC (Once)
+## 2. Configure IB Gateway (Recommended) or TWS on the PC (Once)
 
-1. **Download & Install TWS Stable for Linux** from `interactivebrokers.com` (*Trading → Trader Workstation → Download*):
+**IB Gateway is actually preferred over full TWS** for unattended bots: it speaks the exact same IBKR socket protocol, supports multiple simultaneous `clientId` connections (`17` and `18`), uses ~80% less RAM/CPU, and has no chart/order-ticket GUI popups.
 
-   ```bash
-   cd ~/Downloads
-   chmod +x tws-stable-standalone-linux-x64.sh
-   ./tws-stable-standalone-linux-x64.sh
-   ```
+### Option 2A: Using IB Gateway (Recommended)
+1. Launch **IB Gateway**, select **IB API**, toggle **Paper Trading**, and sign in.
+2. In the top menu, open **Configure → Settings**:
 
-2. **Log In:** Launch **Trader Workstation**, select **Paper Trading**, and sign in.
-3. **Configure TWS API Settings** (*File → Global Configuration*):
+   | Menu Path | Setting | Required Value |
+   | :--- | :--- | :--- |
+   | **API → Settings** | Socket port | **`4002`** (Paper default) / **`4001`** (Live default) |
+   | **API → Settings** | Read-Only API | **OFF** (unchecked) for `paper` and `live` |
+   | **API → Settings** | Allow connections from localhost only | **ON** (checked) |
+   | **API → Precautions** | Bypass Order Precautions for API Orders (+ Bond / Negative Yield / Price Cap) | **ON** *(check all bypass boxes so IB Gateway never holds an API order waiting for a click)* |
+   | **Lock and Exit** | Auto restart | **ON**, set outside `10:00–16:30 ET` (e.g., **`11:45 PM`**) |
+
+3. **Important (`config.toml` port):** Because IB Gateway defaults to port **`4002`** (Paper) / **`4001`** (Live) instead of TWS's `7497`/`7496`, set `tws_port = 4002` in `~/.config/gapshort/config.toml` (see Section 4 below).
+
+### Option 2B: Using Full Trader Workstation (TWS)
+1. Launch **Trader Workstation**, select **Paper Trading**, and sign in.
+2. Open **File → Global Configuration**:
 
    | Menu Path | Setting | Required Value |
    | :--- | :--- | :--- |
@@ -120,6 +129,7 @@ Each strategy tracks and compounds its own isolated `$100,000` ledger (`gapshort
 
 ```toml
 mode = "paper"
+tws_port = 4002                  # 4002 for IB Gateway Paper (7497 for TWS Paper; 4001/7496 for Live)
 initial_capital = 100000.0
 isolated_capital = true
 
@@ -148,7 +158,8 @@ client_id_offset = 1             # Connects on client_id 18 alongside Gap Short 
 Because `0DTE Put BWB` only uses margin intraday (`10:30 AM – 4:00 PM ET`, `0%` overnight) while `Gap Short` enters at the close (`3:50–4:00 PM ET`) and holds overnight, both strategies can share the **exact same `$100,000` capital pool** with the **Yearly `Jan-1` House-Money Lock (`yearly_house`)** and the **`95%` Combined IBKR Margin Guard**:
 
 ```toml
-mode = "paper"                   # or "live" (with allow_live = true and tws_port = 7496)
+mode = "paper"                   # or "live" (with allow_live = true and tws_port = 4001 / 7496)
+tws_port = 4002                  # 4002 for IB Gateway Paper (7497 for TWS Paper)
 initial_capital = 100000.0
 isolated_capital = false
 
