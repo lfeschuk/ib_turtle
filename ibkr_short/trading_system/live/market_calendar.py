@@ -44,6 +44,9 @@ def now_ny() -> datetime:
     return datetime.now(NY)
 
 
+now_et = now_ny
+
+
 def next_trading_day(d: date) -> date:
     d = d + timedelta(days=1)
     while not is_trading_day(d):

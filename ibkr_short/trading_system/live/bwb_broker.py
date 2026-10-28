@@ -488,7 +488,7 @@ class IBKRBwbBroker:
             self.ib.disconnect()
 
     def now(self) -> datetime:
-        return mc.now_et()
+        return mc.now_ny()
 
     def today(self) -> date:
         return self.now().date()
