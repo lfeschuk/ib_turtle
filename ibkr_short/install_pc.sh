@@ -271,11 +271,12 @@ fi
 SELF_TEST_ERR="$(cd "${TARGET_DIR}" && "${TARGET_DIR}/.venv/bin/python" -c "
 import numpy, pandas, ib_async, fastapi, uvicorn
 from trading_system.live.config import LiveConfig
-from trading_system.live.bwb_strategy import compute_earned_kelly_fraction
+from trading_system.live.bwb_strategy import compute_earned_kelly_fraction, summarize_bwb_premium_audit
 import trading_system.live.main
 import trading_system.live.bwb_service
 import trading_system.live.web_server
 assert abs(compute_earned_kelly_fraction(100000, 100000, 100000, LiveConfig().bwb) - 0.075) < 1e-6
+assert summarize_bwb_premium_audit([], 0.20, 0.20, 'paper')['verdict'] == 'early'
 " 2>&1)"
 if [[ $? -eq 0 ]]; then
   ok "Self-test passed: all modules import cleanly and Kelly sizing math verified"
@@ -394,6 +395,8 @@ profit_share = 0.50
 max_combined_margin_pct = 0.95
 symbol = "SPX"
 entry_minutes_after_open = 60
+min_net_credit_pct = 0.0
+entry_timeout_sec = 90
 client_id_offset = 1
 EOF
     ok "Wrote ${CONFIG_FILE} (Port=${BROKER_PORT}, Mode=Shared \$100k + yearly_house + 95% margin guard)"
@@ -446,6 +449,8 @@ profit_share = 0.50
 max_combined_margin_pct = 0.95
 symbol = "SPX"
 entry_minutes_after_open = 60
+min_net_credit_pct = 0.0
+entry_timeout_sec = 90
 client_id_offset = 1
 EOF
     ok "Wrote ${CONFIG_FILE} (Port=${BROKER_PORT}, Mode=Two Independent \$100k Paper Ledgers)"

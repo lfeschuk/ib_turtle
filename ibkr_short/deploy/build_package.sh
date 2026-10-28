@@ -7,9 +7,10 @@ mkdir -p dist
 out="dist/gapshort-live-$(date +%Y%m%d).tar.gz"
 tar --exclude='__pycache__' --exclude='*.pyc' --exclude='trading_system/live/export_model.py' \
     --owner=0 --group=0 --numeric-owner -czf "$out" \
+    README.md install_pc.sh \
     trading_system/__init__.py trading_system/models.py trading_system/strategy_core.py \
     trading_system/engine.py trading_system/sizing.py trading_system/live \
-    deploy/README.md deploy/config.example.toml deploy/gapshort.service deploy/requirements-live.txt
+    deploy/README.md deploy/install_pc.sh deploy/config.example.toml deploy/gapshort.service deploy/requirements-live.txt
 (cd dist && sha256sum "$(basename "$out")" > "$(basename "$out").sha256")
 echo "$out ($(du -h "$out" | cut -f1))"
 cat "$out.sha256"

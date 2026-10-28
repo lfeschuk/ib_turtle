@@ -429,6 +429,9 @@ def test_bwb_demo_and_dual_strategy_api(tmp: Path, gs_service, gs_journal) -> No
     assert max_diff < 1e-6, max_diff
     rep = bwb_service.report_view()
     assert rep["edge"]["n"] > 1500 and rep["edge"]["verdict"] == "ok" and rep["execution"]["verdict"] == "ok"
+    au0 = rep["bwb_audit"]
+    assert au0["n_filled"] == rep["edge"]["n"] and au0["verdict"] == "ok"
+    assert abs(au0["model_error_pct"]) < 1e-12 and abs(au0["extra_slip_pct"]) < 1e-12
 
     # Verify Dual-Strategy API (/api/overview + ?strategy=gapshort vs ?strategy=bwb)
     gs_journal.set("paused", "0")
@@ -446,6 +449,8 @@ def test_bwb_demo_and_dual_strategy_api(tmp: Path, gs_service, gs_journal) -> No
     assert ov["strategies"]["gapshort"]["status"]["initial_capital"] == 100_000.0
     assert ov["strategies"]["bwb"]["status"]["initial_capital"] == 100_000.0
     assert ov["strategies"]["bwb"]["status"]["net_liquidation"] > 2_000_000.0
+    assert "bwb_audit" in c.get("/api/report?strategy=bwb").json()
+    assert "bwb_audit" not in c.get("/api/report?strategy=gapshort").json()
 
     # Independent strategy pause/resume controls
     assert c.post("/api/pause?strategy=bwb", headers={"X-CSRF-Token": csrf}).status_code == 200
@@ -453,8 +458,245 @@ def test_bwb_demo_and_dual_strategy_api(tmp: Path, gs_service, gs_journal) -> No
     assert c.post("/api/resume?strategy=bwb", headers={"X-CSRF-Token": csrf}).status_code == 200
     assert bwb_journal.get("paused") == "0"
     assert c.get("/api/status?strategy=invalid").status_code == 422
-    print(f"bwb demo & dual-strategy api ok: {len(bot_eq)} days, {rep['edge']['n']} BWB trades, "
+
+    # Verify Yearly House-Money ("yearly_house") Jan-1 principal lock & Shared-Capital 95% margin guard
+    from trading_system.live.bwb_strategy import compute_earned_kelly_fraction, size_bwb_bet
+    from trading_system.live.config import BwbSettings
+
+    cfg_yh = BwbSettings(sizing_mode="yearly_house", isolated_capital=False, max_combined_margin_pct=0.95)
+    # At the start of a new year ($400k equity == $400k Jan-1 anchor), yearly_house resets to 7.5% base
+    f_jan1 = compute_earned_kelly_fraction(400_000.0, 100_000.0, 400_000.0, cfg_yh, year_start_equity=400_000.0)
+    assert abs(f_jan1 - 0.075) < 1e-9, f_jan1
+    # Once up +42.5% above the $400k Jan-1 anchor ($570k), yearly_house reaches the 20.0% cap
+    f_up = compute_earned_kelly_fraction(570_000.0, 100_000.0, 570_000.0, cfg_yh, year_start_equity=400_000.0)
+    assert abs(f_up - 0.200) < 1e-9, f_up
+    # When Gap Short is using 85% FINRA 4210 margin, the 95% shared-margin guard clips BWB from 20.0% to 10.0%
+    sz_guarded = size_bwb_bet(570_000.0, 570_000.0, pl, cfg_yh, discrete_contracts=False,
+                              year_start_equity=400_000.0, other_margin_used_pct=0.85)
+    assert abs(sz_guarded.collat_fraction - 0.100) < 1e-9 and "95% shared-margin guard" in sz_guarded.note, sz_guarded
+
+    # Verify /api/overview in Shared Capital mode (isolated_capital = False on both strategies)
+    cfg.isolated_capital = False
+    cfg.bwb.isolated_capital = False
+    cfg.bwb.sizing_mode = "yearly_house"
+    bwb_service.peer_service = gs_service
+    ov_shared = c.get("/api/overview").json()
+    assert ov_shared["combined"]["shared_capital"] is True
+    assert ov_shared["combined"]["initial_capital"] == 100_000.0
+
+    print(f"bwb demo, yearly_house & shared-capital api ok: {len(bot_eq)} days, {rep['edge']['n']} BWB trades, "
           f"max diff ${max_diff:.2e}, final $100k -> ${bot_eq[-1]:,.2f}")
+
+
+def test_bwb_live_premium_audit_and_guards(tmp: Path) -> None:
+    """Verifies Model Error vs Extra Slippage decomposition, min-credit gate, 10:30 cancel guard, and shadow quotes."""
+    from types import ModuleType, SimpleNamespace
+
+    from trading_system.live.bwb_broker import IBKRBwbBroker, SimBwbBroker
+    from trading_system.live.bwb_service import BwbBotService
+    from trading_system.live.bwb_strategy import BwbMarketSnapshot, build_bwb_plan
+
+    async def _run_bwb_slice(svc: BwbBotService, sim_b: SimBwbBroker) -> None:
+        while not sim_b.finished:
+            sim_b.begin_day()
+            await svc.decision_cycle(allow_entries=True)
+            sim_b.end_day()
+            await svc.reconcile()
+
+    # 1. Decomposed Haircut: -40 bps Wrong Model + -25 bps Extra Slippage = -65 bps total haircut
+    cfg1 = LiveConfig(mode="demo", data_dir=str(tmp), secrets_path=str(tmp / "s.json"),
+                      demo_start="2026-01-02", demo_seconds_per_day=0.0)
+    cfg1.validate()
+    sim1 = SimBwbBroker(cfg1, start_date="2026-01-02", end_date="2026-06-30")
+    sim1.quote_haircut_pct_of_risk = -0.0040   # live 10:30 mid is 40 bps of W_risk below model mid
+    sim1.extra_slip_pct_of_risk = 0.0025       # fills 25 bps of W_risk worse than live quote est_net
+    j1 = Journal(tmp / "bwb-haircut.db")
+    svc1 = BwbBotService(cfg1, sim1, j1, Notifier(cfg1, {}))
+    asyncio.run(_run_bwb_slice(svc1, sim1))
+
+    rep1 = svc1.report_view()
+    au1 = rep1["bwb_audit"]
+    assert au1["n_filled"] > 50 and not au1["using_shadow_quotes"], au1
+    assert abs(au1["model_error_pct"] - (-0.0040)) < 1e-9, au1
+    assert abs(au1["extra_slip_pct"] - (-0.0025)) < 1e-9, au1
+    assert abs(au1["total_haircut_pct"] - (-0.0065)) < 1e-9, au1
+    assert abs(au1["true_edge_pct"] - (au1["actual_net_pct"] + au1["hist_payoff_cons_pct"])) < 1e-12
+    assert au1["verdict"] == "watch" and 0.05 < au1["recommended_max_collat_pct"] < cfg1.bwb.max_collat_pct, au1
+    assert abs(rep1["execution"]["gap"] - (-0.0065)) < 1e-6, rep1["execution"]
+
+    # 2. Pre-trade minimum net credit gate blocks negative/zero-edge entries (skipped_low_credit)
+    cfg2 = LiveConfig(mode="demo", data_dir=str(tmp), secrets_path=str(tmp / "s.json"),
+                      demo_start="2026-01-02", demo_seconds_per_day=0.0)
+    cfg2.bwb.min_net_credit_pct = 0.0185
+    cfg2.validate()
+    sim2 = SimBwbBroker(cfg2, start_date="2026-01-02", end_date="2026-04-30")
+    sim2.quote_haircut_pct_of_risk = -0.0170   # pushes est_net below 1.85% floor and <= 1.50% break-even
+    j2 = Journal(tmp / "bwb-floor-block.db")
+    svc2 = BwbBotService(cfg2, sim2, j2, Notifier(cfg2, {}))
+    asyncio.run(_run_bwb_slice(svc2, sim2))
+    au2 = svc2.report_view()["bwb_audit"]
+    assert au2["n_filled"] == 0 and au2["skipped_low_credit"] > 20, au2
+    assert len(j2.recent_trades(100)) == 0
+
+    # If the floor is disabled (0.001) and those sub-breakeven fills go through, audit immediately flags 'bad'
+    cfg2b = LiveConfig(mode="demo", data_dir=str(tmp), secrets_path=str(tmp / "s.json"),
+                       demo_start="2026-01-02", demo_seconds_per_day=0.0)
+    cfg2b.bwb.min_net_credit_pct = 0.001
+    cfg2b.validate()
+    sim2b = SimBwbBroker(cfg2b, start_date="2026-01-02", end_date="2026-04-30")
+    sim2b.quote_haircut_pct_of_risk = -0.0170
+    svc2b = BwbBotService(cfg2b, sim2b, Journal(tmp / "bwb-bad-edge.db"), Notifier(cfg2b, {}))
+    asyncio.run(_run_bwb_slice(svc2b, sim2b))
+    au2b = svc2b.report_view()["bwb_audit"]
+    assert au2b["verdict"] == "bad" and au2b["true_edge_pct"] <= 0.0 and au2b["recommended_max_collat_pct"] == 0.0, au2b
+
+    # 3. Unfilled 10:30 AM timeout cancellation guard (never leaves hanging limit orders open)
+    cfg3 = LiveConfig(mode="demo", data_dir=str(tmp), secrets_path=str(tmp / "s.json"),
+                      demo_start="2026-01-02", demo_seconds_per_day=0.0)
+    cfg3.validate()
+    sim3 = SimBwbBroker(cfg3, start_date="2026-01-02", end_date="2026-03-31")
+    sim3.simulate_timeout_unfilled = True
+    j3 = Journal(tmp / "bwb-timeout.db")
+    svc3 = BwbBotService(cfg3, sim3, j3, Notifier(cfg3, {}))
+    asyncio.run(_run_bwb_slice(svc3, sim3))
+    au3 = svc3.report_view()["bwb_audit"]
+    assert au3["n_filled"] == 0 and au3["unfilled_cancelled"] > 20 and len(j3.recent_trades(100)) == 0, au3
+
+    # 4. Shadow mode logs live 10:30 AM option quotes without sending any orders
+    cfg4 = LiveConfig(mode="shadow", data_dir=str(tmp), secrets_path=str(tmp / "s.json"),
+                      demo_start="2026-01-02", demo_seconds_per_day=0.0)
+    cfg4.validate()
+    sim4 = SimBwbBroker(cfg4, start_date="2026-01-02", end_date="2026-04-30")
+    sim4.quote_haircut_pct_of_risk = -0.0030
+    svc4 = BwbBotService(cfg4, sim4, Journal(tmp / "bwb-shadow.db"), Notifier(cfg4, {}))
+    asyncio.run(_run_bwb_slice(svc4, sim4))
+    au4 = svc4.report_view()["bwb_audit"]
+    assert au4["using_shadow_quotes"] is True and au4["n_filled"] == 0 and au4["n_quoted"] > 20, au4
+    assert abs(au4["model_error_pct"] - (-0.0030)) < 1e-9, au4
+
+    # 5. IBKRBwbBroker unit check: live NBBO quote extraction, 2-step limit + timeout cancel, and leg cashflow math
+    had_ib_async = "ib_async" in sys.modules
+    if not had_ib_async:
+        fake_mod = ModuleType("ib_async")
+        fake_mod.Option = lambda *a, **kw: SimpleNamespace(args=a, kwargs=kw, conId=int(a[2]))
+        fake_mod.ComboLeg = lambda **kw: SimpleNamespace(**kw)
+        fake_mod.Contract = lambda **kw: SimpleNamespace(**kw)
+        fake_mod.Order = lambda **kw: SimpleNamespace(orderId=99, **kw)
+        sys.modules["ib_async"] = fake_mod
+    try:
+        cfg_ib = LiveConfig(mode="paper", data_dir=str(tmp), secrets_path=str(tmp / "s.json"))
+        cfg_ib.bwb.entry_timeout_sec = 5
+        cfg_ib.validate()
+        ib_brk = IBKRBwbBroker(cfg_ib, readonly=False)
+        ib_brk.account_id = "DU123456"
+
+        snap = BwbMarketSnapshot(
+            day="2026-10-26", spot_open=5800.0, spot_close=None, spot_mark=5800.0,
+            iv1d=0.115, vix_open=15.0, vix_prev_close=15.5, vix1d_prev_close=11.0,
+            iv1d_morning_pct=11.5, rf_annual=0.045, rf_daily=0.045 / 252.0,
+            f1_pass=True, f1_reason="F1 pass",
+        )
+        plan = build_bwb_plan(snap, cfg_ib.bwb, equity=100_000.0)
+
+        class _FakeIB:
+            def __init__(self, fill_mode: str):
+                self.fill_mode = fill_mode
+                self.cancelled = 0
+                self.placed_limits: list[float] = []
+
+            def isConnected(self) -> bool:
+                return True
+
+            async def qualifyContractsAsync(self, *contracts):
+                for idx, c in enumerate(contracts):
+                    c.conId = 1001 + idx
+
+            async def reqTickersAsync(self, *_contracts):
+                # K_hi: 9.90/10.10 (mid 10.0), K_mid: 6.45/6.55 (mid 6.5), K_lo: 1.45/1.55 (mid 1.5)
+                # Combo live mid = 2*(6.5) - 10.0 - 1.5 = +1.50 pts
+                return [
+                    SimpleNamespace(bid=9.90, ask=10.10),
+                    SimpleNamespace(bid=6.45, ask=6.55),
+                    SimpleNamespace(bid=1.45, ask=1.55),
+                ]
+
+            def placeOrder(self, _bag, order):
+                self.placed_limits.append(float(order.lmtPrice))
+                if self.fill_mode == "timeout":
+                    return SimpleNamespace(
+                        isDone=lambda: self.cancelled > 0,
+                        orderStatus=SimpleNamespace(filled=0.0, avgFillPrice=0.0, status="Cancelled"),
+                        fills=[],
+                    )
+                fills = [
+                    SimpleNamespace(
+                        contract=SimpleNamespace(secType="OPT"),
+                        execution=SimpleNamespace(shares=2.0, price=10.02, side="BOT"),
+                        commissionReport=SimpleNamespace(commission=2.70),
+                    ),
+                    SimpleNamespace(
+                        contract=SimpleNamespace(secType="OPT"),
+                        execution=SimpleNamespace(shares=4.0, price=6.48, side="SLD"),
+                        commissionReport=SimpleNamespace(commission=5.40),
+                    ),
+                    SimpleNamespace(
+                        contract=SimpleNamespace(secType="OPT"),
+                        execution=SimpleNamespace(shares=2.0, price=1.50, side="BOT"),
+                        commissionReport=SimpleNamespace(commission=2.70),
+                    ),
+                ]
+                return SimpleNamespace(
+                    isDone=lambda: True,
+                    orderStatus=SimpleNamespace(filled=2.0, avgFillPrice=-1.44, status="Filled"),
+                    fills=fills,
+                )
+
+            def cancelOrder(self, _order):
+                self.cancelled += 1
+
+        ib_brk.ib = _FakeIB("filled")
+        q_ib = asyncio.run(ib_brk.quote_bwb_spread(plan))
+        assert q_ib.source == "ibkr_nbbo" and abs(q_ib.live_mid_credit_pts - 1.50) < 1e-9, q_ib
+        res_fill = asyncio.run(ib_brk.place_bwb_spread(plan, 2.0, "SPXW test", quote=q_ib, min_credit_pts=0.80))
+        # Gross = (4*6.48 - 2*10.02 - 2*1.50) / 2 = (25.92 - 20.04 - 3.00) / 2 = 1.44 pts; comm = $10.80 => 0.054 pts
+        assert res_fill.filled and abs(res_fill.gross_credit_pts - 1.44) < 1e-9, res_fill
+        assert abs(res_fill.net_credit_pts - (1.44 - 0.054)) < 1e-9, res_fill
+
+        # Timeout test (speed up asyncio.sleep inside test)
+        ib_brk.ib = _FakeIB("timeout")
+        ib_brk.cfg.bwb.entry_timeout_sec = 5
+        orig_sleep = asyncio.sleep
+        clock = [0.0]
+
+        async def _fast_sleep(dt: float):
+            clock[0] += dt
+            await orig_sleep(0)
+
+        loop = asyncio.new_event_loop()
+        orig_time = loop.time
+        loop.time = lambda: clock[0]
+        asyncio.sleep = _fast_sleep
+        try:
+            res_to = loop.run_until_complete(
+                ib_brk.place_bwb_spread(plan, 2.0, "SPXW test", quote=q_ib, min_credit_pts=0.80)
+            )
+        finally:
+            asyncio.sleep = orig_sleep
+            loop.time = orig_time
+            loop.close()
+        assert not res_to.filled and ib_brk.ib.cancelled == 1 and len(ib_brk.ib.placed_limits) == 2, (
+            res_to, ib_brk.ib.placed_limits
+        )
+    finally:
+        if not had_ib_async:
+            sys.modules.pop("ib_async", None)
+
+    print(
+        f"bwb live premium audit & guards ok: model_err {au1['model_error_pct']:+.2%}, "
+        f"extra_slip {au1['extra_slip_pct']:+.2%}, true_edge {au1['true_edge_pct']:+.2%} "
+        f"(kelly cap -> {au1['recommended_max_collat_pct']:.1%}), floor skips {au2['skipped_low_credit']}, "
+        f"timeout cancels {au3['unfilled_cancelled']}"
+    )
 
 
 def main() -> None:
@@ -472,6 +714,8 @@ def main() -> None:
         test_report_in_demo(service)
         test_api(cfg, service, journal)
         test_bwb_demo_and_dual_strategy_api(tmp, service, journal)
+    with tempfile.TemporaryDirectory() as d:
+        test_bwb_live_premium_audit_and_guards(Path(d))
     with tempfile.TemporaryDirectory() as d:
         test_shadow_book_matches_backtest(Path(d))
     with tempfile.TemporaryDirectory() as d:

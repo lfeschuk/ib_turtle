@@ -1,6 +1,7 @@
 """IBKR TWS / Gateway and Historical Replay brokers for the 0DTE SPX Put BWB strategy."""
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import date, datetime, time as dtime
 from functools import lru_cache
@@ -13,16 +14,30 @@ import pandas as pd
 
 from . import market_calendar as mc
 from .broker import AccountInfo, FillInfo, OrderInfo, PositionInfo, ReadOnlyError
-from .bwb_strategy import BwbMarketSnapshot, BwbPlan, BwbSettlement, settle_bwb
+from .bwb_strategy import (
+    BwbFillResult,
+    BwbMarketSnapshot,
+    BwbPlan,
+    BwbQuoteSnapshot,
+    BwbSettlement,
+    T_0DTE,
+    SQRT_T_0DTE,
+    bs_price_0dte,
+    half_spread_pts,
+    iv_ratio_0dte,
+    settle_bwb,
+)
 from .config import LiveConfig
 
 log = logging.getLogger(__name__)
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SCRATCH_ROOT = _REPO_ROOT.parent
 DEFAULT_PANEL_PATHS = (
-    Path("/usr/local/google/home/lfesch/.gemini/jetski/scratch/spx_0dte_study/out/daily_panel.pkl"),
-    Path(__file__).resolve().parents[2] / "data" / "bwb_daily_panel.pkl",
+    _SCRATCH_ROOT / "spx_0dte_study" / "out" / "daily_panel.pkl",
+    _REPO_ROOT / "data" / "bwb_daily_panel.pkl",
 )
-DEFAULT_SPY_CSV = Path("/usr/local/google/home/lfesch/.gemini/jetski/scratch/spx_0dte_study/data/yf_SPY_1d.csv")
+DEFAULT_SPY_CSV = _SCRATCH_ROOT / "spx_0dte_study" / "data" / "yf_SPY_1d.csv"
 
 
 @dataclass
@@ -125,6 +140,9 @@ class SimBwbBroker:
         else:
             self.t_end = len(self.dates) - 1
         self.account_id = "DU-BWB-0002"
+        self.quote_haircut_pct_of_risk: float = 0.0
+        self.extra_slip_pct_of_risk: float = 0.0
+        self.simulate_timeout_unfilled: bool = False
         self.reset()
 
     def reset(self) -> None:
@@ -175,7 +193,9 @@ class SimBwbBroker:
         if self.open_spread is not None:
             sp = self.open_spread
             close_spot = float(row["C_clean"])
-            settlement = settle_bwb(sp.plan, close_spot, sp.contracts)
+            settlement = settle_bwb(
+                sp.plan, close_spot, sp.contracts, override_net_credit_pts=sp.entry_credit_pts
+            )
             option_pnl = settlement.pnl_dollars
             day_str = self.today().isoformat()
             self._fills_today.append(
@@ -281,19 +301,78 @@ class SimBwbBroker:
     async def fills_today(self) -> list[FillInfo]:
         return list(self._fills_today)
 
-    async def place_bwb_spread(self, plan: BwbPlan, contracts: float, trade_key: str) -> OrderInfo:
+    async def quote_bwb_spread(self, plan: BwbPlan) -> BwbQuoteSnapshot:
+        live_mid = plan.mid_credit_pts + self.quote_haircut_pct_of_risk * plan.w_risk_pts
+        est_slip = plan.slip_pts
+        est_net = live_mid - est_slip - plan.fee_pts
+        nat = live_mid - 2.0 * est_slip
+        return BwbQuoteSnapshot(
+            k_hi=plan.k_hi,
+            k_mid=plan.k_mid,
+            k_lo=plan.k_lo,
+            w_risk_pts=plan.w_risk_pts,
+            bid_hi=0.0,
+            ask_hi=0.0,
+            bid_mid=0.0,
+            ask_mid=0.0,
+            bid_lo=0.0,
+            ask_lo=0.0,
+            live_mid_credit_pts=live_mid,
+            natural_credit_pts=nat,
+            est_slip_pts=est_slip,
+            est_net_credit_pts=est_net,
+            source="sim",
+        )
+
+    async def place_bwb_spread(
+        self,
+        plan: BwbPlan,
+        contracts: float,
+        trade_key: str,
+        quote: BwbQuoteSnapshot | None = None,
+        min_credit_pts: float | None = None,
+    ) -> BwbFillResult:
         if self.cfg.mode == "shadow":
             raise ReadOnlyError("read-only mode: no orders")
+        q = quote if quote is not None else await self.quote_bwb_spread(plan)
+        floor_pts = float(min_credit_pts) if min_credit_pts is not None else 0.0
+        if floor_pts > 0.0 and q.est_net_credit_pts < floor_pts - 1e-9:
+            return BwbFillResult(
+                filled=False,
+                contracts=0.0,
+                gross_credit_pts=0.0,
+                commission_dollars=0.0,
+                net_credit_pts=0.0,
+                limit_credit_pts=floor_pts + plan.fee_pts,
+                order_id=0,
+                status="Skipped: live quote below min credit floor",
+            )
+        if self.simulate_timeout_unfilled:
+            return BwbFillResult(
+                filled=False,
+                contracts=0.0,
+                gross_credit_pts=0.0,
+                commission_dollars=0.0,
+                net_credit_pts=0.0,
+                limit_credit_pts=q.est_net_credit_pts + plan.fee_pts,
+                order_id=0,
+                status="Cancelled: unfilled at 10:30 window",
+            )
+
         self._next_order_id += 1
         oid = self._next_order_id
         margin = contracts * plan.margin_per_contract
+        actual_net = q.est_net_credit_pts - self.extra_slip_pct_of_risk * plan.w_risk_pts
+        comm_usd = plan.fee_pts * plan.multiplier * contracts
+        actual_gross = actual_net + plan.fee_pts
+
         self.open_spread = OpenBwbSpread(
             trade_key=trade_key,
             symbol=plan.symbol,
             day=plan.day,
             plan=plan,
             contracts=contracts,
-            entry_credit_pts=plan.net_credit_pts,
+            entry_credit_pts=actual_net,
             margin_dollars=margin,
         )
         order = OrderInfo(
@@ -302,7 +381,7 @@ class SimBwbBroker:
             action="SELL",
             order_type="BAG LMT",
             quantity=contracts,
-            limit_price=plan.net_credit_pts,
+            limit_price=actual_gross,
             stop_price=plan.k_lo,
             status="Filled",
             role="entry",
@@ -314,13 +393,22 @@ class SimBwbBroker:
                 symbol=trade_key,
                 side="SELL",
                 shares=contracts,
-                price=plan.net_credit_pts,
+                price=actual_gross,
                 day=plan.day,
                 role="entry",
-                commission=plan.fee_pts * plan.multiplier * contracts,
+                commission=comm_usd,
             )
         )
-        return order
+        return BwbFillResult(
+            filled=True,
+            contracts=contracts,
+            gross_credit_pts=actual_gross,
+            commission_dollars=comm_usd,
+            net_credit_pts=actual_net,
+            limit_credit_pts=actual_gross,
+            order_id=oid,
+            status="Filled",
+        )
 
     async def close_spread(self, trade_key: str, how: str = "MKT") -> OrderInfo:
         if self.open_spread is None or (trade_key and self.open_spread.trade_key != trade_key):
@@ -558,23 +646,107 @@ class IBKRBwbBroker:
         if not self.is_connected():
             raise ConnectionError("not connected to TWS")
 
-    async def place_bwb_spread(self, plan: BwbPlan, contracts: float, trade_key: str) -> OrderInfo:
-        self._guard_write()
-        from ib_async import ComboLeg, Contract, Option, Order
+    async def _qualify_bwb_legs(self, plan: BwbPlan):
+        from ib_async import Option
 
         expiry = plan.day.replace("-", "")
         und_sym = "XSP" if plan.symbol == "XSP" else "SPX"
         t_class = "XSP" if plan.symbol == "XSP" else "SPXW"
         step = 1.0 if plan.symbol == "XSP" else 5.0
-        k_hi = round(plan.k_hi / step) * step
         k_mid = round(plan.k_mid / step) * step
-        k_lo = round(plan.k_lo / step) * step
+        k_hi = max(k_mid + step, round(plan.k_hi / step) * step)
+        w1_act = k_hi - k_mid
+        w2_act = max(w1_act + step, round((plan.k_mid - plan.k_lo) / step) * step)
+        k_lo = k_mid - w2_act
 
         opt_hi = Option(und_sym, expiry, k_hi, "P", "SMART", tradingClass=t_class)
         opt_mid = Option(und_sym, expiry, k_mid, "P", "SMART", tradingClass=t_class)
         opt_lo = Option(und_sym, expiry, k_lo, "P", "SMART", tradingClass=t_class)
         await self.ib.qualifyContractsAsync(opt_hi, opt_mid, opt_lo)
+        return und_sym, step, k_hi, k_mid, k_lo, opt_hi, opt_mid, opt_lo
 
+    async def quote_bwb_spread(self, plan: BwbPlan) -> BwbQuoteSnapshot:
+        """Snapshots live IBKR/Cboe NBBO bid/ask on all 3 BWB put strikes (read-only safe in shadow mode)."""
+        if not self.is_connected():
+            raise ConnectionError("not connected to TWS")
+        _, step, k_hi, k_mid, k_lo, opt_hi, opt_mid, opt_lo = await self._qualify_bwb_legs(plan)
+        tickers = await self.ib.reqTickersAsync(opt_hi, opt_mid, opt_lo)
+        scale = 0.1 if plan.symbol == "XSP" else 1.0
+
+        def _extract_ba(tkr, k_strike: float) -> tuple[float, float, bool]:
+            b = float(getattr(tkr, "bid", math.nan) or math.nan)
+            a = float(getattr(tkr, "ask", math.nan) or math.nan)
+            if math.isfinite(b) and math.isfinite(a) and a > 0.0 and b >= 0.0 and a >= b:
+                return b, a, True
+            ref = float(getattr(tkr, "close", math.nan) or getattr(tkr, "last", math.nan) or math.nan)
+            if not (math.isfinite(ref) and ref > 0.0):
+                z = math.log(k_strike / plan.spot) / max(plan.iv1d * SQRT_T_0DTE, 1e-6)
+                sig = plan.iv1d * float(iv_ratio_0dte(z))
+                ref = bs_price_0dte(plan.spot, k_strike, T_0DTE, 0.045, sig, is_call=False)
+            hs = half_spread_pts(ref) * scale
+            return max(0.0, ref - hs), ref + hs, False
+
+        b_hi, a_hi, ok_hi = _extract_ba(tickers[0], k_hi)
+        b_m, a_m, ok_m = _extract_ba(tickers[1], k_mid)
+        b_lo, a_lo, ok_lo = _extract_ba(tickers[2], k_lo)
+
+        mid_hi = 0.5 * (b_hi + a_hi)
+        mid_m = 0.5 * (b_m + a_m)
+        mid_lo = 0.5 * (b_lo + a_lo)
+
+        live_mid = 2.0 * mid_m - mid_hi - mid_lo
+        nat_cred = 2.0 * b_m - a_hi - a_lo
+        hs_sum = 0.5 * ((a_hi - b_hi) + 2.0 * (a_m - b_m) + (a_lo - b_lo))
+        est_slip = max(0.05 * scale, 0.35 * hs_sum)
+        est_net = live_mid - est_slip - plan.fee_pts
+        w_risk = max(step, 2.0 * k_mid - k_hi - k_lo)
+        src = "ibkr_nbbo" if (ok_hi and ok_m and ok_lo) else "ibkr_partial"
+
+        return BwbQuoteSnapshot(
+            k_hi=k_hi,
+            k_mid=k_mid,
+            k_lo=k_lo,
+            w_risk_pts=w_risk,
+            bid_hi=b_hi,
+            ask_hi=a_hi,
+            bid_mid=b_m,
+            ask_mid=a_m,
+            bid_lo=b_lo,
+            ask_lo=a_lo,
+            live_mid_credit_pts=live_mid,
+            natural_credit_pts=nat_cred,
+            est_slip_pts=est_slip,
+            est_net_credit_pts=est_net,
+            source=src,
+        )
+
+    async def place_bwb_spread(
+        self,
+        plan: BwbPlan,
+        contracts: float,
+        trade_key: str,
+        quote: BwbQuoteSnapshot | None = None,
+        min_credit_pts: float | None = None,
+    ) -> BwbFillResult:
+        self._guard_write()
+        from ib_async import ComboLeg, Contract, Order
+
+        q = quote if quote is not None else await self.quote_bwb_spread(plan)
+        floor_net = float(min_credit_pts) if min_credit_pts is not None else 0.0
+        floor_gross = floor_net + plan.fee_pts
+        if floor_net > 0.0 and q.live_mid_credit_pts < floor_gross - 1e-6:
+            return BwbFillResult(
+                filled=False,
+                contracts=0.0,
+                gross_credit_pts=0.0,
+                commission_dollars=0.0,
+                net_credit_pts=0.0,
+                limit_credit_pts=floor_gross,
+                order_id=0,
+                status="Skipped: live mid below min credit floor",
+            )
+
+        und_sym, _, k_hi, k_mid, k_lo, opt_hi, opt_mid, opt_lo = await self._qualify_bwb_legs(plan)
         bag = Contract(
             symbol=und_sym,
             secType="BAG",
@@ -587,28 +759,91 @@ class IBKRBwbBroker:
             ],
         )
         qty = max(1, int(round(contracts)))
-        lmt_credit = round(plan.net_credit_pts, 2)
+        tick = 0.01 if plan.symbol == "XSP" else 0.05
+        floor_tick = round(math.ceil((floor_gross - 1e-9) / tick) * tick, 2) if floor_gross > 0 else tick
+        lmt_1 = max(floor_tick, round(round((q.live_mid_credit_pts - 0.5 * q.est_slip_pts) / tick) * tick, 2))
+        lmt_2 = max(floor_tick, round(round((q.est_net_credit_pts + plan.fee_pts) / tick) * tick, 2))
+
         order = Order(
             action="BUY",
             totalQuantity=qty,
             orderType="LMT",
-            lmtPrice=-lmt_credit,
+            lmtPrice=-lmt_1,
             tif="DAY",
             transmit=True,
             orderRef="bwb-entry",
             account=self.account_id,
         )
         trade = self.ib.placeOrder(bag, order)
-        return OrderInfo(
-            order_id=order.orderId,
-            symbol=trade_key,
-            action="SELL",
-            order_type="BAG LMT",
-            quantity=float(qty),
-            limit_price=lmt_credit,
-            stop_price=k_lo,
-            status=trade.orderStatus.status,
-            role="entry",
+        cur_lmt = lmt_1
+
+        timeout_s = max(5.0, float(self.cfg.bwb.entry_timeout_sec))
+        half_s = timeout_s / 2.0
+        t0 = asyncio.get_event_loop().time()
+        stepped = False
+
+        while not trade.isDone():
+            elapsed = asyncio.get_event_loop().time() - t0
+            if elapsed >= timeout_s:
+                break
+            if (not stepped) and elapsed >= half_s and lmt_2 < lmt_1 - 1e-6:
+                stepped = True
+                cur_lmt = lmt_2
+                order.lmtPrice = -cur_lmt
+                trade = self.ib.placeOrder(bag, order)
+            await asyncio.sleep(min(2.0, max(0.2, timeout_s - elapsed)))
+
+        if not trade.isDone():
+            self.ib.cancelOrder(order)
+            for _ in range(10):
+                if trade.isDone():
+                    break
+                await asyncio.sleep(0.2)
+
+        filled_qty = float(trade.orderStatus.filled or 0.0)
+        if filled_qty <= 0.0:
+            return BwbFillResult(
+                filled=False,
+                contracts=0.0,
+                gross_credit_pts=0.0,
+                commission_dollars=0.0,
+                net_credit_pts=0.0,
+                limit_credit_pts=cur_lmt,
+                order_id=int(order.orderId or 0),
+                status="Cancelled: unfilled at 10:30 window",
+            )
+
+        # Compute exact gross credit per spread from OPT leg cashflows (or combo avgFillPrice fallback)
+        opt_fills = [f for f in trade.fills if getattr(f.contract, "secType", "") == "OPT"]
+        if opt_fills:
+            cash_pts = 0.0
+            for f in opt_fills:
+                sh = float(f.execution.shares)
+                px = float(f.execution.price)
+                cash_pts += sh * px if f.execution.side in ("SLD", "SELL") else -sh * px
+            gross_credit_pts = cash_pts / filled_qty
+        else:
+            avg_px = float(trade.orderStatus.avgFillPrice or -cur_lmt)
+            gross_credit_pts = -avg_px if avg_px < 0 else avg_px
+
+        comm_usd = sum(
+            float(f.commissionReport.commission)
+            for f in trade.fills
+            if getattr(f, "commissionReport", None) and f.commissionReport.commission
+        )
+        if comm_usd <= 0.0:
+            comm_usd = plan.fee_pts * plan.multiplier * filled_qty
+        net_credit_pts = gross_credit_pts - (comm_usd / (plan.multiplier * filled_qty))
+
+        return BwbFillResult(
+            filled=True,
+            contracts=filled_qty,
+            gross_credit_pts=gross_credit_pts,
+            commission_dollars=comm_usd,
+            net_credit_pts=net_credit_pts,
+            limit_credit_pts=cur_lmt,
+            order_id=int(order.orderId or 0),
+            status=str(trade.orderStatus.status or "Filled"),
         )
 
     async def close_spread(self, trade_key: str, how: str = "MKT") -> OrderInfo:

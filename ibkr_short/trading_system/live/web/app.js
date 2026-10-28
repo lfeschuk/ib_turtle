@@ -48,7 +48,9 @@
   const money = (v, signed) => !isNum(v) ? '–' : (signed && v > 0 ? '+' : '') +
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
   const pct = (v, signed) => !isNum(v) ? '–' : (signed && v > 0 ? '+' : '') + v.toFixed(1) + '%';
+  const pct2 = (v, signed) => !isNum(v) ? '–' : (signed && v > 0 ? '+' : '') + v.toFixed(2) + '%';
   const frac = (v, signed) => isNum(v) ? pct(v * 100, signed) : '–';   // 0.034 -> 3.4%
+  const frac2 = (v, signed) => isNum(v) ? pct2(v * 100, signed) : '–'; // 0.0291 -> +2.91%
   const price = (v) => !isNum(v) ? '–' : (v >= 1 ? v.toFixed(2) : v.toFixed(4));
   const shares = (v) => !isNum(v) ? '–' : Math.round(v).toLocaleString('en-US');
   const tone = (v) => !isNum(v) || v === 0 ? '' : (v > 0 ? 'pos' : 'neg');
@@ -219,13 +221,13 @@
       view.tabbar);
 
     for (const k of ['ovCombined', 'ovGap', 'ovBwb', 'account', 'bwbStruct', 'controls', 'positions', 'signals',
-                     'day', 'edge', 'compare', 'equity', 'orders', 'trades', 'events']) {
+                     'bwbAudit', 'day', 'edge', 'compare', 'equity', 'orders', 'trades', 'events']) {
       view[k] = h('section', { class: 'card' });
     }
     view.panes = {
       overview: h('div', { class: 'pane' }, view.ovCombined, view.ovGap, view.ovBwb),
       now: h('div', { class: 'pane' }, view.account, view.bwbStruct, view.controls, view.positions, view.signals),
-      report: h('div', { class: 'pane' }, view.day, view.edge, view.compare, view.equity),
+      report: h('div', { class: 'pane' }, view.bwbAudit, view.day, view.edge, view.compare, view.equity),
       activity: h('div', { class: 'pane' }, view.orders, view.trades, view.events),
     };
     view.updated = h('span', { class: 'muted' });
@@ -426,7 +428,11 @@
           stat('-2 Middle Short Puts', Math.round(bp.k_mid) + 'P (' + Math.round(bp.delta_mid * 100) + 'Δ tent peak)'),
           stat('+1 Lower Long Put', Math.round(bp.k_lo) + 'P (W2=' + bp.w2_pts.toFixed(1) + 'pt)'),
           stat('Lower Breakeven', Math.round(bp.k_be) + ' (W_risk=' + bp.w_risk_pts.toFixed(1) + 'pt)'),
-          stat('Net Credit', price(bp.net_credit_pts) + ' pts ($' + Math.round(bp.net_credit_pts * 100) + '/ct)'),
+          stat('Model Net Credit', price(bp.net_credit_pts) + ' pts ($' + Math.round(bp.net_credit_pts * 100) + '/ct)'),
+          stat(isNum(bp.actual_net_pts) ? 'Actual Net Fill' : 'Live 10:30 Mid',
+            isNum(bp.actual_net_pts)
+              ? price(bp.actual_net_pts) + ' pts ($' + Math.round(bp.actual_net_pts * 100) + '/ct)'
+              : (isNum(bp.live_mid_pts) ? price(bp.live_mid_pts) + ' pts (est net ' + price(bp.est_net_pts) + ')' : '–')),
           stat('Target Size', bp.contracts.toFixed(2) + 'x (' + money(bp.collat_budget) + ' collat)'),
         ]),
         h('div', { class: 'note', text: bp.f1_reason || '' })
@@ -506,6 +512,7 @@
   // ---------------------------------------------------------------- end-of-day report
   const VERDICT = { ok: 'On track', watch: 'Watch', bad: 'Problem', early: 'Too early' };
   const EXEC_VERDICT = { ok: 'Good', watch: 'Watch', bad: 'Problem', early: 'Too early' };
+  const AUDIT_VERDICT = { ok: 'Healthy edge', watch: 'Cut Kelly', bad: 'No edge — stop', early: 'Collecting' };
 
   function pill(verdict, labels) {
     return h('span', { class: 'pill ' + (verdict || 'early'), text: (labels || VERDICT)[verdict] || verdict || '' });
@@ -674,7 +681,44 @@
     view.compare.replaceChildren(...kids);
   }
 
+  function renderBwbAudit(r) {
+    const au = r.bwb_audit;
+    if (!au) {
+      view.bwbAudit.hidden = true;
+      return;
+    }
+    view.bwbAudit.hidden = false;
+    const obsLabel = (au.n_active || 0) + (au.using_shadow_quotes ? ' shadow quotes' : ' fills');
+    const kids = [
+      h('h2', {}, h('span', { text: 'Live Premium & True Edge Audit' }), h('span', { text: obsLabel })),
+      h('div', { class: 'verdict' }, pill(au.verdict, AUDIT_VERDICT), h('span', { text: au.text || '' })),
+    ];
+    if (au.n_active > 0) {
+      const credLabel = au.using_shadow_quotes ? 'Shadow Est. Net' : 'Actual Net Fill';
+      const breachText = au.n_settled > 0
+        ? au.breach_count + '/' + au.n_settled + ' (' + pct(au.breach_rate * 100) + ' vs ' + pct(au.hist_breach_rate * 100) + ' hist)'
+        : '0/0';
+      kids.push(h('div', { class: 'grid' }, [
+        stat('Model Net Credit', frac2(au.model_net_pct, true) + ' (mid ' + frac2(au.model_mid_pct) + ')'),
+        stat('Live 10:30 Mid', frac2(au.live_mid_pct, true)),
+        stat('Wrong Model Error', frac2(au.model_error_pct, true), tone(au.model_error_pct)),
+        stat('Extra Slippage', frac2(au.extra_slip_pct, true), tone(au.extra_slip_pct)),
+        stat(credLabel, frac2(au.actual_net_pct, true)),
+        stat('Break-Even Floor', frac2(au.breakeven_credit_pct) + ' (0% edge)'),
+        stat('True Remaining Edge', frac2(au.true_edge_pct, true) + ' / trade', tone(au.true_edge_pct)),
+        stat('Suggested Kelly Cap', pct(au.recommended_max_collat_pct * 100) + ' · BE ' + breachText),
+      ]));
+    }
+    if ((au.skipped_low_credit || 0) > 0 || (au.unfilled_cancelled || 0) > 0) {
+      kids.push(h('div', { class: 'note',
+        text: 'Execution guard: skipped ' + (au.skipped_low_credit || 0) + ' low-credit day(s) below floor and cancelled ' +
+          (au.unfilled_cancelled || 0) + ' unfilled 10:30 order(s) after timeout (no hanging limit orders).' }));
+    }
+    view.bwbAudit.replaceChildren(...kids);
+  }
+
   function renderReport(r) {
+    renderBwbAudit(r);
     renderDay(r);
     renderEdge(r);
     renderCompare(r);
