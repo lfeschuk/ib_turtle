@@ -9,8 +9,8 @@ This repository contains the complete, self-contained trading service that runs 
    - Submits 3-leg OCA short brackets (`LOC` entry + server-side `STP` loss cap + `LMT` profit target), sends Day-3 `MOC` exits, and reconciles at **16:15 ET**.
 2. **Strategy 2 — Vol-Scaled 0DTE SPX Put BWB (`clientId = 18`):**
    - Checks the causal `F1: VIX1D < VIX` contango gate at **10:30 AM ET**.
-   - Builds the volatility-scaled 4-leg `SPXW` (or `XSP`) Put Broken-Wing Butterfly (`+1 K_hi Put, -2 K_mid Put, +1 K_lo Put`).
-   - Sizes contracts using the **Earned-Money / Yearly House-Money Kelly Ramp (`7.5% -> 20.0%`)**, submits the Cboe `BAG` combo credit order, and reconciles 4:00 PM ET cash settlement at **16:15 ET**.
+   - Builds the volatility-scaled 4-leg `SPXW` (or `XSP`) Put Broken-Wing Butterfly (`+1 K_hi Put, -2 K_mid Put, +1 K_lo Put`), snapshots live IBKR/Cboe NBBO leg quotes (`Model Mid` vs `Live 10:30 Mid`), and enforces a pre-trade minimum net credit floor (`1.85%` of `W_risk` on `20Δ`, `1.50%` on `15Δ`) plus a hard `90s` timeout cancel so unfilled limits never hang open intraday.
+   - Sizes contracts using the **Earned-Money / Yearly House-Money Kelly Ramp (`7.5% -> 20.0%`)**, submits the Cboe `BAG` combo credit order, reconciles 4:00 PM ET cash settlement at **16:15 ET**, and decomposes **Wrong Model Error vs Extra Slippage vs True Remaining Edge** live in the **Report** tab.
 
 ---
 
@@ -23,7 +23,7 @@ You do **not** need to run the installation steps manually. We included an all-i
    cd /path/to/ibkr_short
    bash install_pc.sh
    ```
-2. **Or if you copied `install_pc.sh` and `dist/gapshort-live-20261027.tar.gz` to `~/Downloads` on your PC:**
+2. **Or if you copied `install_pc.sh` and `dist/gapshort-live-20261028.tar.gz` to `~/Downloads` on your PC:**
    ```bash
    cd ~/Downloads
    bash install_pc.sh
@@ -46,9 +46,9 @@ You do **not** need to run the installation steps manually. We included an all-i
 
 - **No — you do NOT need to install any external `gapshort` package first.**
 - **`~/gapshort` is simply the folder name on your Ubuntu PC where you unpack this bot.**
-  - All the bot code is packaged inside `dist/gapshort-live-20261027.tar.gz` (located at `/usr/local/google/home/lfesch/work_files/ibkr_short/dist/gapshort-live-20261027.tar.gz` on your work machine).
-  - When you run `mkdir -p ~/gapshort` and `tar -xzf gapshort-live-20261027.tar.gz -C ~/gapshort` on your Ubuntu PC (shown in Step 3 below), that creates the `~/gapshort` folder and puts the entire bot inside it.
-  - **What if you copied the whole `ibkr_short` folder directly to your PC?** If you copied `/usr/local/google/home/lfesch/work_files/ibkr_short` to your PC (e.g. to `~/ibkr_short`), it is already the exact same code — just rename or symlink it to `~/gapshort` (`mv ~/ibkr_short ~/gapshort` or `ln -s ~/ibkr_short ~/gapshort`) so the `systemd` service file (`deploy/gapshort.service`) finds `~/gapshort` automatically.
+  - All the bot code is packaged inside `dist/gapshort-live-20261028.tar.gz` (located at `~/work_files/ibkr_short/dist/gapshort-live-20261028.tar.gz` on your work machine).
+  - When you run `mkdir -p ~/gapshort` and `tar -xzf gapshort-live-20261028.tar.gz -C ~/gapshort` on your Ubuntu PC (shown in Step 3 below), that creates the `~/gapshort` folder and puts the entire bot inside it.
+  - **What if you copied the whole `ibkr_short` folder directly to your PC?** If you copied `~/work_files/ibkr_short` to your PC (e.g. to `~/ibkr_short`), it is already the exact same code — just rename or symlink it to `~/gapshort` (`mv ~/ibkr_short ~/gapshort` or `ln -s ~/ibkr_short ~/gapshort`) so the `systemd` service file (`deploy/gapshort.service`) finds `~/gapshort` automatically.
 
 ---
 
@@ -123,18 +123,18 @@ If you use full TWS instead of IB Gateway, open **File → Global Configuration*
 
 ## Step 3. Unpack and Install the Bot into `~/gapshort` on the PC (Once)
 
-Copy `dist/gapshort-live-20261027.tar.gz` and `dist/gapshort-live-20261027.tar.gz.sha256` from your work machine (`/usr/local/google/home/lfesch/work_files/ibkr_short/dist/`) into `~/Downloads` on your Ubuntu PC.
+Copy `dist/gapshort-live-20261028.tar.gz` and `dist/gapshort-live-20261028.tar.gz.sha256` from your work machine (`~/work_files/ibkr_short/dist/`) into `~/Downloads` on your Ubuntu PC.
 
 Then run these commands on your Ubuntu PC to create `~/gapshort`, set up its isolated Python `.venv`, create `~/.config/gapshort/config.toml`, and set your phone web-app password:
 
 ```bash
 # 1. Verify the archive checksum
 cd ~/Downloads
-sha256sum -c gapshort-live-20261027.tar.gz.sha256    # Must print: OK
+sha256sum -c gapshort-live-20261028.tar.gz.sha256    # Must print: OK
 
 # 2. Create ~/gapshort and unpack the bot into it
 mkdir -p ~/gapshort
-tar -xzf gapshort-live-20261027.tar.gz -C ~/gapshort
+tar -xzf gapshort-live-20261028.tar.gz -C ~/gapshort
 
 # 3. Create the Python virtual environment inside ~/gapshort/.venv and install dependencies
 cd ~/gapshort

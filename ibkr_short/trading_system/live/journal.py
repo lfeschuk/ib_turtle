@@ -38,6 +38,13 @@ CREATE TABLE IF NOT EXISTS twin (
 CREATE TABLE IF NOT EXISTS edge_daily (
     day TEXT PRIMARY KEY, actual REAL, theory REAL NOT NULL, expected REAL NOT NULL, var REAL NOT NULL,
     missed REAL NOT NULL, n_open INTEGER, n_closed INTEGER);
+CREATE TABLE IF NOT EXISTS bwb_quotes (
+    day TEXT PRIMARY KEY, symbol TEXT NOT NULL, trade_key TEXT NOT NULL, delta_mid REAL NOT NULL,
+    w_risk_pts REAL NOT NULL, contracts REAL NOT NULL, model_mid_pts REAL NOT NULL, model_net_pts REAL NOT NULL,
+    live_mid_pts REAL, est_net_pts REAL, actual_gross_pts REAL, actual_net_pts REAL, commission_usd REAL DEFAULT 0,
+    quote_source TEXT, action TEXT NOT NULL, note TEXT,
+    close_spot REAL, payoff_pts REAL, settle_fee_pts REAL, actual_ret_on_risk REAL, model_ret_on_risk REAL,
+    zone TEXT, breached_be INTEGER);
 """
 
 # Columns added after the first release; older databases get them on startup.
@@ -78,7 +85,7 @@ class Journal:
 
     def reset(self) -> None:
         with self._lock:
-            for table in ("events", "trades", "fills", "equity", "signals", "twin", "edge_daily"):
+            for table in ("events", "trades", "fills", "equity", "signals", "twin", "edge_daily", "bwb_quotes"):
                 self._db.execute(f"DELETE FROM {table}")  # table names are constants, not user input
 
     # events
@@ -222,6 +229,77 @@ class Journal:
 
     def edge_series(self, limit: int = 400) -> list[dict]:
         rows = self._q("SELECT * FROM (SELECT * FROM edge_daily ORDER BY day DESC LIMIT ?) ORDER BY day", (int(limit),))
+        return [dict(r) for r in rows]
+
+    # 0DTE BWB 10:30 AM live quote vs model vs actual fill audit
+    def bwb_quote_upsert(
+        self,
+        day: str,
+        symbol: str,
+        trade_key: str,
+        delta_mid: float,
+        w_risk_pts: float,
+        contracts: float,
+        model_mid_pts: float,
+        model_net_pts: float,
+        live_mid_pts: float | None,
+        est_net_pts: float | None,
+        actual_gross_pts: float | None,
+        actual_net_pts: float | None,
+        commission_usd: float,
+        quote_source: str,
+        action: str,
+        note: str = "",
+    ) -> None:
+        self._q(
+            "INSERT INTO bwb_quotes (day, symbol, trade_key, delta_mid, w_risk_pts, contracts, model_mid_pts, "
+            "model_net_pts, live_mid_pts, est_net_pts, actual_gross_pts, actual_net_pts, commission_usd, quote_source, "
+            "action, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(day) DO UPDATE SET symbol = excluded.symbol, trade_key = excluded.trade_key, "
+            "delta_mid = excluded.delta_mid, w_risk_pts = excluded.w_risk_pts, contracts = excluded.contracts, "
+            "model_mid_pts = excluded.model_mid_pts, model_net_pts = excluded.model_net_pts, "
+            "live_mid_pts = excluded.live_mid_pts, est_net_pts = excluded.est_net_pts, "
+            "actual_gross_pts = excluded.actual_gross_pts, actual_net_pts = excluded.actual_net_pts, "
+            "commission_usd = excluded.commission_usd, quote_source = excluded.quote_source, "
+            "action = excluded.action, note = excluded.note",
+            (
+                day, symbol, trade_key, delta_mid, w_risk_pts, contracts, model_mid_pts, model_net_pts,
+                live_mid_pts, est_net_pts, actual_gross_pts, actual_net_pts, commission_usd, quote_source, action, note,
+            ),
+        )
+
+    def bwb_quote_settle(
+        self,
+        day: str,
+        close_spot: float,
+        payoff_pts: float,
+        settle_fee_pts: float,
+        actual_ret_on_risk: float,
+        model_ret_on_risk: float,
+        zone: str,
+        breached_be: int,
+        actual_net_pts: float | None = None,
+        commission_usd: float | None = None,
+    ) -> None:
+        if actual_net_pts is not None and commission_usd is not None:
+            self._q(
+                "UPDATE bwb_quotes SET close_spot = ?, payoff_pts = ?, settle_fee_pts = ?, actual_ret_on_risk = ?, "
+                "model_ret_on_risk = ?, zone = ?, breached_be = ?, actual_net_pts = ?, commission_usd = ? "
+                "WHERE day = ?",
+                (
+                    close_spot, payoff_pts, settle_fee_pts, actual_ret_on_risk, model_ret_on_risk, zone,
+                    int(breached_be), actual_net_pts, commission_usd, day,
+                ),
+            )
+        else:
+            self._q(
+                "UPDATE bwb_quotes SET close_spot = ?, payoff_pts = ?, settle_fee_pts = ?, actual_ret_on_risk = ?, "
+                "model_ret_on_risk = ?, zone = ?, breached_be = ? WHERE day = ?",
+                (close_spot, payoff_pts, settle_fee_pts, actual_ret_on_risk, model_ret_on_risk, zone, int(breached_be), day),
+            )
+
+    def bwb_quote_rows(self, limit: int = 1000) -> list[dict]:
+        rows = self._q("SELECT * FROM (SELECT * FROM bwb_quotes ORDER BY day DESC LIMIT ?) ORDER BY day", (int(limit),))
         return [dict(r) for r in rows]
 
     # equity

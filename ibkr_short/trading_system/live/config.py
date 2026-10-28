@@ -49,6 +49,8 @@ class BwbSettings:
     symbol: str = "SPX"                  # "SPX" (SPXW $100 mult) or "XSP" (Mini-SPX $100 mult, 1/10th notional)
     use_xsp_below_nlv: float = 25_000.0  # auto-select XSP if account equity < $25k
     discrete_strikes: bool = False       # False = continuous backtest parity; True = round to $5 (SPXW) / $1 (XSP)
+    min_net_credit_pct: float = 0.0      # 0.0 = auto positive-edge floor (1.85% on 20d, 1.50% on 15d in shadow/paper/live)
+    entry_timeout_sec: int = 90          # seconds to work 10:30 AM BAG limit order before cancelling (no hanging limits)
     entry_minutes_after_open: int = 60   # 10:30 AM ET post-initial-balance entry window
     client_id_offset: int = 1            # TWS clientId = cfg.client_id + client_id_offset
     panel_path: str = ""                 # optional custom path to daily_panel.pkl for historical replay
@@ -117,6 +119,10 @@ class LiveConfig:
             raise ValueError("bwb.delta_mid must be between 0.05 and 0.40")
         if not 0 < self.bwb.base_collat_pct <= self.bwb.max_collat_pct <= 0.50:
             raise ValueError("bwb.base_collat_pct must be > 0 and <= bwb.max_collat_pct <= 0.50")
+        if not 0.0 <= self.bwb.min_net_credit_pct <= 0.20:
+            raise ValueError("bwb.min_net_credit_pct must be between 0.0 and 0.20")
+        if not 5 <= self.bwb.entry_timeout_sec <= 600:
+            raise ValueError("bwb.entry_timeout_sec must be between 5 and 600")
 
 
 def _apply(obj, values: dict) -> None:

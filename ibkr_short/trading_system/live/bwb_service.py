@@ -12,12 +12,16 @@ from . import edge_report
 from . import market_calendar as mc
 from .broker import ReadOnlyError
 from .bwb_strategy import (
+    BwbFillResult,
     BwbPlan,
+    BwbQuoteSnapshot,
     BwbSizeDecision,
     build_bwb_plan,
     compute_earned_kelly_fraction,
+    effective_min_credit_pct,
     settle_bwb,
     size_bwb_bet,
+    summarize_bwb_premium_audit,
 )
 from .config import LiveConfig
 from .journal import Journal
@@ -73,6 +77,8 @@ class BwbBotService:
         self._active_day: str | None = None
         self._active_plan: BwbPlan | None = None
         self._active_size: BwbSizeDecision | None = None
+        self._active_quote: BwbQuoteSnapshot | None = None
+        self._active_fill: BwbFillResult | None = None
         self._active_trade_id: int | None = None
         self._active_twin_id: int | None = None
         self._active_trade_key: str = ""
@@ -184,9 +190,14 @@ class BwbBotService:
             self._active_day = today
             self._active_plan = plan
             self._active_size = size
+            self._active_quote = None
+            self._active_fill = None
             self._active_trade_id = None
             self._active_twin_id = None
             self._active_trade_key = tkey
+
+            min_floor_pct = effective_min_credit_pct(self.cfg.bwb, self.cfg.mode)
+            min_floor_pts = min_floor_pct * plan.w_risk_pts
 
             bwb_meta = {
                 "day": today,
@@ -207,7 +218,12 @@ class BwbBotService:
                 "w1_pts": plan.w1_pts,
                 "w2_pts": plan.w2_pts,
                 "w_risk_pts": plan.w_risk_pts,
+                "mid_credit_pts": plan.mid_credit_pts,
                 "net_credit_pts": plan.net_credit_pts,
+                "min_credit_pts": min_floor_pts,
+                "live_mid_pts": None,
+                "est_net_pts": None,
+                "actual_net_pts": None,
                 "collat_fraction": size.collat_fraction,
                 "collat_budget": size.collat_budget,
                 "contracts": size.contracts,
@@ -230,6 +246,7 @@ class BwbBotService:
 
             if not allow_entries:
                 summary["note"] = "entries off"
+                self._active_plan = None
                 self.last_decision = summary
                 return summary
 
@@ -239,12 +256,38 @@ class BwbBotService:
                 self.last_decision = summary
                 return summary
 
+            # Snapshot live 10:30 AM option quotes on the 3 BWB put strikes (read-only safe in shadow mode)
+            quote = await b.quote_bwb_spread(plan)
+            self._active_quote = quote
+            bwb_meta["live_mid_pts"] = quote.live_mid_credit_pts
+            bwb_meta["est_net_pts"] = quote.est_net_credit_pts
+            self.journal.set("last_bwb_plan", json.dumps(bwb_meta))
+
             detail = (
                 f"{size.collat_fraction:.2%} collat (${size.margin_dollars:,.0f}, {size.contracts:.2f}x), "
-                f"credit {plan.net_credit_pts:.2f} pts, BE {plan.k_be:.0f}, max-loss floor {plan.k_lo:.0f}"
+                f"model {plan.net_credit_pts:.2f}pt, live est {quote.est_net_credit_pts:.2f}pt "
+                f"(mid {quote.live_mid_credit_pts:.2f}pt), BE {plan.k_be:.0f}, floor {plan.k_lo:.0f}"
             )
 
             if self.paused:
+                self.journal.bwb_quote_upsert(
+                    day=today,
+                    symbol=plan.symbol,
+                    trade_key=tkey,
+                    delta_mid=plan.delta_mid,
+                    w_risk_pts=quote.w_risk_pts,
+                    contracts=size.contracts,
+                    model_mid_pts=plan.mid_credit_pts,
+                    model_net_pts=plan.net_credit_pts,
+                    live_mid_pts=quote.live_mid_credit_pts,
+                    est_net_pts=quote.est_net_credit_pts,
+                    actual_gross_pts=None,
+                    actual_net_pts=None,
+                    commission_usd=0.0,
+                    quote_source=quote.source,
+                    action="paused",
+                    note="paused",
+                )
                 self.journal.record_signal(
                     today, tkey, score, setup_label, "skipped", "paused (tracked for the edge check)", size.margin_dollars
                 )
@@ -265,25 +308,101 @@ class BwbBotService:
                 return summary
 
             if self.read_only:
-                self.journal.record_signal(today, tkey, score, setup_label, "would place", detail, size.margin_dollars)
+                below_floor = min_floor_pts > 0.0 and quote.est_net_credit_pts < min_floor_pts - 1e-9
+                act_lbl = "skipped_low_credit" if below_floor else "would_place"
+                note_lbl = (
+                    f"shadow est {quote.est_net_credit_pts:.2f}pt < min floor {min_floor_pts:.2f}pt"
+                    if below_floor
+                    else "shadow"
+                )
+                self.journal.bwb_quote_upsert(
+                    day=today,
+                    symbol=plan.symbol,
+                    trade_key=tkey,
+                    delta_mid=plan.delta_mid,
+                    w_risk_pts=quote.w_risk_pts,
+                    contracts=size.contracts,
+                    model_mid_pts=plan.mid_credit_pts,
+                    model_net_pts=plan.net_credit_pts,
+                    live_mid_pts=quote.live_mid_credit_pts,
+                    est_net_pts=quote.est_net_credit_pts,
+                    actual_gross_pts=None,
+                    actual_net_pts=None,
+                    commission_usd=0.0,
+                    quote_source=quote.source,
+                    action=act_lbl,
+                    note=note_lbl,
+                )
+                self.journal.record_signal(
+                    today,
+                    tkey,
+                    score,
+                    setup_label,
+                    "skipped" if below_floor else "would place",
+                    note_lbl if below_floor else detail,
+                    0.0 if below_floor else size.margin_dollars,
+                )
                 self.journal.twin_add(
                     day=today,
                     symbol=tkey,
                     setups=setup_label,
                     score=score,
-                    kind="shadow",
-                    note="",
+                    kind="missed" if below_floor else "shadow",
+                    note="below min credit floor" if below_floor else "",
                     exp_ret=plan.expected_ret_on_risk,
                     shares=size.contracts,
                     plan_price=plan.margin_per_contract,
                     fee_rate=0.0,
                 )
-                self._log("info", "shadow", f"Would open {tkey}: {detail}")
+                self._log("info", "shadow", f"Shadow {tkey}: {note_lbl if below_floor else detail}")
+                self.last_decision = summary
+                return summary
+
+            if min_floor_pts > 0.0 and quote.est_net_credit_pts < min_floor_pts - 1e-9:
+                skip_msg = (
+                    f"live est credit {quote.est_net_credit_pts:.2f}pt ({quote.est_net_credit_pts / quote.w_risk_pts:.2%}) "
+                    f"< min positive-edge floor {min_floor_pts:.2f}pt ({min_floor_pct:.2%})"
+                )
+                self.journal.bwb_quote_upsert(
+                    day=today,
+                    symbol=plan.symbol,
+                    trade_key=tkey,
+                    delta_mid=plan.delta_mid,
+                    w_risk_pts=quote.w_risk_pts,
+                    contracts=size.contracts,
+                    model_mid_pts=plan.mid_credit_pts,
+                    model_net_pts=plan.net_credit_pts,
+                    live_mid_pts=quote.live_mid_credit_pts,
+                    est_net_pts=quote.est_net_credit_pts,
+                    actual_gross_pts=None,
+                    actual_net_pts=None,
+                    commission_usd=0.0,
+                    quote_source=quote.source,
+                    action="skipped_low_credit",
+                    note=skip_msg,
+                )
+                self.journal.record_signal(today, tkey, score, setup_label, "skipped", skip_msg, 0.0)
+                self.journal.twin_add(
+                    day=today,
+                    symbol=tkey,
+                    setups=setup_label,
+                    score=score,
+                    kind="missed",
+                    note="below min credit floor",
+                    exp_ret=plan.expected_ret_on_risk,
+                    shares=size.contracts,
+                    plan_price=plan.margin_per_contract,
+                    fee_rate=0.0,
+                )
+                self._log("warn", "credit_gate", f"Skipped {tkey}: {skip_msg}")
+                summary["note"] = "skipped: below min credit floor"
                 self.last_decision = summary
                 return summary
 
             try:
-                await b.place_bwb_spread(plan, size.contracts, tkey)
+                fill = await b.place_bwb_spread(
+                    plan, size.contracts, tkey, quote=quote, min_credit_pts=min_floor_pts
+                )
             except ReadOnlyError:
                 self.journal.record_signal(today, tkey, score, setup_label, "would place", detail, size.margin_dollars)
                 self.last_decision = summary
@@ -297,14 +416,86 @@ class BwbBotService:
                 self.last_decision = summary
                 return summary
 
+            if not fill.filled or fill.contracts <= 0.0:
+                act_code = "skipped_low_credit" if "floor" in fill.status.lower() else "unfilled_cancelled"
+                self.journal.bwb_quote_upsert(
+                    day=today,
+                    symbol=plan.symbol,
+                    trade_key=tkey,
+                    delta_mid=plan.delta_mid,
+                    w_risk_pts=quote.w_risk_pts,
+                    contracts=size.contracts,
+                    model_mid_pts=plan.mid_credit_pts,
+                    model_net_pts=plan.net_credit_pts,
+                    live_mid_pts=quote.live_mid_credit_pts,
+                    est_net_pts=quote.est_net_credit_pts,
+                    actual_gross_pts=None,
+                    actual_net_pts=None,
+                    commission_usd=0.0,
+                    quote_source=quote.source,
+                    action=act_code,
+                    note=fill.status,
+                )
+                self.journal.record_signal(today, tkey, score, setup_label, "skipped", fill.status, 0.0)
+                self.journal.twin_add(
+                    day=today,
+                    symbol=tkey,
+                    setups=setup_label,
+                    score=score,
+                    kind="missed",
+                    note="below min credit floor" if act_code == "skipped_low_credit" else "unfilled at 10:30",
+                    exp_ret=plan.expected_ret_on_risk,
+                    shares=size.contracts,
+                    plan_price=plan.margin_per_contract,
+                    fee_rate=0.0,
+                )
+                self._log("warn", "order", f"{tkey} not entered: {fill.status}")
+                summary["note"] = fill.status
+                self.last_decision = summary
+                return summary
+
+            self._active_fill = fill
+            actual_contracts = fill.contracts
+            actual_margin = actual_contracts * plan.margin_per_contract
+            bwb_meta["actual_net_pts"] = fill.net_credit_pts
+            bwb_meta["actual_gross_pts"] = fill.gross_credit_pts
+            bwb_meta["contracts"] = actual_contracts
+            bwb_meta["collat_budget"] = actual_margin
+            self.journal.set("last_bwb_plan", json.dumps(bwb_meta))
+
+            self.journal.bwb_quote_upsert(
+                day=today,
+                symbol=plan.symbol,
+                trade_key=tkey,
+                delta_mid=plan.delta_mid,
+                w_risk_pts=quote.w_risk_pts,
+                contracts=actual_contracts,
+                model_mid_pts=plan.mid_credit_pts,
+                model_net_pts=plan.net_credit_pts,
+                live_mid_pts=quote.live_mid_credit_pts,
+                est_net_pts=quote.est_net_credit_pts,
+                actual_gross_pts=fill.gross_credit_pts,
+                actual_net_pts=fill.net_credit_pts,
+                commission_usd=fill.commission_dollars,
+                quote_source=quote.source,
+                action="placed",
+                note=fill.status,
+            )
+
+            filled_detail = (
+                f"{size.collat_fraction:.2%} collat (${actual_margin:,.0f}, {actual_contracts:.2f}x), "
+                f"filled net {fill.net_credit_pts:.2f}pt vs model {plan.net_credit_pts:.2f}pt "
+                f"(live mid {quote.live_mid_credit_pts:.2f}pt), BE {plan.k_be:.0f}"
+            )
+
             # Record entry in trades and twin tables using margin_per_contract as unit notional
             trade_id, _, _ = self.journal.record_entry_fill(
                 symbol=tkey,
                 day=today,
                 price=plan.margin_per_contract,
-                shares=size.contracts,
+                shares=actual_contracts,
                 plan={
-                    "notional": size.margin_dollars,
+                    "notional": actual_margin,
                     "stop": plan.k_lo,
                     "target": plan.k_mid,
                     "score": score,
@@ -316,7 +507,7 @@ class BwbBotService:
                 exec_id=f"bwb-entry-{today}",
                 symbol=tkey,
                 side="SELL",
-                shares=size.contracts,
+                shares=actual_contracts,
                 price=plan.margin_per_contract,
                 day=today,
                 role="entry",
@@ -331,12 +522,12 @@ class BwbBotService:
                 kind="taken",
                 note="",
                 exp_ret=plan.expected_ret_on_risk,
-                shares=size.contracts,
+                shares=actual_contracts,
                 plan_price=plan.margin_per_contract,
                 fee_rate=0.0,
             )
-            self.journal.twin_link_fill(today, tkey, trade_id, size.contracts)
-            self.journal.record_signal(today, tkey, score, setup_label, "placed", detail, size.margin_dollars)
+            self.journal.twin_link_fill(today, tkey, trade_id, actual_contracts)
+            self.journal.record_signal(today, tkey, score, setup_label, "placed", filled_detail, actual_margin)
             summary["placed"] = 1
             self.last_decision = summary
             return summary
@@ -353,23 +544,96 @@ class BwbBotService:
             option_pnl = 0.0
             settlement = None
 
+            if self._active_day != today or self._active_plan is None:
+                # Recover intraday state if service restarted between 10:30 AM and 16:15 ET
+                raw_meta = self.journal.get("last_bwb_plan")
+                meta = json.loads(raw_meta) if raw_meta else {}
+                open_tr = [t for t in self.journal.open_trades() if t["entry_date"] == today]
+                if meta.get("day") == today and meta.get("f1_pass"):
+                    self._active_day = today
+                    self._active_plan = build_bwb_plan(snap, self.cfg.bwb, equity=prev_eq)
+                    self._active_trade_key = meta.get("trade_key") or self._trade_key(self._active_plan)
+                    ct = float(open_tr[0]["shares"]) if open_tr else float(meta.get("contracts") or 0.0)
+                    self._active_size = BwbSizeDecision(
+                        collat_fraction=float(meta.get("collat_fraction") or 0.075),
+                        collat_budget=ct * self._active_plan.margin_per_contract,
+                        contracts=ct,
+                        margin_dollars=ct * self._active_plan.margin_per_contract,
+                        house_cushion_dollars=float(meta.get("house_cushion_dollars") or 0.0),
+                        house_cushion_pct=float(meta.get("house_cushion_pct") or 0.0),
+                        ramp_progress_pct=float(meta.get("ramp_progress_pct") or 0.0),
+                        sizing_mode=self.cfg.bwb.sizing_mode,
+                        note=str(meta.get("sizing_note") or ""),
+                    )
+                    if open_tr and meta.get("actual_net_pts") is not None:
+                        self._active_trade_id = int(open_tr[0]["id"])
+                        self._active_fill = BwbFillResult(
+                            filled=True,
+                            contracts=ct,
+                            gross_credit_pts=float(meta.get("actual_gross_pts") or meta["actual_net_pts"]),
+                            commission_dollars=0.0,
+                            net_credit_pts=float(meta["actual_net_pts"]),
+                            limit_credit_pts=float(meta.get("actual_gross_pts") or meta["actual_net_pts"]),
+                            order_id=0,
+                            status="Recovered",
+                        )
+
             if self._active_day == today and self._active_plan is not None and self._active_size is not None:
                 plan = self._active_plan
                 size = self._active_size
                 tkey = self._active_trade_key
                 close_spot = snap.spot_close if snap.spot_close is not None else snap.spot_mark
-                settlement = settle_bwb(plan, close_spot, size.contracts)
+
+                actual_contracts = self._active_fill.contracts if self._active_fill is not None else size.contracts
+                actual_net_pts = (
+                    self._active_fill.net_credit_pts if self._active_fill is not None else plan.net_credit_pts
+                )
+                comm_usd = self._active_fill.commission_dollars if self._active_fill is not None else 0.0
+
+                # Refresh late-arriving IBKR commissions if present on fills_today()
+                if self._active_fill is not None and self.cfg.mode in ("paper", "live"):
+                    try:
+                        todays_fills = await b.fills_today()
+                        late_comm = sum(f.commission for f in todays_fills if f.role == "entry" and f.commission > 0)
+                        if late_comm > 0.0 and abs(late_comm - comm_usd) > 1e-6 and actual_contracts > 0:
+                            comm_usd = late_comm
+                            actual_net_pts = self._active_fill.gross_credit_pts - (
+                                comm_usd / (plan.multiplier * actual_contracts)
+                            )
+                    except Exception:
+                        pass
+
+                settlement = settle_bwb(
+                    plan, close_spot, actual_contracts, override_net_credit_pts=actual_net_pts
+                )
+                twin_plan = build_bwb_plan(snap, self.cfg.bwb, equity=prev_eq, force_continuous=True)
+                twin_settle = settle_bwb(twin_plan, close_spot, actual_contracts)
+
+                scale = 0.1 if plan.symbol == "XSP" and close_spot > 1000.0 else 1.0
+                breached_be = int((float(close_spot) * scale) < plan.k_be)
+                self.journal.bwb_quote_settle(
+                    day=today,
+                    close_spot=settlement.close_spot,
+                    payoff_pts=settlement.payoff_pts,
+                    settle_fee_pts=settlement.settle_fee_pts,
+                    actual_ret_on_risk=settlement.ret_on_risk,
+                    model_ret_on_risk=twin_settle.ret_on_risk,
+                    zone=settlement.zone,
+                    breached_be=breached_be,
+                    actual_net_pts=actual_net_pts if self._active_trade_id is not None else None,
+                    commission_usd=comm_usd if self._active_trade_id is not None else None,
+                )
 
                 if self._active_trade_id is not None:
                     option_pnl = settlement.pnl_dollars
                     exit_price = plan.margin_per_contract - (settlement.net_pnl_pts * plan.multiplier)
                     reason = f"4pm cash settle ({settlement.zone}, SPX {settlement.close_spot:.1f})"
-                    self.journal.record_exit_fill(tkey, today, exit_price, size.contracts, reason)
+                    self.journal.record_exit_fill(tkey, today, exit_price, actual_contracts, reason)
                     self.journal.record_fill(
                         exec_id=f"bwb-settle-{today}",
                         symbol=tkey,
                         side="BUY",
-                        shares=size.contracts,
+                        shares=actual_contracts,
                         price=exit_price,
                         day=today,
                         role="exit",
@@ -378,8 +642,6 @@ class BwbBotService:
                     )
 
                 # Update today's twin row so the Actual vs Backtest Twin vs Expected Edge report stays current
-                twin_plan = build_bwb_plan(snap, self.cfg.bwb, equity=prev_eq, force_continuous=True)
-                twin_settle = settle_bwb(twin_plan, close_spot, size.contracts)
                 m_entry = twin_plan.margin_per_contract
                 m_exit = m_entry - (twin_settle.net_pnl_pts * twin_plan.multiplier)
                 for r in self.journal.twin_rows(day=today):
@@ -417,14 +679,15 @@ class BwbBotService:
             self.journal.record_equity(today, new_eq, adj_eq)
             self.journal.set("last_reconcile_day", today)
 
-            # Update cumulative edge_daily snapshot in O(1) time when a trade occurred today
+            # Update cumulative edge_daily snapshot in O(1) time when a signal occurred today
             if settlement is not None and self._active_plan is not None and self._active_size is not None:
                 prev_edges = self.journal.edge_series(limit=1)
                 p_edge = prev_edges[-1] if prev_edges else {
                     "actual": 0.0, "theory": 0.0, "expected": 0.0, "var": 0.0, "missed": 0.0, "n_closed": 0
                 }
-                notional_d = size.contracts * twin_plan.margin_per_contract
-                if self.paused:
+                notional_d = actual_contracts * twin_plan.margin_per_contract
+                missed_today = self.paused or (not self.read_only and self._active_trade_id is None)
+                if missed_today:
                     self.journal.edge_upsert(
                         today,
                         p_edge["actual"],
@@ -451,6 +714,8 @@ class BwbBotService:
 
             self._active_plan = None
             self._active_size = None
+            self._active_quote = None
+            self._active_fill = None
             self._active_trade_id = None
             return {
                 "day": today,
@@ -653,7 +918,14 @@ class BwbBotService:
         return {"day": day, "signals": self.journal.signals(day) if day else []}
 
     def report_view(self) -> dict:
-        return edge_report.build_report(self.journal, self.edge, self.cfg.mode)
+        rep = edge_report.build_report(self.journal, self.edge, self.cfg.mode)
+        rep["bwb_audit"] = summarize_bwb_premium_audit(
+            self.journal.bwb_quote_rows(limit=2500),
+            self.cfg.bwb.delta_mid,
+            self.cfg.bwb.max_collat_pct,
+            self.cfg.mode,
+        )
+        return rep
 
     # ----------------------------------------------------------------- runtime loops
     async def _heartbeat(self, ok: bool) -> None:

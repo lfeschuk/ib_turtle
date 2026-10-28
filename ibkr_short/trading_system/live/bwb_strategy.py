@@ -26,6 +26,31 @@ SIGMA_RET_BY_DELTA = {
     0.20: 0.145,
     0.15: 0.125,
 }
+# Historical 4:00 PM intrinsic settlement payoff + settle fee as fraction of W_risk
+HIST_PAYOFF_CONS_BY_DELTA = {
+    0.20: -0.01478,   # 2018-2026 conservative F1 average (-1.48% of W_risk)
+    0.15: -0.01125,   # 2018-2026 conservative F1 average (-1.13% of W_risk)
+}
+HIST_PAYOFF_VIX1D_BY_DELTA = {
+    0.20: -0.01259,   # 2022-2026 live VIX1D F1 average (-1.26% of W_risk)
+    0.15: -0.01134,   # 2022-2026 live VIX1D F1 average (-1.13% of W_risk)
+}
+BREAKEVEN_CREDIT_BY_DELTA = {
+    0.20: 0.0150,     # <= 1.50% of W_risk net credit => <= 0% remaining edge
+    0.15: 0.0115,     # <= 1.15% of W_risk net credit => <= 0% remaining edge
+}
+DEFAULT_MIN_CREDIT_BY_DELTA = {
+    0.20: 0.0185,     # default pre-trade net credit floor on 20d (+35 bps above break-even)
+    0.15: 0.0150,     # default pre-trade net credit floor on 15d (+35 bps above break-even)
+}
+HEALTHY_CREDIT_BY_DELTA = {
+    0.20: 0.0250,     # >= 2.50% net credit => >= +1.02% remaining edge on risk
+    0.15: 0.0205,     # >= 2.05% net credit => >= +0.92% remaining edge on risk
+}
+HIST_BREACH_RATE_BY_DELTA = {
+    0.20: 0.070,      # 7.0% historical Pr(S_close < K_BE) on F1 days
+    0.15: 0.046,      # 4.6% historical Pr(S_close < K_BE) on F1 days
+}
 
 _Z_GRID_CACHE: dict[float, tuple[np.ndarray, np.ndarray]] = {}
 
@@ -166,6 +191,39 @@ class BwbSettlement:
     ret_on_risk: float
     pnl_dollars: float
     zone: str
+
+
+@dataclass(frozen=True)
+class BwbQuoteSnapshot:
+    """Live 10:30 AM option-chain quote snapshot on the 3 BWB put strikes."""
+    k_hi: float
+    k_mid: float
+    k_lo: float
+    w_risk_pts: float
+    bid_hi: float
+    ask_hi: float
+    bid_mid: float
+    ask_mid: float
+    bid_lo: float
+    ask_lo: float
+    live_mid_credit_pts: float      # 2 * mid(K_mid) - mid(K_hi) - mid(K_lo)
+    natural_credit_pts: float       # 2 * bid(K_mid) - ask(K_hi) - ask(K_lo)
+    est_slip_pts: float             # expected combo crossing slippage from live NBBO widths
+    est_net_credit_pts: float       # live_mid_credit_pts - est_slip_pts - fee_pts
+    source: str                     # "ibkr_nbbo", "ibkr_partial", or "sim"
+
+
+@dataclass(frozen=True)
+class BwbFillResult:
+    """Execution result for a 0DTE Put BWB combo order (or cancelled timeout / floor skip)."""
+    filled: bool
+    contracts: float
+    gross_credit_pts: float
+    commission_dollars: float
+    net_credit_pts: float
+    limit_credit_pts: float
+    order_id: int
+    status: str
 
 
 def build_bwb_plan(snap: BwbMarketSnapshot, cfg_bwb: BwbSettings, equity: float = 100_000.0,
@@ -343,7 +401,35 @@ def size_bwb_bet(equity: float, hwm: float, plan: BwbPlan, cfg_bwb: BwbSettings,
     )
 
 
-def settle_bwb(plan: BwbPlan, close_spot: float, contracts: float) -> BwbSettlement:
+def effective_min_credit_pct(cfg_bwb: BwbSettings, mode: str) -> float:
+    """Returns minimum net credit fraction of W_risk required to enter a 0DTE BWB."""
+    if cfg_bwb.min_net_credit_pct > 0.0:
+        return float(cfg_bwb.min_net_credit_pct)
+    if mode == "demo":
+        return 0.0
+    d_key = 0.15 if abs(cfg_bwb.delta_mid - 0.15) < 0.025 else 0.20
+    return DEFAULT_MIN_CREDIT_BY_DELTA[d_key]
+
+
+def _binom_tail_pvalue(k: int, n: int, p0: float) -> float:
+    """Exact upper-tail binomial probability Pr(X >= k | n, p0) using math.lgamma."""
+    if n <= 0 or k <= 0:
+        return 1.0
+    if k > n:
+        return 0.0
+    p = min(max(float(p0), 1e-9), 1.0 - 1e-9)
+    lp, lq = math.log(p), math.log(1.0 - p)
+    lg_n = math.lgamma(n + 1)
+    total = 0.0
+    for j in range(k, n + 1):
+        log_pmf = lg_n - math.lgamma(j + 1) - math.lgamma(n - j + 1) + j * lp + (n - j) * lq
+        if log_pmf > -700.0:
+            total += math.exp(log_pmf)
+    return float(min(1.0, max(0.0, total)))
+
+
+def settle_bwb(plan: BwbPlan, close_spot: float, contracts: float,
+               override_net_credit_pts: float | None = None) -> BwbSettlement:
     """Computes exact 4:00 PM ET cash settlement for an open 0DTE Put BWB."""
     scale = 0.1 if plan.symbol == "XSP" and close_spot > 1000.0 else 1.0
     c_spot = float(close_spot) * scale
@@ -353,7 +439,8 @@ def settle_bwb(plan: BwbPlan, close_spot: float, contracts: float) -> BwbSettlem
     payoff = intr_hi - 2.0 * intr_mid + intr_lo
     n_itm = (1.0 if intr_hi > 0 else 0.0) + (2.0 if intr_mid > 0 else 0.0) + (1.0 if intr_lo > 0 else 0.0)
     settle_fee = n_itm * SETTLE_FEE_PTS * scale
-    net_pnl_pts = plan.net_credit_pts + payoff - settle_fee
+    cred_pts = float(override_net_credit_pts) if override_net_credit_pts is not None else plan.net_credit_pts
+    net_pnl_pts = cred_pts + payoff - settle_fee
     ret_on_risk = net_pnl_pts / plan.w_risk_pts if plan.w_risk_pts > 0 else 0.0
     pnl_dollars = net_pnl_pts * plan.multiplier * float(contracts)
 
@@ -379,3 +466,144 @@ def settle_bwb(plan: BwbPlan, close_spot: float, contracts: float) -> BwbSettlem
         pnl_dollars=pnl_dollars,
         zone=zone,
     )
+
+
+def summarize_bwb_premium_audit(rows: list[dict], delta_mid: float, max_collat_pct: float, mode: str) -> dict:
+    """Decomposes live 10:30 AM BWB quotes & fills into Model Error, Extra Slippage, and True Remaining Edge."""
+    d_key = 0.15 if abs(delta_mid - 0.15) < 0.025 else 0.20
+    hist_payoff_cons = HIST_PAYOFF_CONS_BY_DELTA[d_key]
+    hist_payoff_vix1d = HIST_PAYOFF_VIX1D_BY_DELTA[d_key]
+    be_floor = BREAKEVEN_CREDIT_BY_DELTA[d_key]
+    healthy_floor = HEALTHY_CREDIT_BY_DELTA[d_key]
+    hist_breach = HIST_BREACH_RATE_BY_DELTA[d_key]
+
+    quoted = [
+        r for r in rows
+        if r.get("w_risk_pts") and r["w_risk_pts"] > 0 and r.get("live_mid_pts") is not None
+    ]
+    filled = [
+        r for r in quoted
+        if r.get("actual_net_pts") is not None and r.get("action") == "placed"
+    ]
+    settled = [
+        r for r in rows
+        if r.get("breached_be") is not None and r.get("action") in ("placed", "would_place")
+    ]
+    skipped_low = sum(1 for r in rows if r.get("action") == "skipped_low_credit")
+    unfilled_canc = sum(1 for r in rows if r.get("action") == "unfilled_cancelled")
+
+    use_shadow = (mode == "shadow") or (len(filled) == 0 and len(quoted) > 0)
+    active = quoted if use_shadow else filled
+    n_obs = len(active)
+
+    base = {
+        "mode": mode,
+        "using_shadow_quotes": use_shadow,
+        "delta_mid": d_key,
+        "n_days": len(rows),
+        "n_quoted": len(quoted),
+        "n_filled": len(filled),
+        "n_settled": len(settled),
+        "skipped_low_credit": skipped_low,
+        "unfilled_cancelled": unfilled_canc,
+        "breakeven_credit_pct": be_floor,
+        "healthy_credit_pct": healthy_floor,
+        "hist_payoff_cons_pct": hist_payoff_cons,
+        "hist_payoff_vix1d_pct": hist_payoff_vix1d,
+        "hist_breach_rate": hist_breach,
+        "verdict": "early",
+    }
+    if n_obs == 0:
+        base["text"] = "No 10:30 AM BWB option quotes recorded yet."
+        return base
+
+    m_mid = np.array([float(r["model_mid_pts"]) / float(r["w_risk_pts"]) for r in active], dtype=float)
+    m_net = np.array([float(r["model_net_pts"]) / float(r["w_risk_pts"]) for r in active], dtype=float)
+    l_mid = np.array([float(r["live_mid_pts"]) / float(r["w_risk_pts"]) for r in active], dtype=float)
+    a_net = np.array(
+        [
+            float(r["est_net_pts"] if use_shadow else r["actual_net_pts"]) / float(r["w_risk_pts"])
+            for r in active
+        ],
+        dtype=float,
+    )
+
+    model_mid_avg = float(m_mid.mean())
+    model_net_avg = float(m_net.mean())
+    live_mid_avg = float(l_mid.mean())
+    actual_net_avg = float(a_net.mean())
+
+    model_err = float((l_mid - m_mid).mean())
+    extra_slip = float(((a_net - l_mid) - (m_net - m_mid)).mean())
+    total_haircut = float((a_net - m_net).mean())
+
+    model_edge = model_net_avg + hist_payoff_cons
+    true_edge_cons = actual_net_avg + hist_payoff_cons
+    true_edge_vix1d = actual_net_avg + hist_payoff_vix1d
+
+    edge_ratio = (true_edge_cons / model_edge) if model_edge > 1e-6 else 0.0
+    rec_max_collat = float(max(0.0, min(max_collat_pct, max_collat_pct * edge_ratio)))
+
+    breaches = sum(int(r["breached_be"]) for r in settled)
+    n_set = len(settled)
+    breach_rate = (breaches / n_set) if n_set > 0 else None
+    breach_pval = _binom_tail_pvalue(breaches, n_set, hist_breach) if n_set > 0 else 1.0
+
+    base.update(
+        {
+            "n_active": n_obs,
+            "model_mid_pct": model_mid_avg,
+            "model_net_pct": model_net_avg,
+            "live_mid_pct": live_mid_avg,
+            "actual_net_pct": actual_net_avg,
+            "model_error_pct": model_err,
+            "extra_slip_pct": extra_slip,
+            "total_haircut_pct": total_haircut,
+            "model_edge_pct": model_edge,
+            "true_edge_pct": true_edge_cons,
+            "true_edge_vix1d_pct": true_edge_vix1d,
+            "edge_retention_pct": max(0.0, edge_ratio * 100.0),
+            "recommended_max_collat_pct": rec_max_collat,
+            "breach_count": breaches,
+            "breach_rate": breach_rate,
+            "breach_p_value": breach_pval,
+        }
+    )
+
+    src_lbl = "Shadow NBBO est. net credit" if use_shadow else "Actual net fill credit"
+    if n_obs < 5:
+        base["verdict"] = "early"
+        base["text"] = (
+            f"Collecting 10:30 AM quotes ({n_obs}/5 days so far): {src_lbl.lower()} {actual_net_avg:.2%} "
+            f"vs {model_net_avg:.2%} model (implied edge {true_edge_cons:+.2%} on risk)."
+        )
+        return base
+
+    breach_warn = n_set >= 15 and breach_pval < 0.03
+    if actual_net_avg <= be_floor or true_edge_cons <= 0.0:
+        base["verdict"] = "bad"
+        base["text"] = (
+            f"NO EDGE — STOP: {src_lbl} averages {actual_net_avg:.2%} of risk "
+            f"(model error {model_err:+.2%}, extra slip {extra_slip:+.2%}), at/below the {be_floor:.2%} "
+            f"break-even floor. Implied edge is {true_edge_cons:+.2%}/trade."
+        )
+    elif actual_net_avg < healthy_floor or breach_warn:
+        base["verdict"] = "watch"
+        extra_txt = (
+            f" Warning: BE breaches {breaches}/{n_set} ({breach_rate:.1%} vs {hist_breach:.1%} hist, p={breach_pval:.3f})."
+            if breach_warn and breach_rate is not None
+            else ""
+        )
+        base["text"] = (
+            f"Reduced edge: {src_lbl} averages {actual_net_avg:.2%} vs {model_net_avg:.2%} model "
+            f"(model error {model_err:+.2%}, extra slip {extra_slip:+.2%}). True remaining edge: "
+            f"{true_edge_cons:+.2%} on risk — cap Kelly at {rec_max_collat:.1%} instead of {max_collat_pct:.1%}.{extra_txt}"
+        )
+    else:
+        base["verdict"] = "ok"
+        base["text"] = (
+            f"Healthy edge: {src_lbl} averages {actual_net_avg:.2%} vs {model_net_avg:.2%} model "
+            f"(model error {model_err:+.2%}, extra slip {extra_slip:+.2%}). True remaining edge: "
+            f"{true_edge_cons:+.2%} on risk (suggested Kelly cap {rec_max_collat:.1%})."
+        )
+    return base

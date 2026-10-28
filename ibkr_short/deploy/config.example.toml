@@ -63,5 +63,7 @@ profit_share = 0.50               # 50% of earned profits allocated to Kelly ram
 max_combined_margin_pct = 0.95    # 95% IBKR maintenance margin ceiling when isolated_capital = false
 symbol = "SPX"                    # "SPX" (SPXW $100 mult) or "XSP" (Mini-SPX 1/10th size)
 use_xsp_below_nlv = 25000.0
+min_net_credit_pct = 0.0          # 0.0 = auto positive-edge floor (1.85% of risk on 20d, 1.50% on 15d); skips day below floor
+entry_timeout_sec = 90            # work 10:30 AM BAG limit for 90s then cancel unfilled (prevents resting-order adverse selection)
 entry_minutes_after_open = 60     # 10:30 AM ET post-initial-balance entry window
 client_id_offset = 1              # connects to TWS as client_id + 1 (18) alongside Gap Short (17)

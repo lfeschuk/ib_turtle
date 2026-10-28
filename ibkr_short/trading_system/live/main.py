@@ -69,6 +69,8 @@ def cmd_set_password(cfg: LiveConfig) -> int:
 async def _check(cfg: LiveConfig, symbol: str) -> int:
     from .borrow import BorrowTable
     from .broker import IBKRBroker
+    from .bwb_broker import IBKRBwbBroker
+    from .bwb_strategy import build_bwb_plan, effective_min_credit_pct
 
     broker = IBKRBroker(cfg, readonly=True, borrow=BorrowTable(cfg.data_path / "ibkr_usa.txt"))
     try:
@@ -95,6 +97,27 @@ async def _check(cfg: LiveConfig, symbol: str) -> int:
         print(f"{symbol}: {q['available']:,.0f} shares available to short, fee {q['fee']}")
     finally:
         await broker.disconnect()
+
+    if cfg.bwb.enabled:
+        bwb_broker = IBKRBwbBroker(cfg, readonly=True)
+        try:
+            await bwb_broker.connect()
+            snap = await bwb_broker.market_snapshot()
+            plan = build_bwb_plan(snap, cfg.bwb, equity=cfg.bwb.initial_capital)
+            quote = await bwb_broker.quote_bwb_spread(plan)
+            floor_pct = effective_min_credit_pct(cfg.bwb, cfg.mode)
+            print(
+                f"0DTE BWB (clientId {cfg.client_id + cfg.bwb.client_id_offset}): {plan.symbol} "
+                f"{plan.k_hi:.0f}/{plan.k_mid:.0f}/{plan.k_lo:.0f}P ({snap.f1_reason}) | "
+                f"model mid {plan.mid_credit_pts:.2f}pt (net {plan.net_credit_pts:.2f}pt) vs "
+                f"live mid {quote.live_mid_credit_pts:.2f}pt (est net {quote.est_net_credit_pts:.2f}pt, "
+                f"min floor {floor_pct * plan.w_risk_pts:.2f}pt, source={quote.source})"
+            )
+        except Exception as exc:
+            print(f"0DTE BWB check warning: {type(exc).__name__}: {exc}")
+            return 2
+        finally:
+            await bwb_broker.disconnect()
     return 0
 
 
