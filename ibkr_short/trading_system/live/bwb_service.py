@@ -144,20 +144,9 @@ class BwbBotService:
                     gs_w0 = float(gs_st.get("initial_capital") or self.cfg.initial_capital)
                     gs_nlv = float(gs_st.get("net_liquidation") or gs_w0)
                     other_m_pct = max(0.0, float(gs_st.get("margin_use_pct") or 0.0) / 100.0)
-                    # Add Gap Short's cumulative P&L onto the shared capital pool in demo/shadow
-                    if self.cfg.mode in ("demo", "shadow"):
-                        eq = max(1.0, eq + (gs_nlv - gs_w0))
-                        hwm = max(hwm, eq)
-                except Exception:
-                    pass
-            if self.cfg.mode in ("paper", "live") and self.broker.is_connected() and hasattr(self.broker, "account"):
-                try:
-                    acct = await self.broker.account()
-                    if acct.net_liquidation > 0:
-                        eq = float(acct.net_liquidation)
-                        hwm = max(hwm, eq)
-                        if self._active_plan is None:
-                            other_m_pct = max(other_m_pct, float(acct.maint_margin) / eq)
+                    # Add Gap Short's cumulative P&L onto the shared $100k capital pool (never raw IBKR $1M paper balance)
+                    eq = max(1.0, eq + (gs_nlv - gs_w0))
+                    hwm = max(hwm, eq)
                 except Exception:
                     pass
         yr_anchor = self._year_start_anchor(today, eq)

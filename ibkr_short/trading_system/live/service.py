@@ -13,7 +13,7 @@ from ..models import BorrowQuote, EngineConfig
 from ..strategy_core import compute_entry_and_brackets, evaluate_candidate
 from . import edge_report
 from . import market_calendar as mc
-from .broker import ReadOnlyError
+from .broker import AccountInfo, ReadOnlyError, SimBroker
 from .config import LiveConfig
 from .journal import Journal
 from .live_strategy import PerBetModel, build_inputs, size_bet
@@ -163,6 +163,25 @@ class BotService:
         first = self.journal.first_equity_since(f"{today[:4]}-01-01")
         return float(first["adj"]) if first else None
 
+    def _strategy_account_and_shorts(self, real_acct: AccountInfo, all_shorts: list) -> tuple[AccountInfo, list]:
+        """Isolate this strategy's $100k ledger and open shorts from other money/positions in the IBKR account."""
+        if self.cfg.mode == "demo" or isinstance(self.broker, SimBroker):
+            return real_acct, all_shorts
+        journal_syms = {t["symbol"] for t in self.journal.open_trades()}
+        bot_shorts = [p for p in all_shorts if p.symbol in journal_syms]
+        w0 = float(self.cfg.initial_capital)
+        realized_all = self.journal.realized_pnl_since("0000-01-01")
+        unrealized = sum(p.unrealized_pnl for p in bot_shorts if _finite(p.unrealized_pnl))
+        nlv = max(1.0, w0 + realized_all + unrealized)
+        bot_maint = 0.0
+        for p in bot_shorts:
+            px = p.market_price if _finite(p.market_price) and p.market_price > 0 else p.avg_cost
+            bot_maint += abs(p.shares) * max(5.0, 0.30 * (px if _finite(px) and px > 0 else 0.0))
+        bot_excess = max(0.0, nlv - bot_maint)
+        if _finite(real_acct.excess_liquidity):
+            bot_excess = min(bot_excess, max(0.0, real_acct.excess_liquidity))
+        return AccountInfo(real_acct.account_id, nlv, nlv, bot_maint, bot_excess), bot_shorts
+
     def _last_exit(self, symbol: str) -> str | None:
         """Last exit for the cooldown: real trades, plus the virtual book in shadow mode."""
         days = [self.journal.last_exit_date(symbol)]
@@ -229,9 +248,10 @@ class BotService:
                 held = {v["symbol"] for v in book}
                 exiting = {v["symbol"] for v in book if v["exits_today"]}
             else:
-                shorts = [p for p in await b.positions() if p.shares < 0]
-                held = {p.symbol for p in shorts}
                 entry_day = {t["symbol"]: t["entry_date"] for t in self.journal.open_trades()}
+                all_shorts = [p for p in await b.positions() if p.shares < 0]
+                shorts = all_shorts if self.cfg.mode == "demo" else [p for p in all_shorts if p.symbol in entry_day]
+                held = {p.symbol for p in shorts}
                 for p in shorts:
                     d0 = entry_day.get(p.symbol)
                     if d0 and b.trading_days_between(d0, today) >= self.cfg.hold_days:
@@ -255,7 +275,9 @@ class BotService:
                 summary["note"] = "paused: no new shorts"
 
             # 2. New shorts
-            acct = await b.account()
+            raw_acct = await b.account()
+            raw_shorts = [p for p in await b.positions() if p.shares < 0]
+            acct, _ = self._strategy_account_and_shorts(raw_acct, raw_shorts)
             nlv = acct.net_liquidation
             open_syms = held - exiting
             slots = self.cfg.max_positions - len(open_syms)
@@ -402,8 +424,9 @@ class BotService:
             b = self.broker
             today = b.today().isoformat()
             await self._sync_fills()
-            acct = await b.account()
-            shorts = [p for p in await b.positions() if p.shares < 0]
+            raw_acct = await b.account()
+            raw_shorts = [p for p in await b.positions() if p.shares < 0]
+            acct, shorts = self._strategy_account_and_shorts(raw_acct, raw_shorts)
             orders = await b.open_orders()
             problems = []
             if not self.read_only:
@@ -413,9 +436,10 @@ class BotService:
                     n_target = sum(o.role == "target" for o in working)
                     if n_stop != 1 or n_target != 1:
                         problems.append(f"{p.symbol}: {n_stop} stop / {n_target} target orders")
-                journal_syms = {t["symbol"] for t in self.journal.open_trades()}
-                for s in sorted({p.symbol for p in shorts} - journal_syms):
-                    problems.append(f"{s}: position not opened by the bot")
+                if self.cfg.mode == "demo":
+                    journal_syms = {t["symbol"] for t in self.journal.open_trades()}
+                    for s in sorted({p.symbol for p in raw_shorts} - journal_syms):
+                        problems.append(f"{s}: position not opened by the bot")
             try:
                 await self._update_twin(today)
             except Exception as exc:
@@ -558,7 +582,14 @@ class BotService:
 
     async def close_position(self, symbol: str) -> str:
         async with self.lock:
-            pos = next((p for p in await self.broker.positions() if p.symbol == symbol and p.shares < 0), None)
+            journal_syms = {t["symbol"] for t in self.journal.open_trades()}
+            pos = next(
+                (
+                    p for p in await self.broker.positions()
+                    if p.symbol == symbol and p.shares < 0 and (self.cfg.mode == "demo" or p.symbol in journal_syms)
+                ),
+                None,
+            )
             if pos is None:
                 raise LookupError(symbol)
             how = self._manual_cover_type()
@@ -568,7 +599,9 @@ class BotService:
 
     async def flatten(self) -> int:
         async with self.lock:
-            shorts = [p for p in await self.broker.positions() if p.shares < 0]
+            journal_syms = {t["symbol"] for t in self.journal.open_trades()}
+            all_shorts = [p for p in await self.broker.positions() if p.shares < 0]
+            shorts = all_shorts if self.cfg.mode == "demo" else [p for p in all_shorts if p.symbol in journal_syms]
             how = self._manual_cover_type()
             for p in shorts:
                 try:
@@ -616,8 +649,9 @@ class BotService:
         if not connected:
             return out
         try:
-            acct = await b.account()
-            shorts = [p for p in await b.positions() if p.shares < 0]
+            raw_acct = await b.account()
+            raw_shorts = [p for p in await b.positions() if p.shares < 0]
+            acct, shorts = self._strategy_account_and_shorts(raw_acct, raw_shorts)
         except Exception as exc:
             out["problem"] = f"broker error: {type(exc).__name__}"
             return out
@@ -628,6 +662,8 @@ class BotService:
         adj = nlv - self.cfg.sizing.tax_rate * max(0.0, realized_ytd)
         peak = max(peak_adj or adj, adj)
         year_start = self._year_start_adj(today)
+        if year_start is None and self.cfg.mode != "demo":
+            year_start = w0
         out.update({
             "net_liquidation": nlv,
             "total_return_pct": (nlv / w0 - 1.0) * 100.0 if w0 > 0 and math.isfinite(nlv) else None,
@@ -652,6 +688,8 @@ class BotService:
         out = []
         for p in await b.positions():
             if p.shares >= 0:
+                continue
+            if self.cfg.mode != "demo" and p.symbol not in trades:
                 continue
             t = trades.get(p.symbol, {})
             stop = next((o.stop_price for o in orders if o.symbol == p.symbol and o.role == "stop"), t.get("stop"))

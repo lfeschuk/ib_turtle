@@ -375,9 +375,7 @@ mode = "perbet_house"
 static_pct = 0.035
 kelly_mult = 0.1667
 profit_kelly_mult = 0.3333
-min_pct = 0.01
-max_pct = 0.06
-max_gross = 0.60
+max_position_pct = 0.10
 model_path = "~/gapshort/trading_system/live/model_perbet.json"
 
 [bwb]
@@ -429,9 +427,7 @@ mode = "static"
 static_pct = 0.035
 kelly_mult = 0.1667
 profit_kelly_mult = 0.3333
-min_pct = 0.01
-max_pct = 0.06
-max_gross = 0.60
+max_position_pct = 0.10
 model_path = "~/gapshort/trading_system/live/model_perbet.json"
 
 [bwb]
@@ -454,6 +450,16 @@ entry_timeout_sec = 90
 client_id_offset = 1
 EOF
     ok "Wrote ${CONFIG_FILE} (Port=${BROKER_PORT}, Mode=Two Independent \$100k Paper Ledgers)"
+  fi
+
+  CFG_ERR="$(cd "${TARGET_DIR}" && "${TARGET_DIR}/.venv/bin/python" -c "
+from trading_system.live.config import load_config
+load_config('${CONFIG_FILE}')
+" 2>&1)"
+  if [[ $? -eq 0 ]]; then
+    ok "Validated ${CONFIG_FILE} schema with load_config()"
+  else
+    fail "Config validation failed for ${CONFIG_FILE}: ${CFG_ERR}"
   fi
 else
   ok "Kept existing ${CONFIG_FILE}"
