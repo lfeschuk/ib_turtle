@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from datetime import datetime, time as dtime, timedelta
 import json
 import logging
@@ -157,7 +158,6 @@ class BwbBotService:
         async with self.lock:
             b = self.broker
             today = b.today().isoformat()
-            self.journal.set("last_decision_day", today)
 
             snap = await b.market_snapshot()
             eq, hwm, yr_anchor, other_m_pct = await self._shared_state(today)
@@ -234,12 +234,15 @@ class BwbBotService:
             }
 
             if not allow_entries:
+                self.journal.set("last_decision_day", today)
                 summary["note"] = "entries off"
                 self._active_plan = None
                 self.last_decision = summary
                 return summary
 
             if not snap.f1_pass:
+                self.journal.set("last_decision_day", today)
+                self.problem = ""
                 self.journal.record_signal(today, tkey, score, setup_label, "skipped", snap.f1_reason, 0.0)
                 self._active_plan = None
                 self.last_decision = summary
@@ -247,9 +250,67 @@ class BwbBotService:
 
             # Snapshot live 10:30 AM option quotes on the 3 BWB put strikes (read-only safe in shadow mode)
             quote = await b.quote_bwb_spread(plan)
+            self.journal.set("last_decision_day", today)
             self._active_quote = quote
+            q_warn = getattr(b, "last_quote_warning", "") or ""
+            if q_warn:
+                self._log("warn", "data", f"{tkey} quote warning: {q_warn}")
+
+            # Sync plan & metadata if CBOE strike qualification snapped any wing strike
+            if (
+                abs(quote.k_hi - plan.k_hi) > 1e-6
+                or abs(quote.k_mid - plan.k_mid) > 1e-6
+                or abs(quote.k_lo - plan.k_lo) > 1e-6
+            ):
+                w1_q = quote.k_hi - quote.k_mid
+                w2_q = quote.k_mid - quote.k_lo
+                plan = replace(
+                    plan,
+                    k_hi=quote.k_hi,
+                    k_mid=quote.k_mid,
+                    k_lo=quote.k_lo,
+                    w1_pts=w1_q,
+                    w2_pts=w2_q,
+                    w_risk_pts=quote.w_risk_pts,
+                    margin_per_contract=quote.w_risk_pts * plan.multiplier,
+                    k_be=2.0 * quote.k_mid - quote.k_hi - plan.net_credit_pts,
+                )
+                size = size_bwb_bet(
+                    eq,
+                    hwm,
+                    plan,
+                    self.cfg.bwb,
+                    discrete_contracts=discrete,
+                    year_start_equity=yr_anchor,
+                    other_margin_used_pct=other_m_pct,
+                )
+                tkey = self._trade_key(plan)
+                setup_label = f"{int(round(plan.delta_mid * 100))}Δ Put BWB ({plan.k_hi:.0f}/{plan.k_mid:.0f}/{plan.k_lo:.0f})"
+                min_floor_pts = min_floor_pct * plan.w_risk_pts
+                self._active_plan = plan
+                self._active_size = size
+                self._active_trade_key = tkey
+                bwb_meta.update(
+                    {
+                        "trade_key": tkey,
+                        "k_hi": plan.k_hi,
+                        "k_mid": plan.k_mid,
+                        "k_lo": plan.k_lo,
+                        "k_be": plan.k_be,
+                        "w1_pts": plan.w1_pts,
+                        "w2_pts": plan.w2_pts,
+                        "w_risk_pts": plan.w_risk_pts,
+                        "min_credit_pts": min_floor_pts,
+                        "collat_fraction": size.collat_fraction,
+                        "collat_budget": size.collat_budget,
+                        "contracts": size.contracts,
+                    }
+                )
+
             bwb_meta["live_mid_pts"] = quote.live_mid_credit_pts
             bwb_meta["est_net_pts"] = quote.est_net_credit_pts
+            bwb_meta["quote_source"] = quote.source
+            bwb_meta["quote_warning"] = q_warn
             self.journal.set("last_bwb_plan", json.dumps(bwb_meta))
 
             detail = (
@@ -397,16 +458,26 @@ class BwbBotService:
                 self.last_decision = summary
                 return summary
             except Exception as exc:
+                err_txt = f"{type(exc).__name__}: {' '.join(str(exc).split())[:160]}"
+                self.problem = f"BWB order error ({tkey}): {err_txt}"
                 self.journal.record_signal(
-                    today, tkey, score, setup_label, "error", f"order rejected: {type(exc).__name__}", 0.0
+                    today, tkey, score, setup_label, "error", f"order failed: {err_txt}", 0.0
                 )
-                self._log("error", "order", f"BWB order {tkey} failed: {type(exc).__name__}")
+                self._log("error", "order", f"BWB order {tkey} failed: {err_txt}")
+                await self.notifier.send(f"0DTE BWB order failed: {tkey}", err_txt, "high")
+                summary["note"] = f"error: {err_txt}"
                 self._active_plan = None
                 self.last_decision = summary
                 return summary
 
             if not fill.filled or fill.contracts <= 0.0:
-                act_code = "skipped_low_credit" if "floor" in fill.status.lower() else "unfilled_cancelled"
+                st_low = fill.status.lower()
+                if "floor" in st_low:
+                    act_code = "skipped_low_credit"
+                elif st_low.startswith("aborted"):
+                    act_code = "aborted_no_quotes"
+                else:
+                    act_code = "unfilled_cancelled"
                 self.journal.bwb_quote_upsert(
                     day=today,
                     symbol=plan.symbol,
@@ -425,20 +496,27 @@ class BwbBotService:
                     action=act_code,
                     note=fill.status,
                 )
-                self.journal.record_signal(today, tkey, score, setup_label, "skipped", fill.status, 0.0)
+                sig_status = "skipped" if act_code == "skipped_low_credit" else "error"
+                self.journal.record_signal(today, tkey, score, setup_label, sig_status, fill.status, 0.0)
                 self.journal.twin_add(
                     day=today,
                     symbol=tkey,
                     setups=setup_label,
                     score=score,
                     kind="missed",
-                    note="below min credit floor" if act_code == "skipped_low_credit" else "unfilled at 10:30",
+                    note="below min credit floor" if act_code == "skipped_low_credit" else fill.status[:120],
                     exp_ret=plan.expected_ret_on_risk,
                     shares=size.contracts,
                     plan_price=plan.margin_per_contract,
                     fee_rate=0.0,
                 )
-                self._log("warn", "order", f"{tkey} not entered: {fill.status}")
+                if act_code == "skipped_low_credit":
+                    self.problem = q_warn
+                    self._log("warn", "credit_gate", f"{tkey} not entered: {fill.status}")
+                else:
+                    self.problem = f"BWB unfilled ({tkey}): {fill.status[:180]}"
+                    self._log("error", "order", f"{tkey} NOT FILLED: {fill.status}")
+                    await self.notifier.send(f"0DTE BWB not filled: {tkey}", fill.status, "high")
                 summary["note"] = fill.status
                 self.last_decision = summary
                 return summary
@@ -516,8 +594,12 @@ class BwbBotService:
                 fee_rate=0.0,
             )
             self.journal.twin_link_fill(today, tkey, trade_id, actual_contracts)
+            self.problem = q_warn
+            self._log("info", "order", f"Filled {tkey}: {filled_detail}")
+            await self.notifier.send(f"0DTE BWB filled: {tkey}", filled_detail, "default")
             self.journal.record_signal(today, tkey, score, setup_label, "placed", filled_detail, actual_margin)
             summary["placed"] = 1
+            summary["note"] = f"filled {actual_contracts:.0f}x @ {fill.net_credit_pts:.2f}pt net ({quote.source})"
             self.last_decision = summary
             return summary
 
@@ -533,14 +615,39 @@ class BwbBotService:
             option_pnl = 0.0
             settlement = None
 
+            raw_meta = self.journal.get("last_bwb_plan")
+            meta = json.loads(raw_meta) if raw_meta else {}
+            entry_snap = snap
+            if meta.get("day") == today and meta.get("spot_open"):
+                entry_snap = replace(
+                    snap,
+                    spot_open=float(meta["spot_open"]),
+                    iv1d=min(1.50, max(0.04, float(meta.get("iv1d_pct") or (snap.iv1d * 100.0)) / 100.0)),
+                )
+
             if self._active_day != today or self._active_plan is None:
                 # Recover intraday state if service restarted between 10:30 AM and 16:15 ET
-                raw_meta = self.journal.get("last_bwb_plan")
-                meta = json.loads(raw_meta) if raw_meta else {}
                 open_tr = [t for t in self.journal.open_trades() if t["entry_date"] == today]
                 if meta.get("day") == today and meta.get("f1_pass"):
                     self._active_day = today
-                    self._active_plan = build_bwb_plan(snap, self.cfg.bwb, equity=prev_eq)
+                    rec_plan = build_bwb_plan(entry_snap, self.cfg.bwb, equity=prev_eq)
+                    if meta.get("k_hi") and meta.get("k_mid") and meta.get("k_lo"):
+                        k_hi_m = float(meta["k_hi"])
+                        k_mid_m = float(meta["k_mid"])
+                        k_lo_m = float(meta["k_lo"])
+                        w_risk_m = float(meta.get("w_risk_pts") or max(1.0, 2.0 * k_mid_m - k_hi_m - k_lo_m))
+                        rec_plan = replace(
+                            rec_plan,
+                            k_hi=k_hi_m,
+                            k_mid=k_mid_m,
+                            k_lo=k_lo_m,
+                            w1_pts=k_hi_m - k_mid_m,
+                            w2_pts=k_mid_m - k_lo_m,
+                            w_risk_pts=w_risk_m,
+                            margin_per_contract=w_risk_m * rec_plan.multiplier,
+                            k_be=float(meta.get("k_be") or rec_plan.k_be),
+                        )
+                    self._active_plan = rec_plan
                     self._active_trade_key = meta.get("trade_key") or self._trade_key(self._active_plan)
                     ct = float(open_tr[0]["shares"]) if open_tr else float(meta.get("contracts") or 0.0)
                     self._active_size = BwbSizeDecision(
@@ -595,7 +702,7 @@ class BwbBotService:
                 settlement = settle_bwb(
                     plan, close_spot, actual_contracts, override_net_credit_pts=actual_net_pts
                 )
-                twin_plan = build_bwb_plan(snap, self.cfg.bwb, equity=prev_eq, force_continuous=True)
+                twin_plan = build_bwb_plan(entry_snap, self.cfg.bwb, equity=prev_eq, force_continuous=True)
                 twin_settle = settle_bwb(twin_plan, close_spot, actual_contracts)
 
                 scale = 0.1 if plan.symbol == "XSP" and close_spot > 1000.0 else 1.0
@@ -953,14 +1060,18 @@ class BwbBotService:
                 continue
             except (ConnectionError, OSError) as exc:
                 self.state = "disconnected"
-                self.problem = "cannot reach TWS"
-                self._log("warn", "connection", f"0DTE BWB TWS connection problem: {type(exc).__name__}")
+                err_txt = " ".join(str(exc).split())[:120]
+                self.problem = f"cannot reach TWS ({type(exc).__name__})" + (f": {err_txt}" if err_txt else "")
+                self._log("warn", "connection", f"0DTE BWB TWS connection problem: {type(exc).__name__} {err_txt}")
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 300)
             except Exception as exc:
                 self.state = "error"
-                self.problem = f"{type(exc).__name__}"
+                err_txt = f"{type(exc).__name__}: {' '.join(str(exc).split())[:150]}"
+                self.problem = err_txt
                 log.exception("BWB service loop error")
+                self._log("error", "service", f"0DTE BWB loop error: {err_txt}")
+                await self.notifier.send("0DTE BWB error", f"{err_txt}; retrying in 60s", "high")
                 await asyncio.sleep(60)
 
     async def run_demo(self, seconds_per_day: float | None = None, loop: bool = True) -> None:

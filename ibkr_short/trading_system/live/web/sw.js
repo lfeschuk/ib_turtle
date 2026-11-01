@@ -1,6 +1,6 @@
 'use strict';
 // Caches only the app shell so it opens offline. API responses are never cached.
-const CACHE = 'gapshort-v5';
+const CACHE = 'gapshort-v6';
 const SHELL = ['/', '/app.js', '/app.css', '/manifest.webmanifest', '/icon.svg', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {

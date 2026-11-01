@@ -238,18 +238,19 @@ class BotService:
         async with self.lock:
             b = self.broker
             today = b.today().isoformat()
-            self.journal.set("last_decision_day", today)
             await self._sync_fills()
 
             # 1. Positions and today's exits. Shadow mode has no real positions, so it keeps a virtual book.
             exiting: set[str] = set()
             if self.read_only:
                 book = await self._virtual_book(today)
+                self.journal.set("last_decision_day", today)
                 held = {v["symbol"] for v in book}
                 exiting = {v["symbol"] for v in book if v["exits_today"]}
             else:
                 entry_day = {t["symbol"]: t["entry_date"] for t in self.journal.open_trades()}
                 all_shorts = [p for p in await b.positions() if p.shares < 0]
+                self.journal.set("last_decision_day", today)
                 shorts = all_shorts if self.cfg.mode == "demo" else [p for p in all_shorts if p.symbol in entry_day]
                 held = {p.symbol for p in shorts}
                 for p in shorts:
@@ -259,8 +260,10 @@ class BotService:
                             await self._cover(p.symbol, p.shares, "MOC", "day-3 exit")
                             exiting.add(p.symbol)
                         except Exception as exc:
-                            self._log("error", "order", f"Day-3 exit for {p.symbol} failed: {type(exc).__name__}")
-                            await self.notifier.send(f"Exit failed: {p.symbol}", "Check the position in IBKR", "high")
+                            err_txt = f"{type(exc).__name__}: {' '.join(str(exc).split())[:140]}"
+                            self.problem = f"Day-3 exit failed ({p.symbol}): {err_txt}"
+                            self._log("error", "order", f"Day-3 exit for {p.symbol} failed: {err_txt}")
+                            await self.notifier.send(f"Exit failed: {p.symbol}", f"{err_txt} — check position in IBKR", "high")
                 await self._sync_fills()
 
             summary = {"day": today, "candidates": 0, "placed": 0, "exits": len(exiting), "note": ""}
@@ -287,6 +290,9 @@ class BotService:
                 return summary
 
             candidates = []
+            cycle_problems: list[str] = []
+            fetch_errors: list[str] = []
+            valid_today_bars = 0
             t0 = time.monotonic()
             movers = await b.movers()
             sem = asyncio.Semaphore(FETCH_CONCURRENCY)
@@ -296,7 +302,9 @@ class BotService:
                     try:
                         return await b.daily_bars(sym)
                     except Exception as exc:
-                        log.warning("skipping %s: %s", sym, type(exc).__name__)
+                        detail = str(exc).strip()[:160] or type(exc).__name__
+                        fetch_errors.append(f"{sym}: {detail}")
+                        log.warning("skipping %s: %s", sym, detail)
                         return None
 
             histories = await asyncio.gather(*(fetch(s) for s in movers))
@@ -304,6 +312,7 @@ class BotService:
                 try:
                     if not bars or len(bars) < 2 or bars[-1].day[:10] != today:
                         continue
+                    valid_today_bars += 1
                     built = build_inputs(sym, bars, await b.gate_info(sym, bars))
                     if built is None:
                         continue
@@ -317,7 +326,18 @@ class BotService:
             summary["candidates"] = len(candidates)
             summary["scan_s"] = round(time.monotonic() - t0, 1)
             if self.cfg.mode != "demo":
-                self._log("info", "scan", f"Checked {len(movers)} movers in {summary['scan_s']:.0f} s: "
+                if movers and valid_today_bars == 0:
+                    err_hint = f" ({fetch_errors[0]})" if fetch_errors else ""
+                    scan_err = f"Scan failed: 0/{len(movers)} movers returned {today} bar{err_hint}"
+                    cycle_problems.append(scan_err)
+                    summary["note"] = scan_err[:120]
+                    self._log("error", "scan", scan_err)
+                    await self.notifier.send("Gap Short scan failed", scan_err, "high")
+                elif movers and len(fetch_errors) >= max(5, len(movers) // 3):
+                    scan_warn = f"Scan degraded: {len(fetch_errors)}/{len(movers)} bar fetches failed ({fetch_errors[0]})"
+                    cycle_problems.append(scan_warn)
+                    self._log("warn", "scan", scan_warn)
+                self._log("info", "scan", f"Checked {len(movers)} movers ({valid_today_bars} current) in {summary['scan_s']:.0f} s: "
                                           f"{len(candidates)} signals")
 
             peak_adj, realized_ytd = self._peak_and_ytd(today)
@@ -370,8 +390,15 @@ class BotService:
                 twin = {"day": today, "symbol": sym, "setups": sig.setups_str, "score": float(sig.score),
                         "exp_ret": mu, "plan_price": sig.ref_close, "fee_rate": self._actual_fee(fee)}
                 if not borrow["shortable"] or borrow["available"] <= 0:
-                    note("skipped", "no shares to borrow")
-                    self.journal.twin_add(**twin, kind="missed", note="no shares to borrow", shares=shares)
+                    if borrow.get("error"):
+                        b_err = f"borrow check error: {borrow['error'][:140]}"
+                        note("error", b_err)
+                        self.journal.twin_add(**twin, kind="missed", note="borrow check error", shares=shares)
+                        self._log("warn", "data", f"{sym}: {b_err}")
+                        cycle_problems.append(f"{sym}: {b_err}")
+                    else:
+                        note("skipped", "no shares to borrow")
+                        self.journal.twin_add(**twin, kind="missed", note="no shares to borrow", shares=shares)
                     continue
                 if fee is not None and fee > self.cfg.max_borrow_annual:
                     note("skipped", f"borrow fee {fee:.0%}/yr")
@@ -402,9 +429,12 @@ class BotService:
                     self._twin_set_kind(today, sym, "shadow", "")
                     continue
                 except Exception as exc:
-                    note("error", f"order rejected: {type(exc).__name__}")
-                    self._twin_set_kind(today, sym, "missed", "order rejected")
-                    self._log("error", "order", f"Short {sym} failed: {type(exc).__name__}")
+                    err_detail = str(exc).strip()[:160] or type(exc).__name__
+                    note("error", f"order rejected: {err_detail}")
+                    self._twin_set_kind(today, sym, "missed", f"order rejected ({err_detail[:60]})")
+                    self._log("error", "order", f"Short {sym} failed: {err_detail}")
+                    cycle_problems.append(f"Short {sym} failed: {err_detail}")
+                    await self.notifier.send(f"Short order failed: {sym}", err_detail, "high")
                     continue
                 note("placed", detail, size.notional)
                 self._log("info", "order", f"Short {shares:,.0f} {sym} ({sig.setups_str}) at the close, {detail}")
@@ -412,6 +442,7 @@ class BotService:
                 open_syms.add(sym)
                 summary["placed"] += 1
             await self._sync_fills()
+            self.problem = "; ".join(cycle_problems[:3])
             self.last_decision = summary
             if summary["placed"] or summary["exits"]:
                 await self.notifier.send("Close orders sent",
@@ -775,10 +806,11 @@ class BotService:
                 backoff = min(backoff * 2, 300)
             except Exception as exc:
                 self.state = "error"
-                self.problem = f"{type(exc).__name__}"
+                err_txt = f"{type(exc).__name__}: {' '.join(str(exc).split())[:150]}"
+                self.problem = err_txt
                 log.exception("service loop error")
-                self.journal.event("error", "service", f"Unexpected error: {type(exc).__name__}")
-                await self.notifier.send("Bot error", f"{type(exc).__name__}; retrying in a minute", "high")
+                self.journal.event("error", "service", f"Unexpected error: {err_txt}")
+                await self.notifier.send("Gap Short error", f"{err_txt}; retrying in a minute", "high")
                 await asyncio.sleep(60)
 
     async def run_demo(self, seconds_per_day: float | None = None, loop: bool = True) -> None:

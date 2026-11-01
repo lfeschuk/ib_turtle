@@ -599,33 +599,52 @@ def test_bwb_live_premium_audit_and_guards(tmp: Path) -> None:
         plan = build_bwb_plan(snap, cfg_ib.bwb, equity=100_000.0)
 
         class _FakeIB:
-            def __init__(self, fill_mode: str):
+            def __init__(self, fill_mode: str, quote_mode: str = "live"):
                 self.fill_mode = fill_mode
+                self.quote_mode = quote_mode
+                self.mdt = 1
                 self.cancelled = 0
+                self.mkt_cancelled = 0
                 self.placed_limits: list[float] = []
+                self.placed_bags: list = []
+                self._leg_seq = 0
 
             def isConnected(self) -> bool:
                 return True
 
-            async def qualifyContractsAsync(self, *contracts):
-                for idx, c in enumerate(contracts):
-                    c.conId = 1001 + idx
+            def reqMarketDataType(self, mdt: int) -> None:
+                self.mdt = int(mdt)
 
-            async def reqTickersAsync(self, *_contracts):
+            async def qualifyContractsAsync(self, *contracts):
+                for c in contracts:
+                    assert c.args[4] == "CBOE", c.args
+                    c.conId = int(c.args[2])
+
+            def reqMktData(self, _contract, *_a):
+                idx = self._leg_seq % 3
+                self._leg_seq += 1
                 # K_hi: 9.90/10.10 (mid 10.0), K_mid: 6.45/6.55 (mid 6.5), K_lo: 1.45/1.55 (mid 1.5)
                 # Combo live mid = 2*(6.5) - 10.0 - 1.5 = +1.50 pts
-                return [
-                    SimpleNamespace(bid=9.90, ask=10.10),
-                    SimpleNamespace(bid=6.45, ask=6.55),
-                    SimpleNamespace(bid=1.45, ask=1.55),
-                ]
+                quotes = [(9.90, 10.10), (6.45, 6.55), (1.45, 1.55)]
+                b, a = quotes[idx]
+                if self.quote_mode == "none":
+                    return SimpleNamespace(bid=float("nan"), ask=float("nan"), delayedBid=float("nan"), delayedAsk=float("nan"))
+                if self.quote_mode == "delayed":
+                    if self.mdt == 1:
+                        return SimpleNamespace(bid=float("nan"), ask=float("nan"))
+                    return SimpleNamespace(bid=float("nan"), ask=float("nan"), delayedBid=b, delayedAsk=a)
+                return SimpleNamespace(bid=b, ask=a)
 
-            def placeOrder(self, _bag, order):
+            def cancelMktData(self, _contract) -> None:
+                self.mkt_cancelled += 1
+
+            def placeOrder(self, bag, order):
+                self.placed_bags.append(bag)
                 self.placed_limits.append(float(order.lmtPrice))
                 if self.fill_mode == "timeout":
                     return SimpleNamespace(
                         isDone=lambda: self.cancelled > 0,
-                        orderStatus=SimpleNamespace(filled=0.0, avgFillPrice=0.0, status="Cancelled"),
+                        orderStatus=SimpleNamespace(filled=0.0, avgFillPrice=0.0, status="Cancelled", whyHeld=""),
                         fills=[],
                     )
                 fills = [
@@ -647,7 +666,7 @@ def test_bwb_live_premium_audit_and_guards(tmp: Path) -> None:
                 ]
                 return SimpleNamespace(
                     isDone=lambda: True,
-                    orderStatus=SimpleNamespace(filled=2.0, avgFillPrice=-1.44, status="Filled"),
+                    orderStatus=SimpleNamespace(filled=2.0, avgFillPrice=-1.44, status="Filled", whyHeld=""),
                     fills=fills,
                 )
 
@@ -661,10 +680,10 @@ def test_bwb_live_premium_audit_and_guards(tmp: Path) -> None:
         # Gross = (4*6.48 - 2*10.02 - 2*1.50) / 2 = (25.92 - 20.04 - 3.00) / 2 = 1.44 pts; comm = $10.80 => 0.054 pts
         assert res_fill.filled and abs(res_fill.gross_credit_pts - 1.44) < 1e-9, res_fill
         assert abs(res_fill.net_credit_pts - (1.44 - 0.054)) < 1e-9, res_fill
+        assert ib_brk.ib.placed_bags[0].exchange == "CBOE"
+        assert all(leg.exchange == "CBOE" for leg in ib_brk.ib.placed_bags[0].comboLegs)
 
-        # Timeout test (speed up asyncio.sleep inside test)
-        ib_brk.ib = _FakeIB("timeout")
-        ib_brk.cfg.bwb.entry_timeout_sec = 5
+        # Timeout test + delayed OPRA fallback + model_fallback abort (speed up asyncio.sleep inside test)
         orig_sleep = asyncio.sleep
         clock = [0.0]
 
@@ -677,16 +696,32 @@ def test_bwb_live_premium_audit_and_guards(tmp: Path) -> None:
         loop.time = lambda: clock[0]
         asyncio.sleep = _fast_sleep
         try:
+            ib_brk.ib = _FakeIB("timeout")
+            ib_brk.cfg.bwb.entry_timeout_sec = 5
             res_to = loop.run_until_complete(
                 ib_brk.place_bwb_spread(plan, 2.0, "SPXW test", quote=q_ib, min_credit_pts=0.80)
             )
+            assert not res_to.filled and ib_brk.ib.cancelled == 1 and len(ib_brk.ib.placed_limits) == 2, (
+                res_to, ib_brk.ib.placed_limits
+            )
+
+            ib_brk.ib = _FakeIB("filled", quote_mode="delayed")
+            q_dly = loop.run_until_complete(ib_brk.quote_bwb_spread(plan))
+            assert q_dly.source == "ibkr_delayed" and abs(q_dly.live_mid_credit_pts - 1.50) < 1e-9, q_dly
+            assert ib_brk.ib.mdt == 1  # restored to live MDT=1
+
+            ib_brk.ib = _FakeIB("filled", quote_mode="none")
+            q_none = loop.run_until_complete(ib_brk.quote_bwb_spread(plan))
+            assert q_none.source == "model_fallback", q_none
+            res_abort = loop.run_until_complete(
+                ib_brk.place_bwb_spread(plan, 2.0, "SPXW test", quote=q_none, min_credit_pts=0.80)
+            )
+            assert not res_abort.filled and res_abort.status.startswith("Aborted: no IBKR option quotes"), res_abort
+            assert len(ib_brk.ib.placed_limits) == 0
         finally:
             asyncio.sleep = orig_sleep
             loop.time = orig_time
             loop.close()
-        assert not res_to.filled and ib_brk.ib.cancelled == 1 and len(ib_brk.ib.placed_limits) == 2, (
-            res_to, ib_brk.ib.placed_limits
-        )
     finally:
         if not had_ib_async:
             sys.modules.pop("ib_async", None)
@@ -699,6 +734,307 @@ def test_bwb_live_premium_audit_and_guards(tmp: Path) -> None:
     )
 
 
+def test_live_data_and_error_propagation(tmp: Path) -> None:
+    """Verifies IBKR duration/MDT fallbacks, IBKR 1m index priority, CBOE 2-step BWB execution, and error propagation."""
+    from datetime import datetime, time as dtime
+    from types import ModuleType, SimpleNamespace
+
+    from trading_system.live.borrow import BorrowTable
+    from trading_system.live.broker import IBKRBroker
+    from trading_system.live.bwb_broker import IBKRBwbBroker
+    from trading_system.live.bwb_service import BwbBotService
+    from trading_system.live.bwb_strategy import BwbFillResult, BwbMarketSnapshot, BwbQuoteSnapshot, build_bwb_plan
+
+    had_ib_async = "ib_async" in sys.modules
+    if not had_ib_async:
+        fake_mod = ModuleType("ib_async")
+        fake_mod.Stock = lambda sym, exch, cur: SimpleNamespace(symbol=sym, exchange=exch, currency=cur, conId=1)
+        fake_mod.Index = lambda sym, exch, cur: SimpleNamespace(symbol=sym, exchange=exch, currency=cur, conId=2)
+        fake_mod.Option = lambda *a, **kw: SimpleNamespace(args=a, kwargs=kw, conId=int(a[2]))
+        fake_mod.ComboLeg = lambda **kw: SimpleNamespace(**kw)
+        fake_mod.Contract = lambda **kw: SimpleNamespace(**kw)
+        fake_mod.Order = lambda **kw: SimpleNamespace(orderId=99, **kw)
+        sys.modules["ib_async"] = fake_mod
+
+    orig_sleep = asyncio.sleep
+    clock = [0.0]
+
+    async def _fast_sleep(dt: float):
+        clock[0] += dt
+        await orig_sleep(0)
+
+    async def _cases() -> None:
+        loop = asyncio.get_running_loop()
+        orig_time = loop.time
+        loop.time = lambda: clock[0]
+        try:
+            cfg = LiveConfig(mode="paper", data_dir=str(tmp), secrets_path=str(tmp / "s.json"))
+            cfg.bwb.entry_timeout_sec = 5
+            cfg.validate()
+
+            # 1. IBKRBroker.daily_bars uses '2 Y' for days=280 (never '14 M') and '1 Y' for days=120; borrow_check falls back MDT 1->3
+            brk = IBKRBroker(cfg, readonly=False, borrow=BorrowTable(tmp / "borrow.csv"))
+            seen_durations: list[str] = []
+
+            class _StockIB:
+                def __init__(self):
+                    self.mdt = 1
+
+                def isConnected(self) -> bool:
+                    return True
+
+                def reqMarketDataType(self, mdt: int) -> None:
+                    self.mdt = int(mdt)
+
+                async def qualifyContractsAsync(self, contract):
+                    return [contract]
+
+                async def reqHistoricalDataAsync(self, _contract, **kw):
+                    seen_durations.append(kw["durationStr"])
+                    return [SimpleNamespace(date="2026-10-29", open=10.0, high=11.0, low=9.5, close=10.0, volume=500_000),
+                            SimpleNamespace(date="2026-10-30", open=10.2, high=11.2, low=9.8, close=10.1, volume=600_000)]
+
+                def reqMktData(self, _contract, *_a):
+                    if self.mdt == 1:
+                        brk._on_ib_error(7, 354, "Requested market data is not subscribed")
+                        return SimpleNamespace(shortableShares=float("nan"), close=float("nan"))
+                    return SimpleNamespace(shortableShares=250_000.0, close=float("nan"), delayedClose=10.0)
+
+                def cancelMktData(self, _contract) -> None:
+                    pass
+
+            brk.ib = _StockIB()
+            bars_280 = await brk.daily_bars("AAPL", days=280)
+            await brk.daily_bars("AAPL", days=120)
+            await brk.daily_bars("AAPL", days=20)
+            assert seen_durations == ["2 Y", "1 Y", "45 D"], seen_durations
+            bc = await brk.borrow_check("AAPL", bars_280)
+            assert bc["shortable"] is True and bc["available"] == 250_000.0 and bc["data_mode"] == "delayed" and bc["error"] == "", bc
+            assert brk.ib.mdt == 1
+
+            # 2. IBKRBwbBroker._index_bars intraday priority: streaming tick -> IBKR 1m bar (without touching Yahoo)
+            bwb_brk = IBKRBwbBroker(cfg, readonly=False)
+            bwb_brk.account_id = "DU123456"
+            bwb_brk.now = lambda: datetime.combine(date(2026, 10, 30), dtime(10, 30), tzinfo=mc.NY)
+
+            class _IdxIB:
+                def isConnected(self) -> bool:
+                    return True
+
+                async def qualifyContractsAsync(self, *_c):
+                    return None
+
+                def reqMktData(self, _idx, *_a):
+                    bwb_brk._on_ib_error(11, 354, "Not subscribed")
+                    return SimpleNamespace(last=float("nan"), bid=float("nan"), ask=float("nan"))
+
+                def cancelMktData(self, _idx) -> None:
+                    pass
+
+                async def reqHistoricalDataAsync(self, _idx, **kw):
+                    if kw["barSizeSetting"] == "1 day":
+                        return [SimpleNamespace(date="2026-10-29", open=5790.0, close=5800.0),
+                                SimpleNamespace(date="2026-10-30", open=5810.0, close=5812.0)]
+                    return [SimpleNamespace(date="2026-10-30 10:29:00", open=5824.0, close=5825.5)]
+
+            bwb_brk.ib = _IdxIB()
+            prev_c, cur_o, cur_m = await bwb_brk._index_bars("SPX")
+            assert prev_c == 5800.0 and cur_o == 5825.5 and cur_m == 5825.5
+            assert bwb_brk.last_data_source["SPX"] == "ibkr_1m"
+
+            # 3. IBKRBwbBroker CBOE routing, exact 2-step limit pricing, delayed OPRA fallback, and model_fallback abort
+            snap_opt = BwbMarketSnapshot(
+                day="2026-10-30", spot_open=5800.0, spot_close=None, spot_mark=5800.0,
+                iv1d=0.115, vix_open=15.0, vix_prev_close=15.5, vix1d_prev_close=11.0,
+                iv1d_morning_pct=11.5, rf_annual=0.045, rf_daily=0.045 / 252.0,
+                f1_pass=True, f1_reason="F1 pass",
+            )
+            plan_opt = build_bwb_plan(snap_opt, cfg.bwb, equity=100_000.0)
+
+            class _OptIB:
+                def __init__(self, quote_mode: str = "live", fill_mode: str = "timeout"):
+                    self.quote_mode = quote_mode
+                    self.fill_mode = fill_mode
+                    self.mdt = 1
+                    self.cancelled = 0
+                    self.placed_bags: list = []
+                    self.placed_limits: list[float] = []
+                    self._seq = 0
+
+                def isConnected(self) -> bool:
+                    return True
+
+                def reqMarketDataType(self, mdt: int) -> None:
+                    self.mdt = int(mdt)
+
+                async def qualifyContractsAsync(self, *contracts):
+                    for c in contracts:
+                        assert c.args[4] == "CBOE", c.args
+                        c.conId = int(c.args[2])
+
+                def reqMktData(self, _c, *_a):
+                    b, a = [(9.90, 10.10), (6.45, 6.55), (1.45, 1.55)][self._seq % 3]
+                    self._seq += 1
+                    if self.quote_mode == "none":
+                        return SimpleNamespace(bid=float("nan"), ask=float("nan"), delayedBid=float("nan"), delayedAsk=float("nan"))
+                    if self.quote_mode == "delayed":
+                        return SimpleNamespace(bid=float("nan"), ask=float("nan")) if self.mdt == 1 else SimpleNamespace(
+                            bid=float("nan"), ask=float("nan"), delayedBid=b, delayedAsk=a
+                        )
+                    return SimpleNamespace(bid=b, ask=a)
+
+                def cancelMktData(self, _c) -> None:
+                    pass
+
+                def placeOrder(self, bag, order):
+                    self.placed_bags.append(bag)
+                    self.placed_limits.append(float(order.lmtPrice))
+                    return SimpleNamespace(
+                        isDone=lambda: self.cancelled > 0,
+                        orderStatus=SimpleNamespace(filled=0.0, avgFillPrice=0.0, status="PreSubmitted", whyHeld=""),
+                        fills=[],
+                    )
+
+                def cancelOrder(self, _order):
+                    self.cancelled += 1
+
+            bwb_brk.ib = _OptIB("live", "timeout")
+            q_live = await bwb_brk.quote_bwb_spread(plan_opt)
+            assert q_live.source == "ibkr_nbbo" and abs(q_live.live_mid_credit_pts - 1.50) < 1e-9
+            res_2step = await bwb_brk.place_bwb_spread(plan_opt, 2.0, "SPXW test", quote=q_live, min_credit_pts=0.80)
+            assert not res_2step.filled and bwb_brk.ib.cancelled == 1
+            assert len(bwb_brk.ib.placed_limits) == 2  # strictly 2 limit steps (lmt_1, lmt_2), never 3
+            assert bwb_brk.ib.placed_bags[0].exchange == "CBOE"
+            assert all(leg.exchange == "CBOE" for leg in bwb_brk.ib.placed_bags[0].comboLegs)
+
+            bwb_brk.ib = _OptIB("delayed")
+            q_dly = await bwb_brk.quote_bwb_spread(plan_opt)
+            assert q_dly.source == "ibkr_delayed" and bwb_brk.ib.mdt == 1
+
+            bwb_brk.ib = _OptIB("none")
+            q_none = await bwb_brk.quote_bwb_spread(plan_opt)
+            assert q_none.source == "model_fallback"
+            res_ab = await bwb_brk.place_bwb_spread(plan_opt, 2.0, "SPXW test", quote=q_none, min_credit_pts=0.80)
+            assert not res_ab.filled and res_ab.status.startswith("Aborted: no IBKR option quotes")
+            assert len(bwb_brk.ib.placed_limits) == 0
+
+            # 4. BwbBotService propagates unfilled combo errors to status()['problem'], signals('error'), events('error'), and Notifier
+            alerts: list[tuple[str, str, str]] = []
+
+            class _StubNotifier(Notifier):
+                async def send(self, title: str, body: str, priority: str = "default") -> None:
+                    alerts.append((title, body, priority))
+
+            class _UnfilledBwbBroker:
+                account_id = "DU999999"
+                last_quote_warning = ""
+
+                def is_connected(self) -> bool:
+                    return True
+
+                def today(self) -> date:
+                    return date(2026, 10, 30)
+
+                def now(self) -> datetime:
+                    return datetime.combine(date(2026, 10, 30), dtime(10, 30), tzinfo=mc.NY)
+
+                async def account(self) -> AccountInfo:
+                    return AccountInfo("DU999999", 100_000.0, 100_000.0, 0.0, 100_000.0)
+
+                async def positions(self):
+                    return []
+
+                async def open_orders(self):
+                    return []
+
+                async def fills_today(self):
+                    return []
+
+                async def market_snapshot(self) -> BwbMarketSnapshot:
+                    return BwbMarketSnapshot(
+                        day="2026-10-30", spot_open=5800.0, spot_close=None, spot_mark=5800.0,
+                        iv1d=0.115, vix_open=15.0, vix_prev_close=15.5, vix1d_prev_close=11.0,
+                        iv1d_morning_pct=11.5, rf_annual=0.045, rf_daily=0.045 / 252.0,
+                        f1_pass=True, f1_reason="F1 pass [src:ibkr_live]",
+                    )
+
+                async def quote_bwb_spread(self, pl) -> BwbQuoteSnapshot:
+                    return BwbQuoteSnapshot(
+                        k_hi=pl.k_hi, k_mid=pl.k_mid, k_lo=pl.k_lo, w_risk_pts=pl.w_risk_pts,
+                        bid_hi=9.9, ask_hi=10.1, bid_mid=6.45, ask_mid=6.55, bid_lo=1.45, ask_lo=1.55,
+                        live_mid_credit_pts=1.50, natural_credit_pts=1.20, est_slip_pts=0.14,
+                        est_net_credit_pts=1.30, source="ibkr_nbbo",
+                    )
+
+                async def place_bwb_spread(self, pl, contracts, trade_key, quote=None, min_credit_pts=None) -> BwbFillResult:
+                    return BwbFillResult(
+                        filled=False, contracts=0.0, gross_credit_pts=0.0, commission_dollars=0.0,
+                        net_credit_pts=0.0, limit_credit_pts=1.35, order_id=42,
+                        status="Unfilled (PreSubmitted->Cancelled) | lmt=1.35pt | IBKR: [201] Margin check",
+                    )
+
+            j_err = Journal(tmp / "bwb-err.db")
+            bwb_svc = BwbBotService(cfg, _UnfilledBwbBroker(), j_err, _StubNotifier(cfg, {}))
+            await bwb_svc.decision_cycle(allow_entries=True)
+            st_bwb = await bwb_svc.status()
+            assert "BWB unfilled" in st_bwb["problem"] and "[201]" in st_bwb["problem"], st_bwb["problem"]
+            sigs = j_err.signals("2026-10-30")
+            assert len(sigs) == 1 and sigs[0]["action"] == "error", sigs
+            errs = [e for e in j_err.events(20) if e["level"] == "error"]
+            assert errs and "NOT FILLED" in errs[0]["message"], errs
+            assert alerts and alerts[-1][2] == "high", alerts
+
+            # 5. BotService propagates 0-bars data outage cleanly
+            alerts.clear()
+
+            class _NoBarsBroker:
+                account_id = "DU999999"
+
+                def is_connected(self) -> bool:
+                    return True
+
+                def today(self) -> date:
+                    return date(2026, 10, 30)
+
+                def now(self) -> datetime:
+                    return datetime.combine(date(2026, 10, 30), dtime(15, 45), tzinfo=mc.NY)
+
+                async def account(self) -> AccountInfo:
+                    return AccountInfo("DU999999", 100_000.0, 100_000.0, 0.0, 100_000.0)
+
+                async def positions(self):
+                    return []
+
+                async def open_orders(self):
+                    return []
+
+                async def fills_today(self):
+                    return []
+
+                async def movers(self):
+                    return ["AAA", "BBB"]
+
+                async def daily_bars(self, sym: str, days: int = 280):
+                    raise RuntimeError(f"{sym} daily_bars empty: [162] Historical Market Data Service error")
+
+            j_gs = Journal(tmp / "gs-err.db")
+            gs_svc = BotService(cfg, _NoBarsBroker(), j_gs, _StubNotifier(cfg, {}))
+            await gs_svc.decision_cycle(allow_entries=True)
+            assert "Scan failed: 0/2 movers returned 2026-10-30 bar" in gs_svc.problem, gs_svc.problem
+            assert alerts and alerts[-1][2] == "high" and "Gap Short scan failed" in alerts[-1][0], alerts
+        finally:
+            loop.time = orig_time
+
+    asyncio.sleep = _fast_sleep
+    try:
+        asyncio.run(_cases())
+    finally:
+        asyncio.sleep = orig_sleep
+        if not had_ib_async:
+            sys.modules.pop("ib_async", None)
+    print("live data fallbacks & error propagation ok")
+
+
 def main() -> None:
     test_calendar()
     test_auth_helpers()
@@ -707,6 +1043,8 @@ def main() -> None:
     test_perbet_sizing()
     with tempfile.TemporaryDirectory() as d:
         test_house_sizing(Path(d))
+    with tempfile.TemporaryDirectory() as d:
+        test_live_data_and_error_propagation(Path(d))
     with tempfile.TemporaryDirectory() as d:
         tmp = Path(d)
         cfg, sim, journal, service = build_demo_service(tmp)

@@ -5,8 +5,14 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p dist
 out="dist/gapshort-live-$(date +%Y%m%d).tar.gz"
-tar --exclude='__pycache__' --exclude='*.pyc' --exclude='trading_system/live/export_model.py' \
-    --owner=0 --group=0 --numeric-owner -czf "$out" \
+export COPYFILE_DISABLE=1
+if tar --version 2>/dev/null | grep -qi 'bsdtar'; then
+    tar_flags=(--no-mac-metadata --no-xattrs --uid 0 --gid 0 --numeric-owner)
+else
+    tar_flags=(--owner=0 --group=0 --numeric-owner)
+fi
+tar --exclude='__pycache__' --exclude='*.pyc' --exclude='._*' --exclude='trading_system/live/export_model.py' \
+    "${tar_flags[@]}" -czf "$out" \
     README.md install_pc.sh \
     trading_system/__init__.py trading_system/models.py trading_system/strategy_core.py \
     trading_system/engine.py trading_system/sizing.py trading_system/live \
