@@ -307,8 +307,9 @@
     if (gsSpark) gsKids.push(gsSpark);
     if (gsSt.last_decision && gsSt.last_decision.day) {
       const d = gsSt.last_decision;
-      gsKids.push(h('div', { class: 'note', text: 'Last decision ' + d.day + ': ' + d.candidates + ' signals, ' + d.placed + ' shorts' }));
+      gsKids.push(h('div', { class: 'note', text: 'Last decision ' + d.day + ': ' + d.candidates + ' signals, ' + d.placed + ' shorts' + (d.note ? ' (' + d.note + ')' : '') }));
     }
+    if (gsSt.problem) gsKids.push(h('div', { class: 'warn', text: gsSt.problem }));
     gsKids.push(h('div', { class: 'item-actions' },
       h('button', { class: 'btn primary small', type: 'button', text: 'Open Gap Short ($100k) →',
         onclick: () => selectStrategy('gapshort') })));
@@ -335,8 +336,13 @@
       ];
       if (bp.day && bp.k_mid) {
         bwbKids.push(h('div', { class: 'note',
-          text: bp.day + ' ' + bp.trade_key + ' · Credit ' + price(bp.net_credit_pts) + ' pts · BE ' + Math.round(bp.k_be) + ' · ' + (sz.house_cushion_dollars > 0 ? 'House-money active' : 'Principal shield active') }));
+          text: bp.day + ' ' + bp.trade_key + ' · Credit ' + price(bp.net_credit_pts) + ' pts · BE ' + Math.round(bp.k_be) + (bp.quote_source ? ' · ' + bp.quote_source : '') }));
       }
+      if (bwbSt.last_decision && bwbSt.last_decision.day) {
+        const bd = bwbSt.last_decision;
+        bwbKids.push(h('div', { class: 'note', text: 'Last check ' + bd.day + ': ' + (bd.placed ? 'Placed 0DTE BWB' : 'Not placed') + (bd.note ? ' (' + bd.note + ')' : '') }));
+      }
+      if (bwbSt.problem) bwbKids.push(h('div', { class: 'warn', text: bwbSt.problem }));
       const bwbSpark = sparkSvg(bwb.equity);
       if (bwbSpark) bwbKids.push(bwbSpark);
       bwbKids.push(h('div', { class: 'item-actions' },
@@ -419,11 +425,11 @@
     if (isBwb && s.bwb_plan) {
       const bp = s.bwb_plan;
       view.bwbStruct.hidden = false;
-      view.bwbStruct.replaceChildren(
+      const structKids = [
         h('h2', {}, h('span', { text: '0DTE Put BWB Structure' }), h('span', { text: bp.day || '' })),
         h('div', { class: 'grid' }, [
           stat('Causal F1 Gate', bp.f1_pass ? 'PASS (VIX1D < VIX)' : 'GATED (Sit in Cash)', bp.f1_pass ? 'pos' : 'neg'),
-          stat('SPX Open / 1D IV', price(bp.spot_open) + ' · ' + pct(bp.iv1d_pct)),
+          stat('SPX Spot / 1D IV', price(bp.spot_open) + ' · ' + pct(bp.iv1d_pct)),
           stat('+1 Upper Long Put', Math.round(bp.k_hi) + 'P (W1=' + bp.w1_pts.toFixed(1) + 'pt)'),
           stat('-2 Middle Short Puts', Math.round(bp.k_mid) + 'P (' + Math.round(bp.delta_mid * 100) + 'Δ tent peak)'),
           stat('+1 Lower Long Put', Math.round(bp.k_lo) + 'P (W2=' + bp.w2_pts.toFixed(1) + 'pt)'),
@@ -434,9 +440,12 @@
               ? price(bp.actual_net_pts) + ' pts ($' + Math.round(bp.actual_net_pts * 100) + '/ct)'
               : (isNum(bp.live_mid_pts) ? price(bp.live_mid_pts) + ' pts (est net ' + price(bp.est_net_pts) + ')' : '–')),
           stat('Target Size', bp.contracts.toFixed(2) + 'x (' + money(bp.collat_budget) + ' collat)'),
+          stat('Quote Feed', bp.quote_source || '–'),
         ]),
-        h('div', { class: 'note', text: bp.f1_reason || '' })
-      );
+        h('div', { class: 'note', text: bp.f1_reason || '' }),
+      ];
+      if (bp.quote_warning) structKids.push(h('div', { class: 'warn', text: bp.quote_warning }));
+      view.bwbStruct.replaceChildren(...structKids);
     } else {
       view.bwbStruct.hidden = true;
     }

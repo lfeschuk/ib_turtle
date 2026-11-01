@@ -16,6 +16,8 @@ log = logging.getLogger(__name__)
 
 DONE_STATES = {"Cancelled", "ApiCancelled", "Inactive", "Filled"}
 ROLE_BY_REF = {"gs-entry": "entry", "gs-stop": "stop", "gs-target": "target", "gs-exit": "exit", "gs-manual": "manual"}
+IB_INFO_CODES = {300, 2103, 2104, 2105, 2106, 2107, 2108, 2119, 2158, 2172}
+IB_MKT_DATA_SUB_CODES = {354, 10089, 10090, 10167, 10197}
 
 
 class ReadOnlyError(RuntimeError):
@@ -106,12 +108,44 @@ class IBKRBroker:
         self.ib = None
         self.account_id = ""
         self._contracts: dict = {}
+        self._errors_by_req: dict[int, list[tuple[int, str]]] = {}
+        self._recent_errors: list[tuple[int, int, str]] = []
+        self._error_hook_installed = False
+
+    def _on_ib_error(self, reqId: int, errorCode: int, errorString: str, contract=None) -> None:
+        code = int(errorCode or 0)
+        if code in IB_INFO_CODES:
+            return
+        msg = (errorString or "").replace("\n", " ").strip()[:200]
+        rid = int(reqId or 0)
+        bucket = self._errors_by_req.setdefault(rid, [])
+        if (code, msg) not in bucket:
+            bucket.append((code, msg))
+            if len(bucket) > 5:
+                del bucket[:-5]
+        if len(self._errors_by_req) > 300:
+            self._errors_by_req.pop(next(iter(self._errors_by_req)))
+        self._recent_errors.append((rid, code, msg))
+        if len(self._recent_errors) > 80:
+            del self._recent_errors[:-80]
+
+    def format_req_errors(self, req_ids: list[int]) -> str:
+        parts: list[str] = []
+        for rid in req_ids:
+            for code, msg in self._errors_by_req.get(int(rid), ()):
+                entry = f"[{code}] {msg}"
+                if entry not in parts:
+                    parts.append(entry)
+        return "; ".join(parts)[:240]
 
     async def connect(self) -> None:
         from ib_async import IB  # imported here so demo mode runs without TWS
 
         if self.ib is None:
             self.ib = IB()
+        if not self._error_hook_installed:
+            self.ib.errorEvent += self._on_ib_error
+            self._error_hook_installed = True
         if self.ib.isConnected():
             return
         await self.ib.connectAsync(self.cfg.tws_host, self.cfg.tws_port, clientId=self.cfg.client_id,
@@ -214,12 +248,22 @@ class IBKRBroker:
 
     async def daily_bars(self, symbol: str, days: int = 280) -> list[Bar]:
         contract = await self._contract(symbol)
-        # a long history for the signal rules; a short window (in calendar days) for the daily position update
-        duration = "14 M" if days > 60 else f"{days * 2 + 5} D"
+        # IBKR requires durations > 365 days ("12 M") to be requested in years ("1 Y", "2 Y").
+        if days > 240:
+            duration = "2 Y"
+        elif days > 60:
+            duration = "1 Y"
+        else:
+            duration = f"{days * 2 + 5} D"
+        err_mark = len(self._recent_errors)
         bars = await self.ib.reqHistoricalDataAsync(contract, endDateTime="", durationStr=duration,
                                                     barSizeSetting="1 day", whatToShow="TRADES", useRTH=True,
                                                     formatDate=1, timeout=30)
         await asyncio.sleep(0.4)  # stay well inside IBKR's history request pacing
+        if not bars:
+            new_errs = [f"[{c}] {m}" for _, c, m in self._recent_errors[err_mark:] if c not in IB_MKT_DATA_SUB_CODES]
+            if new_errs:
+                raise RuntimeError(f"{symbol} daily_bars empty: {new_errs[-1]}")
         out = [Bar(str(b.date), float(b.open), float(b.high), float(b.low), float(b.close), float(b.volume))
                for b in bars]
         return out[-days:]
@@ -232,22 +276,52 @@ class IBKRBroker:
                     prior_lifetime_bars=sum(1 for b in prior if b.close > 0 and b.volume > 100),
                     split_in_window=False, corrupt_vendor_bar=False, pit_mcap_prev=nan, pit_shares_prev=nan)
 
-    async def borrow_check(self, symbol: str, bars: list[Bar]) -> dict:
-        """Shortable shares from TWS, borrow fee from IBKR's daily file, and a split sanity check."""
-        contract = await self._contract(symbol)
+    async def _poll_borrow_ticker(self, contract, mdt: int, steps: int):
+        self.ib.reqMarketDataType(mdt)
+        err_mark = len(self._recent_errors)
         ticker = self.ib.reqMktData(contract, "236", False, False)
+        sub_err = ""
         try:
-            for _ in range(24):
+            for _ in range(steps):
                 await asyncio.sleep(0.25)
                 if _num(ticker.shortableShares) is not None and _num(ticker.close) is not None:
                     break
+                if mdt == 1:
+                    sub_hits = [f"[{c}] {m}" for _, c, m in self._recent_errors[err_mark:] if c in IB_MKT_DATA_SUB_CODES]
+                    if sub_hits:
+                        sub_err = sub_hits[-1]
+                        break
         finally:
             self.ib.cancelMktData(contract)
-        shares = _num(ticker.shortableShares) or 0.0
-        prev_close = _num(ticker.close)
+        cls_px = _num(ticker.close)
+        if cls_px is None and mdt in (3, 4):
+            cls_px = _num(getattr(ticker, "delayedClose", None))
+        return _num(ticker.shortableShares), cls_px, sub_err
+
+    async def borrow_check(self, symbol: str, bars: list[Bar]) -> dict:
+        """Shortable shares from TWS (live MDT=1 with automatic MDT=3 delayed fallback), borrow fee, and split check."""
+        contract = await self._contract(symbol)
+        raw_shares, prev_close, sub_err = await self._poll_borrow_ticker(contract, mdt=1, steps=10)
+        data_mode = "live"
+        if raw_shares is None:
+            raw_shares, prev_close_3, _ = await self._poll_borrow_ticker(contract, mdt=3, steps=16)
+            self.ib.reqMarketDataType(1)
+            if prev_close is None:
+                prev_close = prev_close_3
+            if raw_shares is not None:
+                data_mode = "delayed"
+        shares = raw_shares if raw_shares is not None else 0.0
+        err_txt = "" if raw_shares is not None else (sub_err or "shortableShares tick (236) returned NaN")
         # Yesterday's close from the quote should match the history; a mismatch usually means a split today.
         split_flag = prev_close is not None and len(bars) >= 2 and abs(prev_close / bars[-2].close - 1.0) > 0.05
-        return {"shortable": shares > 0, "available": shares, "fee": self.borrow.fee(symbol), "split_flag": split_flag}
+        return {
+            "shortable": shares > 0,
+            "available": shares,
+            "fee": self.borrow.fee(symbol),
+            "split_flag": split_flag,
+            "data_mode": data_mode,
+            "error": err_txt,
+        }
 
     def _guard_write(self) -> None:
         if self.readonly or self.cfg.mode == "shadow":
@@ -276,9 +350,21 @@ class IBKRBroker:
                        tif="GTC", parentId=parent.orderId, ocaGroup=oca, ocaType=1, transmit=True,
                        orderRef="gs-target", account=acct)
         trade = self.ib.placeOrder(contract, parent)
-        self.ib.placeOrder(contract, stop)
-        self.ib.placeOrder(contract, target)
-        return OrderInfo(parent.orderId, symbol, "SELL", "LOC", qty, parent.lmtPrice, None, trade.orderStatus.status,
+        stop_trade = self.ib.placeOrder(contract, stop)
+        target_trade = self.ib.placeOrder(contract, target)
+        for _ in range(8):
+            await asyncio.sleep(0.25)
+            st = trade.orderStatus.status
+            if st in ("Cancelled", "ApiCancelled", "Inactive", "PreSubmitted", "Submitted", "Filled"):
+                break
+        st = trade.orderStatus.status
+        err_txt = self.format_req_errors([int(parent.orderId or 0), int(stop.orderId or 0), int(target.orderId or 0)])
+        if st in ("Cancelled", "ApiCancelled", "Inactive"):
+            for child_tr in (stop_trade, target_trade):
+                if child_tr.orderStatus.status not in DONE_STATES:
+                    self.ib.cancelOrder(child_tr.order)
+            raise RuntimeError(f"IBKR rejected LOC bracket (status={st})" + (f": {err_txt}" if err_txt else ""))
+        return OrderInfo(parent.orderId, symbol, "SELL", "LOC", qty, parent.lmtPrice, None, st,
                          "entry")
 
     async def cancel_brackets(self, symbol: str) -> int:
