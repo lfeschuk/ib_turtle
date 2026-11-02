@@ -592,8 +592,8 @@ class IBKRBwbBroker:
             except Exception:
                 pass
 
-    async def _ib_intraday_1m_close(self, idx, expected_day: str) -> float | None:
-        """Latest 1-minute RTH index bar from IBKR verified for expected_day."""
+    async def _ib_intraday_1m_close(self, idx, expected_day: str, max_age_s: float | None = 240.0) -> float | None:
+        """Latest 1-minute RTH index bar from IBKR verified for expected_day (rejects 15m-delayed bars intraday)."""
         try:
             ib_bars = await asyncio.wait_for(
                 self.ib.reqHistoricalDataAsync(
@@ -611,10 +611,21 @@ class IBKRBwbBroker:
                 return None
             b_last = ib_bars[-1]
             dt = b_last.date
+            bar_ny: datetime | None = None
             if isinstance(dt, datetime):
-                b_day = dt.astimezone(mc.NY).date().isoformat() if dt.tzinfo else dt.date().isoformat()
+                bar_ny = dt.astimezone(mc.NY) if dt.tzinfo else dt.replace(tzinfo=mc.NY)
+                b_day = bar_ny.date().isoformat()
             else:
-                b_day = str(dt)[:10]
+                s_dt = str(dt).strip()
+                b_day = f"{s_dt[:4]}-{s_dt[4:6]}-{s_dt[6:8]}" if len(s_dt) >= 8 and s_dt[:8].isdigit() else s_dt[:10]
+                if len(s_dt) >= 19 and s_dt[4:5] == "-":
+                    try:
+                        bar_ny = datetime.fromisoformat(s_dt[:19]).replace(tzinfo=mc.NY)
+                    except ValueError:
+                        bar_ny = None
+            if max_age_s is not None and bar_ny is not None:
+                if (self.now() - bar_ny).total_seconds() > max_age_s:
+                    return None
             val = float(b_last.close)
             if b_day == expected_day and math.isfinite(val) and val > 0.0:
                 return val
@@ -688,7 +699,7 @@ class IBKRBwbBroker:
                 self.last_data_source[symbol] = "ibkr_daily_close"
                 return prev_close, float(last_bar.open), float(last_bar.close)
 
-            cur_val = await self._ib_intraday_1m_close(idx, today_str)
+            cur_val = await self._ib_intraday_1m_close(idx, today_str, max_age_s=None)
             if cur_val is None:
                 cur_val = await asyncio.to_thread(_yahoo_live_index, symbol, today_str)
             if cur_val is not None:
